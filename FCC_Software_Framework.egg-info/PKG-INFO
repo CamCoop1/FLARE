@@ -1,9 +1,0 @@
-Metadata-Version: 2.1
-Name: FCC-Software-Framework
-Version: 0.0.1
-Summary: Framework for streamlining the FCC framework powered by b2luigi
-Home-page: https://github.com/amanmdesai/FCC_Software_Framework.git
-Author: Cameron Harris
-Author-email: cameron.harris@adelaide.edu.au
-Requires-Python: >=3.6
-License-File: LICENSE
