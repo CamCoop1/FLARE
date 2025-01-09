@@ -7,7 +7,7 @@ Utility functions relating to directories.
 
 from pathlib import Path
 
-from analysis.defintions import BASE_DIRECTORY
+from analysis.definitions import BASE_DIRECTORY
 
 
 def find_file(*path, string=False):
