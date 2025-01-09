@@ -12,7 +12,7 @@ class MCProduction(OutputMixin, FCCAnalysisRunnerBaseClass):
     OPTIONAL This task will handle production of MC for FCC analyses
     """
 
-    data_type = luigi.EnumParameter()
+    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.mcproduction
     results_subdir = results_subdir
     cmd = ["DelphesPythia8_EDM4HEP"]
@@ -23,7 +23,7 @@ class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
     First stage of the analysis.
     """
 
-    data_type = luigi.EnumParameter()
+    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.stage1
     results_subdir = results_subdir
 
@@ -46,7 +46,7 @@ class AnalysisStage2(OutputMixin, FCCAnalysisRunnerBaseClass):
     TODO Finish optional stage 2 of analysis
     """
 
-    data_type = luigi.EnumParameter()
+    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.stage2
     results_subdir = results_subdir
 
@@ -59,7 +59,7 @@ class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
     Final stage of analysis production which generates flat ntuples ready for plotting
     """
 
-    data_type = luigi.EnumParameter()
+    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.final
     results_subdir = results_subdir
     cmd = ["fccanalysis", "final"]

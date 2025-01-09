@@ -1,6 +1,8 @@
 import b2luigi as luigi
 
 from analysis.utils.dirs import find_file
+from analysis.utils.stages import Stages
+from analysis.utils.steering_files import get_stage_steering_script
 
 
 class OutputMixin:
@@ -25,7 +27,12 @@ class OutputMixin:
 
 class FCCAnalysisRunnerBaseClass(luigi.Task):
 
+    stage: Stages
     cmd = ["fccanalysis", "run"]
+
+    @property
+    def stage_steering_file(self):
+        return get_stage_steering_script(self.stage)
 
     def run(self): ...
 
