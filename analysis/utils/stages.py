@@ -56,4 +56,8 @@ def get_stage_script(stage: Stages):
         raise FileNotFoundError(
             f"The steering file for stage '{stage.name}' was not found. Please ensure you have prefixed this stages steering file with '{stage.name}' and rerun."
         )
+    elif len(stage_steering_file) > 1:
+        raise RuntimeError(
+            f"The are more than one steering files for {stage.name}. Please ensure there is only one single steering file per stage."
+        )
     return stage_steering_file[0]
