@@ -10,14 +10,15 @@ class Stages(Enum):
     This enum will be the interface between analyst steering scripts and the b2luigi workflow
 
     NOTE that this enum is structured to reflect the order in which tasks should fun, with the first
-    variant of the enum being the first task that needs to run and so forth.
+    variant of the enum being the first task that needs to run and so forth. The `auto()` method will automatically
+    set the corresponding value to reflect this ordering, 0 through to the final variant.
     """
 
-    mcproduction = auto()
-    stage1 = auto()
-    stage2 = auto()
-    final = auto()
-    plot = auto()
+    mcproduction = auto()  # 0
+    stage1 = auto()  # 1
+    stage2 = auto()  # 2
+    final = auto()  # 3
+    plot = auto()  # 4
 
 
 def check_for_unregistered_stage_file() -> bool:
@@ -47,7 +48,7 @@ def get_stage_script(stage: Stages):
     """
     assert isinstance(
         stage, Stages
-    ), "The function get_stage_steering_script takes argument stage which must be of the enum type Stages"
+    ), "The function get_stage_script takes argument stage which must be of the enum type Stages"
 
     stage_steering_file = [s for s in stages_directory.glob(f"{stage.name}*.py")]
     if not stage_steering_file:
