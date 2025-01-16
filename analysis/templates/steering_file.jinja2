@@ -1,4 +1,5 @@
 outputDir = "{{ outputDir}}"
+{% if inputDir %}
 inputDir = "{{ inputDir }}"
-
+{% endif %}
 {{ python_code }}

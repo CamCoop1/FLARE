@@ -1,3 +1,9 @@
+import json
+import os
+import re
+import shutil
+import subprocess
+
 import b2luigi as luigi
 
 from analysis.utils.dirs import find_file
@@ -48,14 +54,50 @@ class TemplateMethodMixin:
         return file_path[0]
 
     @property
-    def outputDir_path(self):
-        return self.get_output_file_name(f"{self.stage.name}.root")
+    def outputDir_path_tmp(self):
+        """
+        Note we make this a tmp directory otherwise b2luigi will flag this as complete before the rootfiles have populated the output directory
+        """
+        return self.get_output_file_name(f"{self.stage.name}_rootfiles").replace(
+            "rootfiles", "rootfiles_tmp"
+        )
 
     @property
     def rendered_template_path(self):
-        output_dir = find_file(self.outputDir_path).parent
+        output_dir = find_file(self.outputDir_path_tmp).parent
 
         return find_file(output_dir, f"steering_{self.stage.name}.py")
+
+    def extract_includePath_object(script_content):
+        # Match a line starting with 'inputDir='
+        match = re.search(r"^includePaths\s*=\s*(.+)", script_content, re.MULTILINE)
+        if match:
+            # Extract and return the part after '='
+            return match.group(1).strip()
+        return None
+
+    def modify_includePaths_in_python_code(self, python_code):
+        parent_dir = find_file(self.outputDir_path_tmp).parent
+        modified_lines = []
+        for line in python_code.splitlines():
+            if line.startswith("includePaths"):
+                new_include_paths = []
+                unparsed_paths_list = (
+                    line.replace("includePaths", "").replace("=", "").strip()
+                )
+                print(unparsed_paths_list)
+                paths_list = json.loads(unparsed_paths_list)
+                for path in paths_list:
+                    print(f"Copying {path} to {parent_dir}")
+                    shutil.copy(path, parent_dir)
+                    file_name = path.split("/")[-1]
+                    new_include_paths.append(f"{parent_dir}/{file_name}")
+
+                modified_lines.append(f"includesPaths = {new_include_paths}")
+            else:
+                modified_lines.append(line)
+
+        return "\n".join(modified_lines)
 
     def run_templating(self):
         with get_stage_script(self.stage).open("r") as f:
@@ -68,8 +110,10 @@ class TemplateMethodMixin:
             "inputDir" not in python_code
         ), f"Please do not define your own input directory in your {self.stage} script. Remove this and rerun"
 
+        python_code = self.modify_includePaths_in_python_code(python_code=python_code)
+
         rendered_tex = self.template.render(
-            outputDir=self.outputDir_path,
+            outputDir=self.outputDir_path_tmp,
             inputDir=self.inputDir_path,
             python_code=python_code,
         )
@@ -83,12 +127,16 @@ class TemplateMethodMixin:
 
         assert (
             "outputDir" not in python_code
-        ), f"Please do not define your own output directory in your {self.stage} script. Remove this and rerun"
-        # assert "inputDir" not in python_code, f"Please do not define your own input directory in your {self.stage} script. Remove this and rerun"
+        ), f"Please do not define your own output directory in your {self.stage.name} script. Remove this and rerun"
+
+        assert (
+            "inputDir" in python_code
+        ), f"Please ensure you define the inputDir in the first stage steering script of your analysis, {self.stage.name}."
+
+        python_code = self.modify_includePaths_in_python_code(python_code=python_code)
 
         rendered_tex = self.template.render(
-            outputDir=self.outputDir_path,
-            inputDir="whatever_you_need_it_to_bee",
+            outputDir=self.outputDir_path_tmp,
             python_code=python_code,
         )
 
@@ -97,20 +145,52 @@ class TemplateMethodMixin:
 
 
 class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
+    """
+    This will be the base class for all FCC analysis stages. The idea being that
+    you can overload the `cmd` attribute to change the stages.
+    For example if you wanted to fun the final stage of the analysis
+    you would set
+
+    ```
+        cmd = ["fccanalysis", "final"]
+    ```
+
+    and the executed command will reflect what the luigi task has set as the `cmd`
+
+    """
 
     stage: Stages
     cmd = ["fccanalysis", "run"]
 
     def run_fcc_analysis_stage(self):
-        # TODO Complete the run method for the generic fcc analysis
-        ...
+        """
+        This method runs the command defined by `cmd`. The intention being that cmd will be overloaded
+        by tasks that have different cmd's, like how the final stage uses `fccanalysis final` as cmd
+
+        Note that the outputDir is initially suffixed by '_tmp' this is to allow the rootfiles to be successfully created.
+        Once created, we move the files to the correct outputDir without the '_tmp' at which point
+        b2luigi will be told that this task has completed as its output defined in the `output()` method exists.
+        """
+        # Add the template path to the cmd
+        self.cmd.append(str(self.rendered_template_path))
+        # Make tmp directory
+        os.makedirs(self.outputDir_path_tmp, exist_ok=True)
+        # Run the fccanalysis call
+        subprocess.check_call(" ".join(self.cmd), shell=True)
+        # Create the proper output path for b2luigi
+        outputDir = self.outputDir_path_tmp.replace("_tmp", "")
+        # Rename the tmp directory to the output directory expected by b2luigi
+        os.rename(src=self.outputDir_path_tmp, dst=outputDir)
 
     def run(self):
+        # Run templating, checking if the stage is the first in the workflow
         if self.requires():
             self.run_templating()
         else:
+            # First stage of the workflow
             self.run_templating_without_requires()
+        # Run the fccanalysis command for stage
         self.run_fcc_analysis_stage()
 
     def output(self):
-        yield self.add_to_output(f"{self.stage.name}.root")
+        yield self.add_to_output(f"{self.stage.name}_rootfiles")

@@ -12,6 +12,8 @@ class MCProduction(OutputMixin, FCCAnalysisRunnerBaseClass):
     OPTIONAL This task will handle production of MC for FCC analyses
     """
 
+    # TODO might have to overload the run_fcc_analysis function specifically for MC production as the cmd is unique
+
     data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.mcproduction
     results_subdir = results_subdir
@@ -70,10 +72,11 @@ class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
         defined the optional stage2 steering script, the `AnalysisFinal` task will
         properly set the b2luigi workflow to go straight to `AnalysisStage1`
         """
-        if 1 == 2:
+        if 1 == 1:
             # TODO Build the functionality to properly check if a stage2 steering file is created
-            return AnalysisStage1(data_type=self.data_type)
-        yield AnalysisStage2(data_type=self.data_type)
+            yield AnalysisStage1(data_type=self.data_type)
+        else:
+            yield AnalysisStage2(data_type=self.data_type)
 
 
 class AnalysisPlot(OutputMixin, FCCAnalysisRunnerBaseClass):
