@@ -1,7 +1,6 @@
 import json
 import os
 import re
-import shutil
 import subprocess
 
 import b2luigi as luigi
@@ -47,7 +46,6 @@ class TemplateMethodMixin:
     @property
     def inputDir_path(self):
         try:
-            print(self.get_input_file_names().values())
             (file_path,) = self.get_input_file_names().values()
         except ValueError as e:
             raise RuntimeError("More than one input directory") from e
@@ -76,43 +74,25 @@ class TemplateMethodMixin:
             return match.group(1).strip()
         return None
 
-    def modify_includePaths_in_python_code(self, python_code):
-        parent_dir = find_file(self.outputDir_path_tmp).parent
-        modified_lines = []
-        for line in python_code.splitlines():
-            if line.startswith("includePaths"):
-                new_include_paths = []
-                unparsed_paths_list = (
-                    line.replace("includePaths", "").replace("=", "").strip()
-                )
-                print(unparsed_paths_list)
-                paths_list = json.loads(unparsed_paths_list)
-                for path in paths_list:
-                    print(f"Copying {path} to {parent_dir}")
-                    shutil.copy(path, parent_dir)
-                    file_name = path.split("/")[-1]
-                    new_include_paths.append(f"{parent_dir}/{file_name}")
-
-                modified_lines.append(f"includesPaths = {new_include_paths}")
-            else:
-                modified_lines.append(line)
-
-        return "\n".join(modified_lines)
-
     def run_templating(self):
         with get_stage_script(self.stage).open("r") as f:
             python_code = f.read()
 
+        if self.stage != Stages.plot:
+            outputdir = "outputDir"
+        else:
+            outputdir = "outdir"
+
         assert (
-            "outputDir" not in python_code
+            outputdir not in python_code
         ), f"Please do not define your own output directory in your {self.stage} script. Remove this and rerun"
+
         assert (
             "inputDir" not in python_code
         ), f"Please do not define your own input directory in your {self.stage} script. Remove this and rerun"
 
-        python_code = self.modify_includePaths_in_python_code(python_code=python_code)
-
         rendered_tex = self.template.render(
+            outputdir_string=outputdir,
             outputDir=self.outputDir_path_tmp,
             inputDir=self.inputDir_path,
             python_code=python_code,
@@ -133,9 +113,8 @@ class TemplateMethodMixin:
             "inputDir" in python_code
         ), f"Please ensure you define the inputDir in the first stage steering script of your analysis, {self.stage.name}."
 
-        python_code = self.modify_includePaths_in_python_code(python_code=python_code)
-
         rendered_tex = self.template.render(
+            outputdir_string="outputDir",
             outputDir=self.outputDir_path_tmp,
             python_code=python_code,
         )
@@ -162,6 +141,31 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
     stage: Stages
     cmd = ["fccanalysis", "run"]
 
+    def symlink_includePaths_in_python_code(self):
+        self.symlinked_scripts = []
+        with get_stage_script(self.stage).open("r") as f:
+            python_code = f.read()
+
+        file_destination_base = os.path.dirname(self.outputDir_path_tmp)
+        for line in python_code.splitlines():
+            if line.startswith("includePaths"):
+                unparsed_paths_list = (
+                    line.replace("includePaths", "").replace("=", "").strip()
+                )
+                paths_list = json.loads(unparsed_paths_list)
+                for path in paths_list:
+                    file_destination = f"{file_destination_base}/{path}"
+                    print(f"Symlinking {path} to {file_destination}")
+                    stages_directory = get_stage_script(self.stage).parent
+                    file_src = f"{stages_directory}//{path}"
+                    os.symlink(file_src, file_destination, target_is_directory=False)
+                    self.symlinked_scripts.append(file_destination)
+
+    def remove_symlink_files(self):
+        for path in self.symlinked_scripts:
+            if os.path.islink(path):
+                os.remove(path)
+
     def run_fcc_analysis_stage(self):
         """
         This method runs the command defined by `cmd`. The intention being that cmd will be overloaded
@@ -175,12 +179,23 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
         self.cmd.append(str(self.rendered_template_path))
         # Make tmp directory
         os.makedirs(self.outputDir_path_tmp, exist_ok=True)
+        # Symlink any needed files in includePaths
+        self.symlink_includePaths_in_python_code()
+        print(f"Current working directory {os.getcwd()}")
         # Run the fccanalysis call
-        subprocess.check_call(" ".join(self.cmd), shell=True)
+        try:
+            subprocess.check_call(" ".join(self.cmd), shell=True)
+        except subprocess.CalledProcessError as e:
+            self.remove_symlink_files()
+            raise subprocess.CalledProcessError(
+                returncode=e.returncode, cmd=e.cmd, stderr=e.stderr
+            )
         # Create the proper output path for b2luigi
         outputDir = self.outputDir_path_tmp.replace("_tmp", "")
         # Rename the tmp directory to the output directory expected by b2luigi
         os.rename(src=self.outputDir_path_tmp, dst=outputDir)
+        # Removing symlinked files
+        self.remove_symlink_files()
 
     def run(self):
         # Run templating, checking if the stage is the first in the workflow

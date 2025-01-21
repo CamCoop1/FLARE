@@ -72,7 +72,7 @@ class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
         defined the optional stage2 steering script, the `AnalysisFinal` task will
         properly set the b2luigi workflow to go straight to `AnalysisStage1`
         """
-        if 1 == 1:
+        if 1 == 2:
             # TODO Build the functionality to properly check if a stage2 steering file is created
             yield AnalysisStage1(data_type=self.data_type)
         else:
@@ -86,8 +86,9 @@ class AnalysisPlot(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.plot
     results_subdir = results_subdir
-    cmd = ["fccanalysis", "plot"]
+    cmd = ["fccanalysis", "plots"]
 
     def requires(self):
+        # TODO Fix this to be final stage
         for data_type in get_data_types():
-            yield AnalysisFinal(data_type=data_type)
+            yield AnalysisStage2(data_type=data_type)
