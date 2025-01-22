@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 import subprocess
 
 import b2luigi as luigi
@@ -69,14 +68,6 @@ class TemplateMethodMixin:
 
         return find_file(output_dir, f"steering_{self.stage.name}.py")
 
-    def extract_includePath_object(script_content):
-        # Match a line starting with 'inputDir='
-        match = re.search(r"^includePaths\s*=\s*(.+)", script_content, re.MULTILINE)
-        if match:
-            # Extract and return the part after '='
-            return match.group(1).strip()
-        return None
-
     def run_templating(self):
         with get_stage_script(self.stage).open("r") as f:
             python_code = f.read()
@@ -139,12 +130,29 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
 
     and the executed command will reflect what the luigi task has set as the `cmd`
 
+    Parameters
+    -----------
+    `stages` : Stages
+        This attribute allows interface with the `Stages` enum
+
+    `cmd` : list
+        This is a list comprising of each section of the bash command that must be submited for a given stage
+
     """
 
     stage: Stages
     cmd = ["fccanalysis", "run"]
 
     def symlink_includePaths_in_python_code(self):
+        """
+        Any paths included in the `includePaths` variable of a stage script needs to be
+        available inside the output directory at run time for the fccanalysis tool to work. To do this,
+        we will symlink the files from the analysis area to the output directory prior to running the fccanalysis
+        command.
+
+        Then upon completion (or failure) the symlinked files will be unlinked leaving the workspace uncluttered
+        """
+        # This keeps track of symlinked files and by attaching to the class we can access it later
         self.symlinked_scripts = []
         with get_stage_script(self.stage).open("r") as f:
             python_code = f.read()
@@ -160,11 +168,12 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
                     file_destination = f"{file_destination_base}/{path}"
                     logger.info(f"Symlinking {path} to {file_destination}")
                     stages_directory = get_stage_script(self.stage).parent
-                    file_src = f"{stages_directory}//{path}"
+                    file_src = f"{stages_directory}/{path}"
                     os.symlink(file_src, file_destination, target_is_directory=False)
                     self.symlinked_scripts.append(file_destination)
 
     def remove_symlink_files(self):
+        # Using the symlinked_scripts attribute created in symlink_includePaths_in_python_code
         for path in self.symlinked_scripts:
             if os.path.islink(path):
                 os.remove(path)
