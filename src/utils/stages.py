@@ -1,9 +1,9 @@
 from enum import Enum, auto
 from functools import lru_cache
 
-from analysis.utils.dirs import find_file
+from src.utils.dirs import find_file
 
-stages_directory = find_file("config", "stages")
+stages_directory = find_file("analysis")
 
 
 class Stages(Enum):

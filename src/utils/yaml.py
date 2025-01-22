@@ -5,11 +5,11 @@ import yaml as yaml
 
 # import json
 # import jsonschema
-from analysis.utils.dirs import find_file
+from src.utils.dirs import find_file
 
 
 @lru_cache(typed=True)
-def get_config(config_name, dir="config"):
+def get_config(config_name, dir="analysis/config"):
     """
     Load config YAML file.
 

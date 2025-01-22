@@ -96,4 +96,4 @@ target/
 *.err
 *.log
 
-config/*
+analysis/*

@@ -1,7 +1,7 @@
 import b2luigi as luigi
 
-from analysis.tasks import AnalysisPlot
-from analysis.utils.stages import check_for_unregistered_stage_file
+from src.tasks import AnalysisPlot
+from src.utils.stages import check_for_unregistered_stage_file
 
 if __name__ == "__main__":
     if check_for_unregistered_stage_file():

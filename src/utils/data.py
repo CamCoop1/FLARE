@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import lru_cache
 
-from analysis.utils.yaml import get_config
+from src.utils.yaml import get_config
 
 
 @dataclass

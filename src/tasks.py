@@ -1,7 +1,10 @@
-from analysis.utils.stages import Stages, get_stage_ordering
-from analysis.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
+from src.utils.stages import Stages, get_stage_ordering
+from src.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
+from src.utils.yaml import get_config
 
-results_subdir = "ntuples"
+details = get_config("details")
+
+results_subdir = f"{details['Name']}/{details['Version']}"
 
 
 class MCProduction(OutputMixin, FCCAnalysisRunnerBaseClass):
