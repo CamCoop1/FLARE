@@ -1,6 +1,3 @@
-import b2luigi as luigi
-
-from analysis.utils.data import get_data_types
 from analysis.utils.stages import Stages, get_stage_ordering
 from analysis.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
 
@@ -14,7 +11,6 @@ class MCProduction(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     # TODO might have to overload the run_fcc_analysis function specifically for MC production as the cmd is unique
 
-    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.mcproduction
     results_subdir = results_subdir
     cmd = ["DelphesPythia8_EDM4HEP"]
@@ -25,7 +21,6 @@ class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
     First stage of the analysis.
     """
 
-    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.stage1
     results_subdir = results_subdir
 
@@ -36,7 +31,7 @@ class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
         properly set the b2luigi workflow to not add `MCProduction` to the workflow
         """
         if Stages.mcproduction in get_stage_ordering():
-            return MCProduction(data_type=self.data_type)
+            return MCProduction()
         # If MC Production isn't required then we must return an empty list to tell
         # b2luigi that there are no required tasks.
         return []
@@ -47,12 +42,11 @@ class AnalysisStage2(OutputMixin, FCCAnalysisRunnerBaseClass):
     OPTIONAL second stage of analysis prior to the `final` stage
     """
 
-    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.stage2
     results_subdir = results_subdir
 
     def requires(self):
-        return AnalysisStage1(data_type=self.data_type)
+        return AnalysisStage1()
 
 
 class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
@@ -60,7 +54,6 @@ class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
     Final stage of analysis production which generates flat ntuples ready for plotting
     """
 
-    data_type = luigi.EnumParameter(enum=get_data_types())
     stage = Stages.final
     results_subdir = results_subdir
     cmd = ["fccanalysis", "final"]
@@ -72,9 +65,9 @@ class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
         properly set the b2luigi workflow to go straight to `AnalysisStage1`
         """
         if Stages.stage2 in get_stage_ordering():
-            yield AnalysisStage2(data_type=self.data_type)
+            yield AnalysisStage2()
         else:
-            yield AnalysisStage1(data_type=self.data_type)
+            yield AnalysisStage1()
 
 
 class AnalysisPlot(OutputMixin, FCCAnalysisRunnerBaseClass):
@@ -98,10 +91,10 @@ class AnalysisPlot(OutputMixin, FCCAnalysisRunnerBaseClass):
 
         Lastly, if neither of these stages are needed we then must jump straight to stage1.
         """
-        for data_type in get_data_types():
-            if Stages.final in get_stage_ordering():
-                yield AnalysisFinal(data_type=data_type)
-            elif Stages.stage2 in get_stage_ordering():
-                yield AnalysisStage2(data_type=data_type)
-            else:
-                yield AnalysisStage1(data_type=data_type)
+
+        if Stages.final in get_stage_ordering():
+            yield AnalysisFinal()
+        elif Stages.stage2 in get_stage_ordering():
+            yield AnalysisStage2()
+        else:
+            yield AnalysisStage1()
