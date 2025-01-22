@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import subprocess
@@ -8,6 +9,8 @@ import b2luigi as luigi
 from analysis.utils.dirs import find_file
 from analysis.utils.jinja2_utils import get_template
 from analysis.utils.stages import Stages, get_stage_script
+
+logger = logging.getLogger("luigi-interface")
 
 
 class OutputMixin:
@@ -155,7 +158,7 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
                 paths_list = json.loads(unparsed_paths_list)
                 for path in paths_list:
                     file_destination = f"{file_destination_base}/{path}"
-                    print(f"Symlinking {path} to {file_destination}")
+                    logger.info(f"Symlinking {path} to {file_destination}")
                     stages_directory = get_stage_script(self.stage).parent
                     file_src = f"{stages_directory}//{path}"
                     os.symlink(file_src, file_destination, target_is_directory=False)
@@ -181,7 +184,8 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
         os.makedirs(self.outputDir_path_tmp, exist_ok=True)
         # Symlink any needed files in includePaths
         self.symlink_includePaths_in_python_code()
-        print(f"Current working directory {os.getcwd()}")
+
+        logger.debug(f"Current working directory {os.getcwd()}")
         # Run the fccanalysis call
         try:
             subprocess.check_call(" ".join(self.cmd), shell=True)
@@ -205,6 +209,7 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.Task):
             # First stage of the workflow
             self.run_templating_without_requires()
         # Run the fccanalysis command for stage
+        logger.info(f"Running anaysis for {self.stage.name}")
         self.run_fcc_analysis_stage()
 
     def output(self):
