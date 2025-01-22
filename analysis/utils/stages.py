@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from functools import lru_cache
 
 from analysis.utils.dirs import find_file
 
@@ -21,6 +22,31 @@ class Stages(Enum):
     plot = auto()  # 4
 
 
+def _get_steering_script_names():
+    """
+    Gets the list of steering script names. the idea behind this private function is to ensure that
+    whenever one is wanting to get the steering scripts they always use the same `stages_directory`
+    """
+    return [x.stem for x in stages_directory.glob("*.py")]
+
+
+def _get_active_stages():
+    """
+    A private helper function which seeks to factor out the finding of valid steering scripts
+    """
+    steering_script_names = _get_steering_script_names()
+    # Get all the valid prefixes
+    valid_prefixes = [variant for variant in Stages]
+    # Get a list of files that match the prefixes
+    valid_steering_scripts = [
+        prefix
+        for prefix in valid_prefixes
+        for name in steering_script_names
+        if name.startswith(prefix.name)
+    ]
+    return valid_steering_scripts
+
+
 def check_for_unregistered_stage_file() -> bool:
     """
     This function serves to check if there exits any steering scripts inside the `config/stages` directory that are not
@@ -28,16 +54,9 @@ def check_for_unregistered_stage_file() -> bool:
 
     Returns True if there is an unregistered steering script, otherwise return False
     """
-    steering_script_names = [x.stem for x in stages_directory.glob("*.py")]
-    # Get all the valid prefixes
-    valid_prefixes = [variant.name for variant in Stages]
-    # Get a list of files that match the prefixes
-    valid_steering_scripts = [
-        name
-        for prefix in valid_prefixes
-        for name in steering_script_names
-        if name.startswith(prefix)
-    ]
+    steering_script_names = _get_steering_script_names()
+
+    valid_steering_scripts = _get_active_stages()
     # Finally, if the two lists aren't the same length then there is an additional unregistered script
     return len(valid_steering_scripts) != len(steering_script_names)
 
@@ -61,3 +80,15 @@ def get_stage_script(stage: Stages):
             f"The are more than one steering files for {stage.name}. Please ensure there is only one single steering file per stage."
         )
     return stage_steering_file[0]
+
+
+@lru_cache()
+def get_stage_ordering() -> list:
+    """
+    This function will serve to return a list of the ordering the analyst requires in their fcc analysis.
+
+    For example if inside their analysis they require the stage1, stage2, final and plot stages to run,
+    then this function will return an ordered list of `Stages` variants which can be used to align the
+    ordering of b2luigi workflow to that which is required by the analyst.
+    """
+    return _get_active_stages()
