@@ -1,0 +1,11 @@
+{
+  "_copy_without_render": [
+    "src/templates/steering_file.jinja2"
+  ],
+  "author_name": "Your Name",
+  "email": "your.email@example.com",
+  "license": "MIT",
+  "project_name": "What is your analysis name?",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_') }}",
+  "version": "0.1.0"
+}

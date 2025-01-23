@@ -1,5 +1,4 @@
 import b2luigi as luigi
-
 from src.tasks import AnalysisPlot
 from src.utils.stages import check_for_unregistered_stage_file
 
