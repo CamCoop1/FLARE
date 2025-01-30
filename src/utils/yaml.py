@@ -25,7 +25,6 @@ def get_config(config_name, dir="analysis/config"):
     """
 
     YAMLFile = find_file(dir, Path(config_name).with_suffix(".yaml"))
-
     with open(YAMLFile) as f:
         contents = yaml.safe_load(f)
 

@@ -1,6 +1,6 @@
 import b2luigi as luigi
 
-from src.tasks import AnalysisPlot
+from src.tasks import FCCAnalysisWrapper
 from src.utils.stages import check_for_unregistered_stage_file
 
 if __name__ == "__main__":
@@ -10,4 +10,5 @@ if __name__ == "__main__":
             " and rerun"
         )
 
-    luigi.process(AnalysisPlot(), workers=4)
+
+    luigi.process(FCCAnalysisWrapper(), workers=4)
