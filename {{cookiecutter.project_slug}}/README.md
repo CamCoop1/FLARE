@@ -35,7 +35,7 @@ Now your virtual environment will be setup like so:
 
 # Setting up your analysis
 
-To begin, you can place all of your analysis scripting and tooling inside the `analysis` directory. For the framework to operate as indended, you need to follow these rules:
+To begin, you can place all of your analysis scripting and tooling inside the `analysis` directory. For the framework to operate as intended, you need to follow these rules:
 
 1. Your analysis stage scripts must be prefixed by which stage it is, as per the `Stages` enum in src/utils/stages.py. What this boils down to is your stage 1 analysis script must be named `stage1_{detailed name}.py`, likewise your final stage analysis script must be named `final_{detailed name}.py`. This is necessary as these prefixes are how the framework knows what stages need to be ran for your analysis.
 
