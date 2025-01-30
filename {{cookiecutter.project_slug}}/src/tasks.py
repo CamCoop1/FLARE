@@ -1,6 +1,9 @@
+import b2luigi as luigi
+
 from src.utils.stages import Stages, get_stage_ordering
 from src.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
 from src.utils.yaml import get_config
+from src.utils.dirs import find_file
 
 details = get_config("details")
 
@@ -101,3 +104,44 @@ class AnalysisPlot(OutputMixin, FCCAnalysisRunnerBaseClass):
             yield AnalysisStage2()
         else:
             yield AnalysisStage1()
+
+
+class GenerateAnalysisDescription(OutputMixin, luigi.Task):
+    """ 
+    This task serves to generate documentation for the current sample set being generated. 
+    """
+    results_subdir = results_subdir
+    
+    def get_output_key_path_pair(self):
+        output_path = find_file("data", self.results_subdir, "README.md")
+        
+        return output_path.name, output_path
+    
+    def output(self):
+        output_key, output_path = self.get_output_key_path_pair()
+        return {output_key : luigi.LocalTarget(str(output_path))}
+        
+    def run(self):
+        description = details['Description']
+        print(description)
+        _, output_path = self.get_output_key_path_pair()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        tmp_output_path = output_path.with_suffix(".tmp.md")
+
+        tmp_output_path.touch()
+        with tmp_output_path.open("w") as f:
+            f.write(description)
+            
+        tmp_output_path.rename(output_path)
+
+class FCCAnalysisWrapper(luigi.WrapperTask):
+    """ 
+    Wrapper task that allows for multiple tasks to be ran in parallel
+    
+    Here be begin the FCC analysis workflow along with generating documentation for this sample set
+    using the analysis/config/details.yaml 
+    """
+    def requires(self):
+        yield AnalysisPlot()            
+        yield GenerateAnalysisDescription()
