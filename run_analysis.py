@@ -1,10 +1,10 @@
 import sys
 import time
-# import b2luigi as luigi
+import b2luigi as luigi
 
 
-# from src.analysis_tasks import FCCAnalysisWrapper
-# from src.utils.stages import check_for_unregistered_stage_file
+from src.fcc_analysis.tasks import FCCAnalysisWrapper
+from src.utils.stages import check_for_unregistered_stage_file
 
 
 def loading_animation():
@@ -37,11 +37,10 @@ def print_b2luigi_logo():
 if __name__ == "__main__":
     
     print_b2luigi_logo()
-    # if check_for_unregistered_stage_file():
-    #     raise RuntimeError(
-    #         "There exists unregistered stages in your analysis. Please register them following the README.md"
-    #         " and rerun"
-    #     )
+    if check_for_unregistered_stage_file():
+        raise RuntimeError(
+            "There exists unregistered stages in your analysis. Please register them following the README.md"
+            " and rerun"
+        )
 
-
-    # luigi.process(FCCAnalysisWrapper(), workers=4)
+    luigi.process(FCCAnalysisWrapper(), workers=4)

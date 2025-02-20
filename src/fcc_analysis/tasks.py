@@ -1,15 +1,9 @@
 import b2luigi as luigi
 
+from src import results_subdir
 from src.utils.stages import Stages, get_stage_ordering
 from src.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
-from src.utils.yaml import get_config
 from src.utils.dirs import find_file
-
-
-details = get_config("details")
-
-results_subdir = f"{details['Name']}/{details['Version']}"
-
 
 class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
     """

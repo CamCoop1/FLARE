@@ -1,0 +1,30 @@
+# #################################################################### #
+#                                                                      #
+#   This yaml file is where you can add a 2-stage MC production        #
+#   procedure. Given the analyst has configured their workflow         #
+#   as per the README. The workflow will then find the correct         #
+#   type (e.g whizard) and use the correct CLI arguments in            #
+#   the correct order etc.                                             #
+#                                                                      #
+#   For the sake of uniqueness, the use of brackets here is intended.  #
+#   The < and > brackets indicate a name that can be whatever the      #
+#   analyst wished. The ( ) brackets indicate an output name that      #
+#   b2luigi will handle in the workflow.                               #
+#                                                                      #
+#   When adding new 2-stage workflows keep this in mind                #
+#                                                                      #
+# #################################################################### #
+
+whizard : 
+  stage1 : 
+    cmd : whizard
+    args : 
+      - <data_type>.sin
+    output_file: proc.stdhep
+  stage2:
+    cmd : DelphesSTDHEP_EDM4HEP
+    args: 
+      - card_<type>.tcl
+      - edm4hep_<type>.tcl
+      - (output).root
+      - proc.stdhep
