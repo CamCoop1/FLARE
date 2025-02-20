@@ -19,12 +19,12 @@ whizard :
   stage1 : 
     cmd : whizard
     args : 
-      - <data_type>.sin
+      - <>.sin
     output_file: proc.stdhep
   stage2:
     cmd : DelphesSTDHEP_EDM4HEP
     args: 
-      - card_<type>.tcl
-      - edm4hep_<type>.tcl
-      - (output).root
+      - card_<>.tcl
+      - edm4hep_<>.tcl
+      - ().root
       - proc.stdhep
