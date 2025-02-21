@@ -9,8 +9,13 @@ class BracketMappings:
     input = "--"
     datatype_parameter = "++"
     free_name = '<>'
+
+    def __iter__(self):
+        for name, value in self.__class__.__dict__.items():
+            if not name.startswith("__"):  # Ignore special/magic attributes
+                yield name, value
     
-   
+
 def determine_bracket_mapping(arg):
     for name, value in BracketMappings.__dict__.items():
         try:
@@ -30,13 +35,18 @@ def _strip(arg, mapping: BracketMappings):
     return arg.replace(mapping[0], "").replace(mapping[1], "")
 
 
-def check_if_path_matches_mapping(arg, path, mapping : BracketMappings):
+def check_if_path_matches_mapping(arg : str, path : str | Path, mapping : str) -> bool:
+    """ 
+    This function returns true if an argument matches a path
+    
+    Returns False when there is an argument that does not have a matching path
+    """
     args = _strip(arg, mapping).split("_")
     return all([(arg in str(path)) for arg in args])
 
 def get_suffix_from_arg(arg):
     return str(Path(arg).suffix)
-        
+
 
 @lru_cache
 def get_mc_production_types():

@@ -17,6 +17,11 @@
 #      <> - free space that the analyst can use to detail a file       #
 #      -- - The input from a previous stage                            #
 #      ++ - The datatype parameter given in the details.yaml           #
+#                                                                      #
+#   What this is allowing us to do is create a totally generic         #
+#   workflow that can handle any combination of generators so long     #
+#   as it can fit this template                                        #
+#                                                                      #
 # #################################################################### #
 
 whizard : 
