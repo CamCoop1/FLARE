@@ -22,14 +22,14 @@ class OutputMixin:
     @property
     def log_dir(self):
         if self.results_subdir is not None:
-            return find_file("log", self.results_subdir, self.__class__.__name__)
-        return find_file("log", self.__class__.__name__)
+            return find_file("analysis", "log", self.results_subdir, self.__class__.__name__)
+        return find_file("analysis", "log", self.__class__.__name__)
 
     @property
     def result_dir(self):
         if self.results_subdir is not None:
-            return find_file("data", self.results_subdir, self.__class__.__name__)
-        return find_file("data", self.__class__.__name__)
+            return find_file("analysis", "data", self.results_subdir, self.__class__.__name__)
+        return find_file("analysis", "data", self.__class__.__name__)
 
 
 class TemplateMethodMixin:

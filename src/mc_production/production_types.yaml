@@ -19,7 +19,7 @@ whizard :
   stage1 : 
     cmd : whizard
     args : 
-      - <>.sin
+      - ++.sin
     output_file: proc.stdhep
   stage2:
     cmd : DelphesSTDHEP_EDM4HEP
@@ -27,4 +27,5 @@ whizard :
       - card_<>.tcl
       - edm4hep_<>.tcl
       - ().root
-      - proc.stdhep
+      - --.stdhep
+    output_file : ++.root

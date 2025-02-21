@@ -1,9 +1,10 @@
 import b2luigi as luigi
 
-from src import results_subdir
+from src import results_subdir, details
 from src.utils.stages import Stages, get_stage_ordering
 from src.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
 from src.utils.dirs import find_file
+
 
 class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
     """
@@ -12,18 +13,6 @@ class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.stage1
     results_subdir = results_subdir
-
-    def requires(self):
-        """
-        This requires function needs to be dynamic such that if the user has not
-        defined the optional mcproduction steering script, the `AnalysisStage1` task will
-        properly set the b2luigi workflow to not add `MCProduction` to the workflow
-        """
-        if Stages.mcproduction in get_stage_ordering():
-            return MCProduction()
-        # If MC Production isn't required then we must return an empty list to tell
-        # b2luigi that there are no required tasks.
-        return []
 
 
 class AnalysisStage2(OutputMixin, FCCAnalysisRunnerBaseClass):
