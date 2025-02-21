@@ -13,6 +13,10 @@
 #                                                                      #
 #   When adding new 2-stage workflows keep this in mind                #
 #                                                                      #
+#      () - Output files that b2luigi will generate and handle         #
+#      <> - free space that the analyst can use to detail a file       #
+#      -- - The input from a previous stage                            #
+#      ++ - The datatype parameter given in the details.yaml           #
 # #################################################################### #
 
 whizard : 
