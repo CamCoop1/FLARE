@@ -5,6 +5,31 @@ from pathlib import Path
 from src.utils.yaml import get_config
 
 class BracketMappings:
+    """ 
+    This class is a way to centralise the bracket mappings used inside production_types.yaml. 
+    
+    The idea being that if in the future the brackets change OR new ones are added then this central
+    class is where the change is made and everything else will continue. 
+    
+    Bracket Mapping Types
+    ----------------------
+    `output` = () 
+        Denotes an output file 
+    `input` = --
+        Denotes an input file from a previous stage in the MC production workflow
+    `datatype_parameter` = ++
+        Inside the MCProductionBaseClass there exits the datatype parameter. If a given 
+        arg requires this specific datatype parameter in its name then it is parsed and added
+        during runtime 
+    `free_name` = <>
+        Denotes where the analyst can take liberties with their naming convention
+        
+    Methods
+    ---------
+    `determine_bracket_mapping`: 
+        This method takes an argument from the production_types.yaml and checks if there is
+        an associated mapping inside this class
+    """
     output = '()'
     input = "--"
     datatype_parameter = "++"
@@ -15,16 +40,16 @@ class BracketMappings:
             if not name.startswith("__"):  # Ignore special/magic attributes
                 yield name, value
     
-
-def determine_bracket_mapping(arg):
-    for name, value in BracketMappings.__dict__.items():
-        try:
-            if "__" not in name and value in arg:  # Ignore special attributes
-                return value
-        except TypeError:               
-            raise AttributeError(
-                f'No mapping exists that matches this argument {arg}'
-            )
+    @classmethod
+    def determine_bracket_mapping(cls,arg:str):
+        for name, value in cls.items():
+            try:
+                if "__" not in name and value in arg:  # Ignore special attributes
+                    return value
+            except TypeError:               
+                raise AttributeError(
+                    f'No mapping exists that matches this argument {arg}'
+                )
 
 
 def _strip(arg, mapping: BracketMappings):
@@ -37,19 +62,23 @@ def _strip(arg, mapping: BracketMappings):
 
 def check_if_path_matches_mapping(arg : str, path : str | Path, mapping : str) -> bool:
     """ 
-    This function returns true if an argument matches a path
+    This function returns True if an argument matches a path
     
     Returns False when there is an argument that does not have a matching path
     """
     args = _strip(arg, mapping).split("_")
     return all([(arg in str(path)) for arg in args])
 
-def get_suffix_from_arg(arg):
+def get_suffix_from_arg(arg) -> str:
     return str(Path(arg).suffix)
 
 
 @lru_cache
 def get_mc_production_types():
+    """ 
+    This function creates and returns an Enum of all the production types inside 
+    the src/mc_production/production_types.yaml
+    """
     return Enum(
         'ProductionTypes',
          get_config('production_types', dir='src/mc_production')
