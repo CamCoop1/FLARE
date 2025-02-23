@@ -1,6 +1,6 @@
 # #################################################################### #
 #                                                                      #
-#   This yaml file is where you can add a 2-stage MC production        #
+#   This yaml file is where you can add a N-stage MC production        #
 #   procedure. Given the analyst has configured their workflow         #
 #   as per the README. The workflow will then find the correct         #
 #   type (e.g whizard) and use the correct CLI arguments in            #
