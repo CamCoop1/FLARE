@@ -3,6 +3,7 @@ import b2luigi as luigi
 import logging
 
 from pathlib import Path 
+import shutil 
 
 from src import results_subdir 
 from src.utils.tasks import OutputMixin
@@ -57,6 +58,12 @@ class MCProductionBaseTask(luigi.Task):
             return f"{self.datatype}{suffix}"
         return self._unparsed_output_file_name
     
+    def copy_input_file_to_output_dir(self, path):
+        source  = Path(path)
+        self.tmp_output_parent_dir.mkdir(parents=True, exist_ok=True)
+        destination = self.tmp_output_parent_dir / source.name
+        shutil.copy(source, destination)
+    
         
     def collect_cmd_inputs(self) -> list:
         """ 
@@ -78,9 +85,11 @@ class MCProductionBaseTask(luigi.Task):
                 case BracketMappings.datatype_parameter:                    
                     parsed_arg = arg.replace(BracketMappings.datatype_parameter, self.datatype)
                     file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(parsed_arg, f,BracketMappings.datatype_parameter)][0]
+                    self.copy_input_file_to_output_dir(file_path)
                     cmd_inputs.append(file_path)
                 case BracketMappings.free_name:
                     file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(arg, f, BracketMappings.free_name)][0]
+                    self.copy_input_file_to_output_dir(file_path)
                     cmd_inputs.append(file_path)
                 case _:
                     raise FileNotFoundError(
