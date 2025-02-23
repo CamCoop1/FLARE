@@ -119,7 +119,6 @@ class MCProductionStage1(OutputMixin, MCProductionBaseTask):
     stage = 'stage1'
     
     
-@luigi.requires(MCProductionStage1)
 class MCProductionStage2(OutputMixin, MCProductionBaseTask):
     """ 
     This will serve as the second stage of the workflow 
