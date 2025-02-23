@@ -70,17 +70,15 @@ class MCProductionBaseTask(luigi.Task):
         
         for arg in self.stage_dict['args']:
             match determine_bracket_mapping(arg):
-                case BracketMappings.output:    
-                    
-                    output_path = self.tmp_output_parent_dir / self.output_file_name
-                    
+                case BracketMappings.output:                        
+                    output_path = self.tmp_output_parent_dir / self.output_file_name                    
                     cmd_inputs.append(str(output_path))
                 case BracketMappings.input:
                     cmd_inputs.append(self.input_file_path)
                 case BracketMappings.datatype_parameter:                    
                     parsed_arg = arg.replace(BracketMappings.datatype_parameter, self.datatype)
-                    file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(arg, f,BracketMappings.datatype_parameter)][0]
-                    cmd_inputs.append(parsed_arg)
+                    file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(parsed_arg, f,BracketMappings.datatype_parameter)][0]
+                    cmd_inputs.append(file_path)
                 case BracketMappings.free_name:
                     file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(arg, f, BracketMappings.free_name)][0]
                     cmd_inputs.append(file_path)
