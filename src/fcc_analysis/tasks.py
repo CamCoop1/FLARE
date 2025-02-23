@@ -3,7 +3,9 @@ import b2luigi as luigi
 from src import results_subdir, details
 from src.utils.stages import Stages, get_stage_ordering
 from src.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
+from src.mc_production.tasks import MCProductionWrapper
 from src.utils.dirs import find_file
+
 
 
 class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
@@ -13,6 +15,13 @@ class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.stage1
     results_subdir = results_subdir
+    
+    def requires(self):
+        if find_file('analysis', 'mc_production', 'details.yaml').exists():
+            print('Runner MC prod')
+            yield MCProductionWrapper()
+        else:
+            return []
 
 
 class AnalysisStage2(OutputMixin, FCCAnalysisRunnerBaseClass):
@@ -34,7 +43,7 @@ class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.final
     results_subdir = results_subdir
-    cmd = ["fccanalysis", "final"]
+    fcc_cmd = ["fccanalysis", "final"]
 
     def requires(self):
         """
@@ -55,7 +64,7 @@ class AnalysisPlot(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.plot
     results_subdir = results_subdir
-    cmd = ["fccanalysis", "plots"]
+    fcc_cmd = ["fccanalysis", "plots"]
 
     def requires(self):
         """
