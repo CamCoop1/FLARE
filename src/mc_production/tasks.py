@@ -19,17 +19,17 @@ from src.utils.dirs import find_file
 
 logger = logging.getLogger("luigi-interface")
 
-class MCProductionBaseTask(luigi.Task):
+class MCProductionBaseTask(luigi.DispatchableTask):
     """ 
     This will serve as the first stage of the MC production workflow
     
     """
-    _type = luigi.EnumParameter(enum=get_mc_production_types())
+    prodtype = luigi.EnumParameter(enum=get_mc_production_types())
     datatype = luigi.Parameter()
     stage : str
     results_subdir : str
-    
     batch_system = 'local'
+
     
     @property
     def input_file_path(self):
@@ -41,10 +41,10 @@ class MCProductionBaseTask(luigi.Task):
     
     @property 
     def stage_dict(self):
-        return self._type.value[self.stage]
+        return self.prodtype.value[self.stage]
     
     @property
-    def cmd_prefix(self):
+    def prod_cmd_prefix(self):
         return self.stage_dict['cmd']
     
     @property 
@@ -71,7 +71,7 @@ class MCProductionBaseTask(luigi.Task):
         list of inputs for the given MC production type
         
         """
-        logger.info(f'Gathering cmd arguments for {self.cmd_prefix} tool')
+        logger.info(f'Gathering cmd arguments for {self.prod_cmd_prefix} tool')
         cmd_inputs = []
         file_paths = [f for f in find_file('analysis', 'mc_production').glob("*")]
         
@@ -95,13 +95,15 @@ class MCProductionBaseTask(luigi.Task):
                     raise FileNotFoundError(
                         "There is no file in analysis/mc_production that"
                         f" matches {arg}. Please ensure all files are present for your"
-                        f" chosen MC production workflow {self._type.name}"
+                        f" chosen MC production workflow {self.prodtype.name}"
                     )                                                
         return cmd_inputs
     
-    
-    def run(self):
-        cmd = " ".join([self.cmd_prefix] + self.collect_cmd_inputs())
+
+    def process(self):
+        """ 
+        """
+        cmd = " ".join([self.prod_cmd_prefix] + self.collect_cmd_inputs())
         
         
         self.tmp_output_parent_dir.mkdir(parents=True, exist_ok=True)
@@ -111,8 +113,10 @@ class MCProductionBaseTask(luigi.Task):
         subprocess.check_call(cmd, cwd=self.tmp_output_parent_dir, shell=True)
 
         target = self.tmp_output_parent_dir.with_suffix("")
-        self.tmp_output_parent_dir.rename(target)
         
+        logging.info(f"Moving {self.tmp_output_parent_dir} -> {target}")
+        shutil.copytree(self.tmp_output_parent_dir, target, dirs_exist_ok=True)
+        shutil.rmtree(self.tmp_output_parent_dir)
         
         
     def output(self):
@@ -127,7 +131,8 @@ class MCProductionStage1(OutputMixin, MCProductionBaseTask):
     results_subdir = results_subdir
     stage = 'stage1'
     
-    
+
+@luigi.requires(MCProductionStage1)
 class MCProductionStage2(OutputMixin, MCProductionBaseTask):
     """ 
     This will serve as the second stage of the workflow 
@@ -135,14 +140,11 @@ class MCProductionStage2(OutputMixin, MCProductionBaseTask):
     results_subdir = results_subdir
     stage = 'stage2'
     
-    def requires(self):
-        yield MCProductionStage1(
-            _type = self._type,
-            datatype=self.datatype
-        )
+    # def requires(self):
+    #     yield self.clone(MCProductionStage1)
     
 if __name__ == "__main__":
     luigi.process(MCProductionStage2(
-        _type=get_mc_production_types()['whizard'],
+        prodtype=get_mc_production_types()['whizard'],
         datatype = 'wzp6_ee_mumuH_Hbb_ecm240',        
     ))
