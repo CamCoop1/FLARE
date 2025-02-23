@@ -34,24 +34,17 @@ class BracketMappings:
     input = "--"
     datatype_parameter = "++"
     free_name = '<>'
-
-    def __iter__(self):
-        for name, value in self.__class__.__dict__.items():
-            if not name.startswith("__"):  # Ignore special/magic attributes
-                yield name, value
     
-    @classmethod
-    def determine_bracket_mapping(cls,arg:str):
-        for name, value in cls.items():
+    @staticmethod
+    def determine_bracket_mapping(arg) -> str | None:
+        for name, value in BracketMappings.__dict__.items():
             try:
                 if "__" not in name and value in arg:  # Ignore special attributes
                     return value
             except TypeError:               
-                raise AttributeError(
-                    f'No mapping exists that matches this argument {arg}'
-                )
-
-
+                continue             
+        return None
+    
 def _strip(arg, mapping: BracketMappings):
     """ 
     This method does nothing more than strip the free name 

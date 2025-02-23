@@ -13,6 +13,7 @@ from src.mc_production.production_types import (
     check_if_path_matches_mapping
 )
 from src.utils.dirs import find_file
+from src.utils.yaml import get_config
 
 
 logger = logging.getLogger("luigi-interface")
@@ -187,8 +188,38 @@ class MCProductionStage2(OutputMixin, MCProductionBaseTask):
     stage = 'stage2'
     
     
-if __name__ == "__main__":
-    luigi.process(MCProductionStage2(
-        prodtype=get_mc_production_types()['whizard'],
-        datatype = 'wzp6_ee_mumuH_Hbb_ecm240',        
-    ))
+class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
+    
+    results_subdir = results_subdir
+    
+    @property
+    def mc_production_output_path(self):
+        return Path(next(iter(self.get_all_output_file_names()))).parent
+    
+    @property
+    def input_paths(self):
+        return [f[0] for f in  self.get_input_file_names().values()]
+    
+    @luigi.on_temporary_files    
+    def process(self):        
+        
+        for input_file in self.input_paths:
+            source = Path(input_file)
+            target = self.get_output_file_name(source.name)            
+            shutil.copy2(source, target)
+            
+        
+    def output(self):
+        for input_file in self.input_paths:
+            path = Path(input_file)
+            yield self.add_to_output(path.name)     
+    
+    def requires(self):
+        config = get_config('details.yaml', 'analysis/mc_production')
+        for datatype in config['datatype']:
+            yield  MCProductionStage2(
+                prodtype=get_mc_production_types()[config['prodtype']],
+                datatype = datatype
+            )   
+
+
