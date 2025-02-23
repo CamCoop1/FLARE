@@ -193,10 +193,6 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     results_subdir = results_subdir
     
     @property
-    def mc_production_output_path(self):
-        return Path(next(iter(self.get_all_output_file_names()))).parent
-    
-    @property
     def input_paths(self):
         return [f[0] for f in  self.get_input_file_names().values()]
     
