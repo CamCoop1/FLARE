@@ -3,6 +3,7 @@ import subprocess
 import logging
 import b2luigi as luigi
 from pathlib import Path 
+from functools import lru_cache
 
 from src import results_subdir 
 from src.utils.tasks import OutputMixin
@@ -15,8 +16,40 @@ from src.mc_production.production_types import (
 from src.utils.dirs import find_file
 from src.utils.yaml import get_config
 
-
+prod_config = get_config('details.yaml', 'analysis/mc_production')
 logger = logging.getLogger("luigi-interface")
+
+@lru_cache
+def _create_mc_stage_classes() -> dict:
+    """Dynamically create and register MC production task classes.
+    
+    Returns a dict of tasks 
+    """
+    prodtype = prod_config['prodtype']
+    
+    stages = get_config('production_types.yaml', 'src/mc_production')[prodtype]
+
+    tasks = {}
+    for stage in stages:
+        class_name = f"MCProduction{stage}"  # e.g., "MCProductionStage1"
+        
+        # Define the class dynamically
+        new_class = type(
+            class_name,  # Class name
+            (OutputMixin,MCProductionBaseTask,),  # Inherit from MCProductionBaseTask
+            {"stage": stage,
+             "results_subdir" : results_subdir
+             }  # Class attributes
+        )
+        globals()[class_name] = new_class
+        tasks.update({stage : new_class})
+        logging.debug(f"Created and registered: {class_name}")
+
+    return tasks
+
+def get_last_stage_task():
+    return next(reversed(_create_mc_stage_classes().values()))
+
 
 class MCProductionBaseTask(luigi.DispatchableTask):
     """ 
@@ -165,27 +198,18 @@ class MCProductionBaseTask(luigi.DispatchableTask):
         # Delete output dir 
         shutil.rmtree(self.tmp_output_parent_dir)
         
+    def requires(self):
+        if '1' in self.stage:
+            return []
+        required_stage = f'stage{int(self.stage[-1])-1}'
         
+        yield self.clone(_create_mc_stage_classes()[required_stage])
+    
+        
+    
+    
     def output(self):
         yield self.add_to_output(self.output_file_name)
-    
-
-
-class MCProductionStage1(OutputMixin, MCProductionBaseTask):
-    """ 
-    This class serves as the first stage of the MC production workflow
-    """
-    results_subdir = results_subdir
-    stage = 'stage1'
-    
-
-@luigi.requires(MCProductionStage1)
-class MCProductionStage2(OutputMixin, MCProductionBaseTask):
-    """ 
-    This will serve as the second stage of the MC production workflow 
-    """
-    results_subdir = results_subdir
-    stage = 'stage2'
     
     
 class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
@@ -211,10 +235,9 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             yield self.add_to_output(path.name)     
     
     def requires(self):
-        config = get_config('details.yaml', 'analysis/mc_production')
-        for datatype in config['datatype']:
-            yield  MCProductionStage2(
-                prodtype=get_mc_production_types()[config['prodtype']],
+        for datatype in prod_config['datatype']:
+            yield  get_last_stage_task()(
+                prodtype=get_mc_production_types()[prod_config['prodtype']],
                 datatype = datatype
             )   
 
