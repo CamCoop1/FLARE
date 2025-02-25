@@ -41,7 +41,7 @@ def _create_mc_stage_classes() -> dict:
              "results_subdir" : results_subdir
              }  # Class attributes
         )
-        globals()[class_name] = new_class
+        
         tasks.update({stage : new_class})
         logging.debug(f"Created and registered: {class_name}")
 
