@@ -1,5 +1,3 @@
-import shutil
-
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -38,7 +36,17 @@ class BracketMappings:
     free_name = '<>'
     
     @staticmethod
-    def determine_bracket_mapping(arg) -> str | None:
+    def determine_bracket_mapping(arg:str) -> str | None:
+        """ 
+        Given a arg (type string) this method will check all attributes of the class
+        in an attempt to match the arg with one of the attributes. 
+        
+        Returns:
+            value : str
+                The matched string
+            None: 
+                if no attribute is matched
+        """
         for name, value in BracketMappings.__dict__.items():
             try:
                 if "__" not in name and value in arg:  # Ignore special attributes
@@ -65,6 +73,9 @@ def check_if_path_matches_mapping(arg : str, path : str | Path, mapping : str) -
     return all([(arg in str(path)) for arg in args])
 
 def get_suffix_from_arg(arg) -> str:
+    """ 
+    For a given arg, get the suffix
+    """
     return str(Path(arg).suffix)
 
 
@@ -77,18 +88,4 @@ def get_mc_production_types():
     return Enum(
         'ProductionTypes',
          get_config('production_types', dir='src/mc_production')
-        )
-
-         
-    
-def move_madgraph_contents_to_output(cwd : Path, output_dir_path: Path):
-    
-    cwd_dirs = cwd.glob("*")
-    
-    not_output_dirs = [f for f in cwd_dirs if f.name != output_dir_path.name]
-    
-    assert len(not_output_dirs)==1, 'More than one output directory was made in madgraph running'
-    
-    madgraph_dir = not_output_dirs[0]
-    
-    madgraph_dir.rename(output_dir_path)
+    )

@@ -5,8 +5,6 @@ import b2luigi as luigi
 from pathlib import Path 
 from functools import lru_cache
 
-import src.mc_production.production_types as production_types
-
 from src import results_subdir 
 from src.utils.tasks import OutputMixin
 from src.mc_production.generator_specific_methods import MadgraphMethods
@@ -200,11 +198,14 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
         
         logger.info(f"Command to be ran \n\n {self.prod_cmd} \n\n")
         
+        # Run any required pre_run methods for this specific stage for this specific prodtype
         self.pre_run()
         # Run the cmd in the tmp directory
         subprocess.check_call(self.prod_cmd, cwd=self.tmp_output_parent_dir, shell=True)
-
+        # Run any required on_completion methods for this specific stage for this specific prodtype
         self.on_completion()    
+        
+        # Get final output dir
         target = self.tmp_output_parent_dir.with_suffix("")
         
         logging.info(f"Moving {self.tmp_output_parent_dir} -> {target}")
@@ -216,6 +217,13 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
         shutil.rmtree(self.tmp_output_parent_dir)
         
     def requires(self):
+        """ 
+        This function dynamically assigns any required functions per the stage heirachy 
+        
+        stage1 -> stage2 -> stage3
+        
+        i.e stage3 requires stage2, stage2 requires stage1        
+        """
         if '1' in self.stage:
             return []
         required_stage = f'stage{int(self.stage[-1])-1}'
@@ -258,7 +266,12 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
     
     
 class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
+    """ 
+    This task simply compiles the outputs from the required tasks into a single folder.
     
+    This is necessary because the FCC analysis tools works by passing the folder and looking for the expected 
+    input parameters to the workflow.    
+    """
     results_subdir = results_subdir
     
     @property
@@ -267,7 +280,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     
     @luigi.on_temporary_files    
     def process(self):        
-        
+        # Copy the file and its metadata (hence copy2) to the output directory
         for input_file in self.input_paths:
             source = Path(input_file)
             target = self.get_output_file_name(source.name)            
