@@ -79,7 +79,7 @@ If you require whizard for you MC production, you will require the following:
 
 ### details.yaml
 
-To select the whizard+, we must set the `prodtype = whizard`. Under `datatype` you must list all the datatypes you will be generating.
+To select the whizard, we must set the `prodtype = whizard`. Under `datatype` you must list all the datatypes you will be generating.
 The exact names are of your own choosing and can be as detailed or simple as you like. An example `details.yaml` can be seen below
 
 ``` yaml
@@ -111,7 +111,7 @@ Where <> indicates areas where you can input your own naming conventions. The so
 
 ### details.yaml
 
-To select the whizard+, we must set the `prodtype = madgraph`. Under `datatype` you must list all the datatypes you will be generating.
+To select the madgraph, we must set the `prodtype = madgraph`. Under `datatype` you must list all the datatypes you will be generating.
 The exact names are of your own choosing and can be as detailed or simple as you like. An example `details.yaml` can be seen below
 
 ``` yaml
@@ -134,8 +134,8 @@ To run the madgraph + DelphesPythia8 workflow the following files must be locate
 
 Where <> indicates areas where you can input your own naming conventions. The software checks for the key words and suffixes. There must be a `.dat` file for each datatype. Using our example `details.yaml` from above, we would need two `.dat` files:
 
-- wzp6_ee_mumuH_Hbb_ecm240_runcard.dat
-- wzp6_ee_mumuH_HWW_ecm240_runcard.dat
+- p8_ee_mumuH_Hbb_ecm240_runcard.dat
+- p8_ee_mumuH_HWW_ecm240_runcard.dat
 
 
 **IMPORTANT:** The `pythia_card_<>.cmd` file must have the variable `Beams:LHEF = signal.lhe`. If this is
