@@ -26,15 +26,34 @@
 
 whizard : 
   stage1 : 
-    cmd : whizard
+    cmd : whizard {0}
     args : 
       - ++.sin
     output_file: proc.stdhep
   stage2:
-    cmd : DelphesSTDHEP_EDM4HEP
+    cmd : DelphesSTDHEP_EDM4HEP {0} {1} {2} {3}
     args: 
       - card_<>.tcl
       - edm4hep_<>.tcl
       - ().root
       - --.stdhep
     output_file : ++.root
+
+madgraph:
+  stage1 : 
+    cmd : mg5_aMC {0}
+    args : 
+      - ++_runcard.dat
+    on_completion: 
+      - madgraph_move_contents_to_tmp_output
+    output_file: signal.lhe
+  stage2: 
+    cmd : DelphesPythia8_EDM4HEP {0} {1} {2} {3}
+    args:
+      - card_<>.tcl
+      - edm4hep_<>.tcl
+      - pythia_card_<>.cmd
+      - ().root
+    output_file : signal.root
+    pre_run: 
+      - madgraph_copy_lhe_file_to_cwd

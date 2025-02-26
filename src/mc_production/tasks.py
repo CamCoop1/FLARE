@@ -5,8 +5,11 @@ import b2luigi as luigi
 from pathlib import Path 
 from functools import lru_cache
 
+import src.mc_production.production_types as production_types
+
 from src import results_subdir 
 from src.utils.tasks import OutputMixin
+from src.mc_production.generator_specific_methods import MadgraphMethods
 from src.mc_production.production_types import (
     BracketMappings,
     get_mc_production_types,
@@ -51,7 +54,7 @@ def get_last_stage_task():
     return next(reversed(_create_mc_stage_classes().values()))
 
 
-class MCProductionBaseTask(luigi.DispatchableTask):
+class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
     """ 
     This base class is total generalised to be able to run on any N-stage MC production
     workflow.
@@ -86,12 +89,12 @@ class MCProductionBaseTask(luigi.DispatchableTask):
         return self.prodtype.value[self.stage]
     
     @property
-    def prod_cmd_prefix(self):
+    def prod_cmd(self):
         """ 
         The cmd for this stage of the MC production as defined inside 
         the production_types.yaml
         """
-        return self.stage_dict['cmd']
+        return self.stage_dict['cmd'].format(*self.collect_cmd_inputs())
     
     @property 
     def tmp_output_parent_dir(self):
@@ -110,6 +113,7 @@ class MCProductionBaseTask(luigi.DispatchableTask):
             suffix = get_suffix_from_arg(self._unparsed_output_file_name)
             return f"{self.datatype}{suffix}"
         return self._unparsed_output_file_name
+
     
     def copy_input_file_to_output_dir(self, path):
         """ 
@@ -131,7 +135,7 @@ class MCProductionBaseTask(luigi.DispatchableTask):
         along with the helper functions inside production_types.py
         
         """
-        logger.info(f'Gathering cmd arguments for {self.prod_cmd_prefix} tool')
+        logger.info(f'Gathering cmd arguments for cmd')
         cmd_inputs = []
         file_paths = [f for f in find_file('analysis', 'mc_production').glob("*")]
         
@@ -140,7 +144,7 @@ class MCProductionBaseTask(luigi.DispatchableTask):
             match BracketMappings.determine_bracket_mapping(arg):
                 case BracketMappings.output:                     
                     # Create the path to the tmp dir    
-                    output_path = self.tmp_output_parent_dir / self.output_file_name                    
+                    output_path = self.tmp_output_parent_dir / self.output_file_name 
                     cmd_inputs.append(str(output_path))
                     
                 case BracketMappings.input:
@@ -150,14 +154,26 @@ class MCProductionBaseTask(luigi.DispatchableTask):
                     # Must replace the datatype_parameter mapping to the datatype attribute             
                     parsed_arg = arg.replace(BracketMappings.datatype_parameter, self.datatype)
                     # Find the associated file using the check_if_path_matches_mapping function
-                    file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(parsed_arg, f,BracketMappings.datatype_parameter)][0]
+                    try: 
+                        file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(parsed_arg, f,BracketMappings.datatype_parameter)][0]
+                    except FileNotFoundError:
+                        raise FileNotFoundError(
+                            f"There is no file associated with {arg} inside analysis/mc_production."
+                            " The framework will exit, ensure this file is present and try again."
+                        )
                     # We copy this file to the tmp output dir so we have a history of what input files were used
                     self.copy_input_file_to_output_dir(file_path)
                     cmd_inputs.append(file_path)
                     
                 case BracketMappings.free_name:
                     # Find the associated file using the check_if_path_matches_mapping function
-                    file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(arg, f, BracketMappings.free_name)][0]
+                    try: 
+                        file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(arg, f, BracketMappings.free_name)][0]
+                    except FileNotFoundError:
+                        raise FileNotFoundError(
+                            f"There is no file associated with {arg} inside analysis/mc_production."
+                            " The framework will exit, ensure this file is present and try again."
+                        )                    
                     # We copy this file to the tmp output dir so we have a history of what input files were used
                     self.copy_input_file_to_output_dir(file_path)
                     cmd_inputs.append(file_path)
@@ -180,14 +196,15 @@ class MCProductionBaseTask(luigi.DispatchableTask):
         will run the cmd and make sure it completes. Once this is done, the output path is moved from the
         tmp folder to the correct folder at which point b2luigi flags the job as done 
         """
-        # Gather the cmd to be submitted 
-        cmd = " ".join([self.prod_cmd_prefix] + self.collect_cmd_inputs())
+    
         
-        logger.info(f"Command to be ran \n\n {cmd} \n\n")
+        logger.info(f"Command to be ran \n\n {self.prod_cmd} \n\n")
         
+        self.pre_run()
         # Run the cmd in the tmp directory
-        subprocess.check_call(cmd, cwd=self.tmp_output_parent_dir, shell=True)
+        subprocess.check_call(self.prod_cmd, cwd=self.tmp_output_parent_dir, shell=True)
 
+        self.on_completion()    
         target = self.tmp_output_parent_dir.with_suffix("")
         
         logging.info(f"Moving {self.tmp_output_parent_dir} -> {target}")
@@ -205,8 +222,36 @@ class MCProductionBaseTask(luigi.DispatchableTask):
         
         yield self.clone(_create_mc_stage_classes()[required_stage])
     
-        
     
+    def on_completion(self):
+        """ 
+        This function is intended to run the required functions to be ran after the main cmd 
+        for this stage detailed in production_types.yaml
+        """
+        try:
+            func_names = self.stage_dict['on_completion']
+        except KeyError:
+            return 
+        
+        for func_name in func_names:
+            if hasattr(self, func_name):
+                func = getattr(self, func_name)
+                func()
+    
+    def pre_run(self):
+        """ 
+        This function is intended to run the required functions to be ran prior to the main cmd
+        for this stage detailed in production_types.yaml
+        """
+        try:
+            func_names = self.stage_dict['pre_run']
+        except KeyError:
+            return 
+        
+        for func_name in func_names:
+            if hasattr(self, func_name):
+                func = getattr(self, func_name)
+                func()
     
     def output(self):
         yield self.add_to_output(self.output_file_name)
@@ -240,5 +285,6 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
                 prodtype=get_mc_production_types()[prod_config['prodtype']],
                 datatype = datatype
             )   
+
 
 

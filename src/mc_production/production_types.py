@@ -1,3 +1,5 @@
+import shutil
+
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path
@@ -79,3 +81,14 @@ def get_mc_production_types():
 
          
     
+def move_madgraph_contents_to_output(cwd : Path, output_dir_path: Path):
+    
+    cwd_dirs = cwd.glob("*")
+    
+    not_output_dirs = [f for f in cwd_dirs if f.name != output_dir_path.name]
+    
+    assert len(not_output_dirs)==1, 'More than one output directory was made in madgraph running'
+    
+    madgraph_dir = not_output_dirs[0]
+    
+    madgraph_dir.rename(output_dir_path)
