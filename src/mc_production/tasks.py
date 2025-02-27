@@ -272,6 +272,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     This is necessary because the FCC analysis tools works by passing the folder and looking for the expected 
     input parameters to the workflow.    
     """
+    prodtype = luigi.Parameter()
     results_subdir = results_subdir
     
     @property
@@ -295,7 +296,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     def requires(self):
         for datatype in prod_config['datatype']:
             yield  get_last_stage_task()(
-                prodtype=get_mc_production_types()[prod_config['prodtype']],
+                prodtype=get_mc_production_types()[self.prodtype],
                 datatype = datatype
             )   
 

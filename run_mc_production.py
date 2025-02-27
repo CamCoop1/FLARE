@@ -17,4 +17,4 @@ if __name__ == "__main__":
     config = get_config('details.yaml', dir="analysis/mc_production")
     _check_mc_prod_valid(config['prodtype'])
     
-    luigi.process(MCProductionWrapper(), workers=4)
+    luigi.process(MCProductionWrapper(prodtype=config['prodtype']), workers=4)

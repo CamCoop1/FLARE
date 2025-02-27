@@ -20,7 +20,7 @@
 #                                                                      
 #   What this is allowing us to do is create a totally generic         
 #   workflow that can handle any combination of generators so long     
-#   as it can fit this template                                                                                                              #
+#   as it can fit this template                                    
 #
 #   Any given generator must follow this format
 #
@@ -70,6 +70,6 @@ madgraph:
       - edm4hep_<>.tcl
       - pythia_card_<>.cmd
       - ().root
-    output_file : signal.root
+    output_file : ++.root
     pre_run: 
       - madgraph_copy_lhe_file_to_cwd

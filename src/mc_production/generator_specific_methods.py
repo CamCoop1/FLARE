@@ -53,3 +53,5 @@ class MadgraphMethods:
         input_file_name = Path(self.input_file_path).name
         
         shutil.copyfile(self.input_file_path, dst=f'{self.tmp_output_parent_dir}/{input_file_name}')
+        
+    
