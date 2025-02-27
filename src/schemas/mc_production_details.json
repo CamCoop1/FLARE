@@ -3,7 +3,7 @@
   "properties": {
     "prodtype": {
       "type": "string",
-      "enum": ["madgraph"]
+      "enum": ["madgraph", "whizard"]
     },
     "datatype": {
       "type": "array",
