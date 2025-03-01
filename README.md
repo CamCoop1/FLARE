@@ -1,3 +1,5 @@
+![CI](https://github.com/amanmdesai/FCC_Software_Framework/actions/workflows/ci.yaml/badge.svg)
+
 # FCC Software Framework
 
 Framework powered by b2luigi to enable streamlined use of the fccanalysis commandline tool.
