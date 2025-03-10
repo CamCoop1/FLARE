@@ -1,25 +1,11 @@
 import b2luigi as luigi
 
+from src import results_subdir, details
 from src.utils.stages import Stages, get_stage_ordering
 from src.utils.tasks import FCCAnalysisRunnerBaseClass, OutputMixin
-from src.utils.yaml import get_config
+from src.mc_production.tasks import MCProductionWrapper
 from src.utils.dirs import find_file
 
-details = get_config("details")
-
-results_subdir = f"{details['Name']}/{details['Version']}"
-
-
-class MCProduction(OutputMixin, FCCAnalysisRunnerBaseClass):
-    """
-    OPTIONAL This task will handle production of MC for FCC analyses
-    """
-
-    # TODO might have to overload the run_fcc_analysis function specifically for MC production as the cmd is unique
-
-    stage = Stages.mcproduction
-    results_subdir = results_subdir
-    cmd = ["DelphesPythia8_EDM4HEP"]
 
 
 class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
@@ -29,18 +15,13 @@ class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.stage1
     results_subdir = results_subdir
-
+    
     def requires(self):
-        """
-        This requires function needs to be dynamic such that if the user has not
-        defined the optional mcproduction steering script, the `AnalysisStage1` task will
-        properly set the b2luigi workflow to not add `MCProduction` to the workflow
-        """
-        if Stages.mcproduction in get_stage_ordering():
-            return MCProduction()
-        # If MC Production isn't required then we must return an empty list to tell
-        # b2luigi that there are no required tasks.
-        return []
+        if find_file('analysis', 'mc_production', 'details.yaml').exists():
+            print('Runner MC prod')
+            yield MCProductionWrapper()
+        else:
+            return []
 
 
 class AnalysisStage2(OutputMixin, FCCAnalysisRunnerBaseClass):
@@ -62,7 +43,7 @@ class AnalysisFinal(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.final
     results_subdir = results_subdir
-    cmd = ["fccanalysis", "final"]
+    fcc_cmd = ["fccanalysis", "final"]
 
     def requires(self):
         """
@@ -83,7 +64,7 @@ class AnalysisPlot(OutputMixin, FCCAnalysisRunnerBaseClass):
 
     stage = Stages.plot
     results_subdir = results_subdir
-    cmd = ["fccanalysis", "plots"]
+    fcc_cmd = ["fccanalysis", "plots"]
 
     def requires(self):
         """
