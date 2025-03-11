@@ -1,5 +1,12 @@
 import pytest
-import os
+
+
+@pytest.fixture 
+def mc_production_types():
+    return [
+        'whizard',
+        'madgraph'
+    ]
 
 @pytest.fixture
 def get_mapping_arg_pairs():

@@ -16,17 +16,28 @@ def test_check_MadgraphMethods_class_has_correct_methods():
 
 
 def test_BracketMappings_class_for_correct_attributes(get_valid_BracketMappings_mappings):
+    """ 
+    Test that that BracketMappings have the correct attributes 
+    """
     for name, mapping in get_valid_BracketMappings_mappings:
         assert hasattr(pt.BracketMappings, name)
         assert getattr(pt.BracketMappings,name) == mapping
 
   
 def test_BracketMappings_for_valid_mapping(get_mapping_arg_pairs):
+    """ 
+    Test BracketMappings.determine_bracket_mapping function to ensure it correctly
+    identifies the mapping from a given argument
+    """
     for (mapping, arg) in get_mapping_arg_pairs:
         assert pt.BracketMappings.determine_bracket_mapping(arg) == mapping
     
 
 def test_check_if_path_matches_mapping(get_mapping_arg_pairs):
+    """ 
+    Tests the check_if_path_matches_mapping function in which an argument a path and a mapping are
+    provided and it returns true if that mapping is apart of that path
+    """
     for (mapping, arg) in get_mapping_arg_pairs:
         assert pt.check_if_path_matches_mapping(arg, arg, mapping)
     
