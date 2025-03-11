@@ -17,8 +17,12 @@ from src.mc_production.production_types import (
 from src.utils.dirs import find_file
 from src.utils.yaml import get_config
 
-prod_config = get_config('details.yaml', 'analysis/mc_production')
+prod_config_dir = find_file('analysis/mc_production')
+ 
 logger = logging.getLogger("luigi-interface")
+
+def _prod_config():
+    return get_config('details.yaml', prod_config_dir) 
 
 @lru_cache
 def _create_mc_stage_classes() -> dict:
@@ -26,7 +30,7 @@ def _create_mc_stage_classes() -> dict:
     
     Returns a dict of tasks 
     """
-    prodtype = prod_config['prodtype']
+    prodtype = _prod_config()['prodtype']
     
     stages = get_config('production_types.yaml', 'src/mc_production')[prodtype]
 
@@ -294,7 +298,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             yield self.add_to_output(path.name)     
     
     def requires(self):
-        for datatype in prod_config['datatype']:
+        for datatype in _prod_config()['datatype']:
             yield  get_last_stage_task()(
                 prodtype=get_mc_production_types()[self.prodtype],
                 datatype = datatype
