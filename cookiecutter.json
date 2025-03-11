@@ -7,6 +7,7 @@
   "license": "MIT",
   "project_name": "What is your analysis name?",
   "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '_') }}",
+  "mc_production": "Do you require the MC Production workflow (Y or N)?",
   "description" : "Description of your analysis: ",
   "version": "0.1.0"
 }
