@@ -216,11 +216,13 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
         self.remove_symlink_files()
 
     def run(self):
-        # Run templating, checking if the stage is the first in the workflow
-        if self.requires():
+        # Run templating, checking if the stage is the first in the workflow        
+        if [s for s in self.requires()]:
+            logger.debug(f'For {self.stage} we are running the regular templating')
             self.run_templating()
         else:
             # First stage of the workflow
+            logger.debug(f'For {self.stage} we are running the templating without requires')
             self.run_templating_without_requires()
         # Run the fccanalysis command for stage
         logger.info(f"Running anaysis for {self.stage.name}")
