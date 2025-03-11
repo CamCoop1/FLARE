@@ -70,4 +70,8 @@ def test_get_last_stage_task_on_whizard(get_whizard_mc_stage_config):
     last_stage = tasks.get_last_stage_task()
     assert 'stage2' in last_stage.__name__
     
-    
+
+def test_get_mc_production_types():
+    """ 
+    This function tests that the get_mc_production_types firstly finds the pro
+    """

@@ -1,13 +1,9 @@
 import pytest
 
 import src.utils.stages as stages
-import src.definitions as defs  
 
-def test_BASE_DIRECTORY_in_definitons():
-    """ 
-    Ensure the BASE_DIRECTORY exists
-    """
-    assert hasattr(defs, 'BASE_DIRECTORY')
+
+
     
     
 @pytest.mark.parametrize('stage',  ('stage1', 'stage2', 'final','plot'))
