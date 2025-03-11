@@ -2,7 +2,8 @@ from functools import lru_cache
 from pathlib import Path
 
 import yaml as yaml
-
+import json
+import jsonschema
 # import json
 # import jsonschema
 from src.utils.dirs import find_file
@@ -25,17 +26,16 @@ def get_config(config_name, dir="analysis/config"):
     """
 
     YAMLFile = find_file(dir, Path(config_name).with_suffix(".yaml"))
-
     with open(YAMLFile) as f:
         contents = yaml.safe_load(f)
 
     # TODO Bring back the schema check for each yaml file
-    # try:
-    #     schema_path = contents.pop("$schema")
-    #     with open(find_file(schema_path)) as f:
-    #         schema = json.load(f)
-    #     jsonschema.validate(contents, schema)
-    # except KeyError:
-    #     pass
+    try:
+        schema_path = contents.pop("$schema")
+        with open(find_file(schema_path)) as f:
+            schema = json.load(f)
+        jsonschema.validate(contents, schema)
+    except KeyError:
+        pass
 
     return contents

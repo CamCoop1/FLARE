@@ -14,8 +14,6 @@ class Stages(Enum):
     variant of the enum being the first task that needs to run and so forth. The `auto()` method will automatically
     set the corresponding value to reflect this ordering, 0 through to the final variant.
     """
-
-    mcproduction = auto()  # 0
     stage1 = auto()  # 1
     stage2 = auto()  # 2
     final = auto()  # 3
@@ -27,7 +25,7 @@ def _get_steering_script_names():
     Gets the list of steering script names. the idea behind this private function is to ensure that
     whenever one is wanting to get the steering scripts they always use the same `stages_directory`
     """
-    return [x.stem for x in stages_directory.glob("*.py")]
+    return [x.stem for x in stages_directory.glob("*.py") if any([s.name in x.stem for s in Stages])]
 
 
 def _get_active_stages():

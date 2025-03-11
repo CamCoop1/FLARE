@@ -96,4 +96,13 @@ target/
 *.err
 *.log
 
-analysis/*
+# Ignore everything inside the analysis directory
+analysis/**
+
+# But do not ignore the specific file
+!analysis/config/details.yaml
+
+# Ensure the parent directories are not ignored so the file can be tracked
+!analysis/
+!analysis/config/
+
