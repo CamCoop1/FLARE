@@ -2,6 +2,15 @@ import pytest
 import os
 
 @pytest.fixture
+def get_mapping_arg_pairs():
+    return (
+        ['()', '().root'],
+        ['++', '++.py'],
+        ['--', '--.lhe'],
+        ['<>', 'card_<>.sin']
+    )
+
+@pytest.fixture
 def get_valid_BracketMappings_mappings():
     return (
         ['output', '()'], 
@@ -60,3 +69,50 @@ def setup_analysis_files_for_Errors(tmp_path):
 
 
     return analysis_dir
+
+
+@pytest.fixture 
+def get_whizard_mc_stage_config(tmp_path):
+    analysis_dir = tmp_path / "analysis"
+    analysis_dir.mkdir()
+    
+    mc_prod_dir = analysis_dir / 'mc_production'
+    mc_prod_dir.mkdir()
+    
+    details_yaml = mc_prod_dir / 'details.yaml'
+    
+    details_yaml.write_text(
+        """ 
+        prodtype: whizard 
+        
+        datatype: 
+          - wzp6_ee_mumuH_Hbb_ecm320
+          - wzp6_ee_mumuH_Hbb_ecm240
+          - wzp6_ee_mumuH_HWW_ecm365        
+        """
+    )
+    
+    return mc_prod_dir
+
+@pytest.fixture 
+def get_madgraph_mc_stage_config(tmp_path):
+    analysis_dir = tmp_path / "analysis"
+    analysis_dir.mkdir()
+    
+    mc_prod_dir = analysis_dir / 'mc_production'
+    mc_prod_dir.mkdir()
+    
+    details_yaml = mc_prod_dir / 'details.yaml'
+    
+    details_yaml.write_text(
+        """ 
+        prodtype: madgraph 
+        
+        datatype: 
+          - wzp6_ee_mumuH_Hbb_ecm320
+          - wzp6_ee_mumuH_Hbb_ecm240
+          - wzp6_ee_mumuH_HWW_ecm365        
+        """
+    )
+    
+    return mc_prod_dir

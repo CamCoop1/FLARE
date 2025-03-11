@@ -1,7 +1,10 @@
 import pytest 
 
+
 from src.mc_production.generator_specific_methods import MadgraphMethods
 import src.mc_production.production_types as pt
+import src.mc_production.tasks as tasks
+
 
 def test_check_MadgraphMethods_class_has_correct_methods():
     """ 
@@ -18,29 +21,14 @@ def test_BracketMappings_class_for_correct_attributes(get_valid_BracketMappings_
         assert getattr(pt.BracketMappings,name) == mapping
 
   
-@pytest.mark.parametrize(
-    "mapping, arg", 
-    (
-        ['()', '().root'],
-        ['++', '++.py'],
-        ['--', '--.lhe'],
-        ['<>', 'card_<>.sin']
-    )
-)
-def test_BracketMappings_for_valid_mapping(mapping, arg):
-    assert pt.BracketMappings.determine_bracket_mapping(arg) == mapping
+def test_BracketMappings_for_valid_mapping(get_mapping_arg_pairs):
+    for (mapping, arg) in get_mapping_arg_pairs:
+        assert pt.BracketMappings.determine_bracket_mapping(arg) == mapping
     
-@pytest.mark.parametrize(
-    "mapping, arg", 
-    (
-        ['()', '().root'],
-        ['++', '++.py'],
-        ['--', '--.lhe'],
-        ['<>', 'card_<>.sin']
-    )
-)
-def test_check_if_path_matches_mapping(mapping, arg):
-    assert pt.check_if_path_matches_mapping(arg, arg, mapping)
+
+def test_check_if_path_matches_mapping(get_mapping_arg_pairs):
+    for (mapping, arg) in get_mapping_arg_pairs:
+        assert pt.check_if_path_matches_mapping(arg, arg, mapping)
     
 @pytest.mark.parametrize(
     "mapping, arg, path", 
@@ -52,3 +40,23 @@ def test_check_if_path_matches_mapping(mapping, arg):
 )
 def test_check_if_path_matches_mapping(mapping, arg, path):
     assert not pt.check_if_path_matches_mapping(arg, path, mapping)
+    
+def test_create_mc_stage_classes(get_whizard_mc_stage_config):
+    
+    tasks.prod_config_dir = get_whizard_mc_stage_config 
+    output_tasks = tasks._create_mc_stage_classes()
+    assert len(output_tasks) == 2
+    
+def test_create_mc_stage_classes(get_madgraph_mc_stage_config):
+    
+    tasks.prod_config_dir = get_madgraph_mc_stage_config 
+    output_tasks = tasks._create_mc_stage_classes()
+    assert len(output_tasks) == 2
+    
+def test_get_last_stage_task_on_whizard(get_whizard_mc_stage_config):
+    
+    tasks.prod_config_dir = get_whizard_mc_stage_config 
+    last_stage = tasks.get_last_stage_task()
+    assert 'stage2' in last_stage.__name__
+    
+    

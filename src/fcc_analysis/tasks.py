@@ -19,7 +19,7 @@ class AnalysisStage1(OutputMixin, FCCAnalysisRunnerBaseClass):
         mc_prod_yaml = find_file('analysis', 'mc_production', 'details.yaml')
         if mc_prod_yaml.exists():
             from src.mc_production.tasks import MCProductionWrapper
-            prodtype = get_config(mc_prod_yaml)['prodtype']
+            prodtype = get_config(mc_prod_yaml.name, dir=mc_prod_yaml.parent)['prodtype']
             yield MCProductionWrapper(prodtype = prodtype)
         else:
             return []
