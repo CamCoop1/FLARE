@@ -31,7 +31,6 @@ def _create_mc_stage_classes() -> dict:
     Returns a dict of tasks 
     """
     prodtype = _prod_config()['prodtype']
-    
     stages = get_config('production_types.yaml', 'src/mc_production')[prodtype]
 
     tasks = {}
@@ -127,7 +126,9 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
         destination = self.tmp_output_parent_dir / source.name
         shutil.copy(source, destination)
 
-        
+    def get_file_paths(self):
+        return prod_config_dir.glob("*")
+    
     def collect_cmd_inputs(self) -> list:
         """ 
         Here should be the code required to get the ordered 
@@ -139,8 +140,7 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
         """
         logger.info(f'Gathering cmd arguments for cmd')
         cmd_inputs = []
-        file_paths = [f for f in find_file('analysis', 'mc_production').glob("*")]
-        
+        file_paths = [f for f in self.get_file_paths()]
         for arg in self.stage_dict['args']:
             # Match the type of argument 
             match BracketMappings.determine_bracket_mapping(arg):
@@ -158,9 +158,9 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
                     # Find the associated file using the check_if_path_matches_mapping function
                     try: 
                         file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(parsed_arg, f,BracketMappings.datatype_parameter)][0]
-                    except FileNotFoundError:
+                    except IndexError:
                         raise FileNotFoundError(
-                            f"There is no file associated with {arg} inside analysis/mc_production."
+                            f"There is no file associated with {arg} inside {str(prod_config_dir)}."
                             " The framework will exit, ensure this file is present and try again."
                         )
                     # We copy this file to the tmp output dir so we have a history of what input files were used
@@ -171,7 +171,7 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
                     # Find the associated file using the check_if_path_matches_mapping function
                     try: 
                         file_path = [str(f) for f in file_paths if check_if_path_matches_mapping(arg, f, BracketMappings.free_name)][0]
-                    except FileNotFoundError:
+                    except IndexError:
                         raise FileNotFoundError(
                             f"There is no file associated with {arg} inside analysis/mc_production."
                             " The framework will exit, ensure this file is present and try again."
