@@ -1,17 +1,23 @@
 {
   "type": "object",
   "properties": {
-    "prodtype": {
-      "type": "string",
-      "enum": ["madgraph", "whizard"]
-    },
     "datatype": {
       "type": "array",
       "items": {
         "type": "string"
       }
+    },
+    "prodtype": {
+      "type": "string",
+      "enum": [
+        "madgraph",
+        "whizard"
+      ]
     }
   },
-  "required": ["prodtype", "datatype"],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "required": [
+    "prodtype",
+    "datatype"
+  ]
 }

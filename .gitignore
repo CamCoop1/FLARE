@@ -105,4 +105,3 @@ analysis/**
 # Ensure the parent directories are not ignored so the file can be tracked
 !analysis/
 !analysis/config/
-

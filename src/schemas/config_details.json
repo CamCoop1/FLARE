@@ -1,17 +1,20 @@
 {
-    "type": "object",
-    "properties": {
-      "Name": {
-        "type": "string"
-      },
-      "Version": {
-        "type": "string"
-      },
-      "Description": {
-        "type": "string"
-      }
+  "type": "object",
+  "properties": {
+    "Description": {
+      "type": "string"
     },
-    "required": ["Name", "Version", "Description"],
-    "additionalProperties": false
-  }
-  
+    "Name": {
+      "type": "string"
+    },
+    "Version": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "Name",
+    "Version",
+    "Description"
+  ]
+}

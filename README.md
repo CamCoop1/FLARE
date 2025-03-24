@@ -59,7 +59,7 @@ You will notice the data directory structure is based off the information provid
 
 If you are just running a newer version of an analysis, bump the version number. If instead you have created a parallel analysis which you wish to run, change the name in the `details.yaml` to create a seperate branching directory inside the data directory.
 
-# Setting Up MC Production 
+# Setting Up MC Production
 
 If MC production is required then a `analysis/mc_production` directory is required. Inside this directory you will find a `details.yaml` file that has a format something like:
 
@@ -91,9 +91,9 @@ prodtype: whizard
 
 datatype:
     - wzp6_ee_mumuH_Hbb_ecm240
-    - wzp6_ee_mumuH_HWW_ecm240    
-``` 
-## Input Files 
+    - wzp6_ee_mumuH_HWW_ecm240
+```
+## Input Files
 To run the whizard + DelphesPythia6 workflow the following files must be located in the `analysis/mc_production`:
 
 - < datatype >.sin
@@ -123,10 +123,10 @@ prodtype: madgraph
 
 datatype:
     - p8_ee_mumuH_Hbb_ecm240
-    - p8_ee_mumuH_HWW_ecm240    
-``` 
+    - p8_ee_mumuH_HWW_ecm240
+```
 
-## Input Files 
+## Input Files
 To run the madgraph + DelphesPythia8 workflow the following files must be located in the `analysis/mc_production`:
 
 - < datatype >_runcard.dat
@@ -150,12 +150,12 @@ Once you have selected your MC production type and ensured all input files are p
 
 This can be done is one of two ways. If you wish to *just* produce the MC for now run the following command provided you have followed the instructions in [Install](#install)
 
-``` 
+```
 (venv)$ python3 run_mc_production.py
 ```
 
 If you instead wish to run the full workflow, that is from the start of MC production all the way to producing plots using `fcc plots` and provided you have followed the instructions in [Setting Up Your Analysis](#setting-up-your-analysis)
 
-``` 
+```
 (venv)$ python3 run_analysis.py
 ```
