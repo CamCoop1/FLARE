@@ -243,7 +243,7 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
 
     def requires(self):
         """
-        This function dynamically assigns any required functions per the stage heirachy
+        This function dynamically assigns any required functions per the stage hierarchy
 
         stage1 -> stage2 -> stage3
 

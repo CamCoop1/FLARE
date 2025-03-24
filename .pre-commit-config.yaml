@@ -99,6 +99,11 @@ repos:
       - id: isort
         name: Run isort to organise imports in the 'black' format
         args: [--profile, black]
+  # Check spelling
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.4
+    hooks:
+    - id: codespell
 
   # # Hooks to check these hooks
   # - repo: meta

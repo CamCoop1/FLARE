@@ -41,7 +41,7 @@ To begin, you can place all of your analysis scripting and tooling inside the `a
 
 1. Your analysis stage scripts must be prefixed by which stage it is, as per the `Stages` enum in src/utils/stages.py. What this boils down to is your stage 1 analysis script must be named `stage1_{detailed name}.py`, likewise your final stage analysis script must be named `final_{detailed name}.py`. This is necessary as these prefixes are how the framework knows what stages need to be ran for your analysis.
 
-2. You must not define an `inputDir` or `outputDir` variable in your analysis scripts for any stage. These are reserved for b2luigi to determine during runtime. The only exception is the very first stage or your analysis requires an `inputDir` to define where to look for the MC. The framework checks during runtime if you have accidently added one of these variables to your scripts and lets you know what you need to change to fix it. Apart from this, you the analyst can define your analysis scripts are you usually would, including adding additional `includePaths` and so forth.
+2. You must not define an `inputDir` or `outputDir` variable in your analysis scripts for any stage. These are reserved for b2luigi to determine during runtime. The only exception is the very first stage or your analysis requires an `inputDir` to define where to look for the MC. The framework checks during runtime if you have accidentally added one of these variables to your scripts and lets you know what you need to change to fix it. Apart from this, you the analyst can define your analysis scripts are you usually would, including adding additional `includePaths` and so forth.
 
 ## Running Your Analysis
 
@@ -57,7 +57,7 @@ This will begin the b2luigi workflow and all stages of your analysis will run in
 
 You will notice the data directory structure is based off the information provided inside of `analysis/config/details.yaml`. This is helpful as if you make changes to your analysis you can change the `Version` variable inside this yaml file and this will allow b2luigi to run another analysis workflow for you. You will note that once you have ran the workflow once and it was successful you cannot run it again without changing the details in the `details.yaml`.
 
-If you are just running a newer version of an analysis, bump the version number. If instead you have created a parallel analysis which you wish to run, change the name in the `details.yaml` to create a seperate branching directory inside the data directory.
+If you are just running a newer version of an analysis, bump the version number. If instead you have created a parallel analysis which you wish to run, change the name in the `details.yaml` to create a separate branching directory inside the data directory.
 
 # Setting Up MC Production
 
@@ -74,7 +74,7 @@ datatype:
     - datatypes
 ```
 
-The details of this yaml file will be explained shortly. The defintions and layout are exact and will always be checked by a JSON checker. It is important that you follow the template.
+The details of this yaml file will be explained shortly. The definitions and layout are exact and will always be checked by a JSON checker. It is important that you follow the template.
 
 ## Whizard + DelphesPythia6 Production
 If you require whizard for you MC production, you will require the following:
@@ -146,7 +146,7 @@ not present, the software will be unable to run the `DelphesPythia8_EDM4HEP` com
 
 ## Running the MC Production
 
-Once you have selected your MC production type and ensured all input files are present adhearing to naming conventions and required output file names (see **IMPORTANT** notes ) you are ready to run your MC production.
+Once you have selected your MC production type and ensured all input files are present adhering to naming conventions and required output file names (see **IMPORTANT** notes ) you are ready to run your MC production.
 
 This can be done is one of two ways. If you wish to *just* produce the MC for now run the following command provided you have followed the instructions in [Install](#install)
 

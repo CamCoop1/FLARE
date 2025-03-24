@@ -140,7 +140,7 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
         This attribute allows interface with the `Stages` enum
 
     `cmd` : list
-        This is a list comprising of each section of the bash command that must be submited for a given stage
+        This is a list comprising of each section of the bash command that must be submitted for a given stage
 
     """
 

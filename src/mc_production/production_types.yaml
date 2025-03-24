@@ -34,7 +34,7 @@
 #
 #   Each stage MUST have a cmd, list of args and an outputfile. If required,
 #   you can also define pre_run and on_completion lists that have the name
-#   of a funciton to be run that is a
+#   of a function to be run that is a
 #
 # ####################################################################
 

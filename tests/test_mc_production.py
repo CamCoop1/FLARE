@@ -98,7 +98,7 @@ def test_collect_cmd_inputs_for_magraph(get_full_madgraph_setup):
     mc_prod_dir, datatype, stage1_prod_cmd, stage2_prod_cmd = get_full_madgraph_setup
     # must reload the tasks module as to have a clean slate
     importlib.reload(tasks)
-    # Set the mc_prod_dir inside the taks module
+    # Set the mc_prod_dir inside the tasks module
     tasks.prod_config_dir = mc_prod_dir
     # Get the stage tasks for madgraph production
     run_tasks = tasks._create_mc_stage_classes()
@@ -125,7 +125,7 @@ def test_collect_cmd_inputs_for_whizard(get_full_whizard_setup):
     mc_prod_dir, datatype, stage1_prod_cmd, stage2_prod_cmd = get_full_whizard_setup
     # must reload the tasks module as to have a clean slate
     importlib.reload(tasks)
-    # Set the mc_prod_dir inside the taks module
+    # Set the mc_prod_dir inside the tasks module
     tasks.prod_config_dir = mc_prod_dir
     # Get the stage tasks for madgraph production
     run_tasks = tasks._create_mc_stage_classes()
@@ -138,7 +138,7 @@ def test_collect_cmd_inputs_for_whizard(get_full_whizard_setup):
             prodtype=get_mc_production_types()["whizard"], datatype=datatype
         )
         if task.stage == "stage2":
-            # if its stage2 we must add the output file to the command as this is done during runtime aswell as the input file
+            # if its stage2 we must add the output file to the command as this is done during runtime as well as the input file
             prod_cmd = prod_cmd(
                 str(task.input_file_path),
                 str(task.tmp_output_parent_dir / task.output_file_name),

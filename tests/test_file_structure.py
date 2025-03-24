@@ -4,7 +4,7 @@ from src.utils.yaml import get_config
 
 def test_definitions_file_in_src_directory():
     """
-    Check that the definitons.py module exists in the src directory
+    Check that the definitions.py module exists in the src directory
     """
     path = find_file("src", "definitions.py")
     assert path.exists()
@@ -29,7 +29,7 @@ def test_production_types_yaml_in_mc_production():
 
 def test_production_types_yaml_not_empty(mc_production_types):
     """
-    Test taht the production_types.yaml is not empty
+    Test that the production_types.yaml is not empty
     """
     prod_types_dir = find_file("src", "mc_production")
 

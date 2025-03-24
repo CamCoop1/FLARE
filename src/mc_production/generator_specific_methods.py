@@ -9,7 +9,7 @@ class MadgraphMethods:
 
     These methods match those inside production_types.yaml.
 
-    This class is intended to be inherited by the MCProductionBaseTask. This is to avoid poluting
+    This class is intended to be inherited by the MCProductionBaseTask. This is to avoid polluting
     the base task with too many methods.
 
     """
