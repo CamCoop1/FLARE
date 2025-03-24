@@ -1,8 +1,8 @@
 ![CI](https://github.com/amanmdesai/FCC_Software_Framework/actions/workflows/ci.yaml/badge.svg)
 
-# FCC Software Framework
+# FLARE: FCCee Luigi Automated Reconstruction And Event processing
 
-Framework powered by b2luigi to enable streamlined use of the fccanalysis commandline tool.
+Framework powered by b2luigi to enable streamlined use of MC generators and fccanalysis commandline tool.
 
 # Install
 To install the package, follow the basic install process. It is recommended you use a virtual environment. To begin, setup the fcc software from cvmfs
@@ -26,7 +26,7 @@ $ source .venv/bin/activate
 Lastly, you can install the framework to your virtual environment
 
 ```
-$ cd FCC_Software_Framework && pip3 install -e .
+$ cd FLARE && pip3 install -e .
 ```
 
 Now your virtual environment will be setup like so:
