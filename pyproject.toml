@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "FLARE"
-version = "0.2.0"
+version = "0.3.0"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = [
     { name = "Cameron Harris", email = "cameron.harris@adelaide.edu.au" }
