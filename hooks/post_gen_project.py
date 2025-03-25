@@ -17,7 +17,7 @@ def create_analysis_artifacts():
     
     os.makedirs(analysis_config_dir, exist_ok=True)
     
-    with open(f'{analysis_config_dir}/detail.yaml', 'w') as f:
+    with open(f'{analysis_config_dir}/details.yaml', 'w') as f:
         f.write(
 """"$schema": "src/schemas/config_details.json"
 
