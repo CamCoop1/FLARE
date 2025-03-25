@@ -35,7 +35,7 @@ def create_mc_production_artifacts():
         prod_dir = 'analysis/mc_production'
         os.makedirs(prod_dir, exist_ok=True)
         
-        with open(f'{prod_dir}/detail.yaml', 'w') as f:
+        with open(f'{prod_dir}/details.yaml', 'w') as f:
             f.write(
 """"$schema": "src/schemas/mc_production_details.json"
 
