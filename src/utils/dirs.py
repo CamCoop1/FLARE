@@ -11,7 +11,7 @@ from src.definitions import BASE_DIRECTORY
 
 
 def find_file(*path, string=False):
-    """ 
+    """
     Using the BASE_DIRECTORY, this function will find any file
     inside the framework
     """

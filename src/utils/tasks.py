@@ -2,9 +2,9 @@ import json
 import logging
 import os
 import subprocess
+from pathlib import Path
 
 import b2luigi as luigi
-from pathlib import Path 
 
 from src.utils.dirs import find_file
 from src.utils.jinja2_utils import get_template
@@ -30,7 +30,7 @@ class OutputMixin:
     def result_dir(self):
         if self.results_subdir is not None:
             return find_file("data", self.results_subdir, self.__class__.__name__)
-        return find_file( "data", self.__class__.__name__)
+        return find_file("data", self.__class__.__name__)
 
 
 class TemplateMethodMixin:
@@ -48,13 +48,13 @@ class TemplateMethodMixin:
 
     @property
     def inputDir_path(self):
-        
+
         file_path_list = next(iter(self.get_input_file_names().values()))
         file_path = Path(file_path_list[0])
-        
+
         if file_path.is_file():
             return str(file_path.parent)
-        
+
         return str(file_path)
 
     @property
@@ -140,12 +140,12 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
         This attribute allows interface with the `Stages` enum
 
     `cmd` : list
-        This is a list comprising of each section of the bash command that must be submited for a given stage
+        This is a list comprising of each section of the bash command that must be submitted for a given stage
 
     """
-    
+
     stage: Stages
-    batch_system = 'local'
+    batch_system = "local"
     fcc_cmd = ["fccanalysis", "run"]
 
     def symlink_includePaths_in_python_code(self):
@@ -202,7 +202,9 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
         logger.debug(f"Current working directory {os.getcwd()}")
         # Run the fccanalysis call
         try:
-            subprocess.check_call(" ".join(self.fcc_cmd), cwd=self.outputDir_path_tmp, shell=True)
+            subprocess.check_call(
+                " ".join(self.fcc_cmd), cwd=self.outputDir_path_tmp, shell=True
+            )
         except subprocess.CalledProcessError as e:
             self.remove_symlink_files()
             raise subprocess.CalledProcessError(
@@ -216,13 +218,15 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
         self.remove_symlink_files()
 
     def run(self):
-        # Run templating, checking if the stage is the first in the workflow        
+        # Run templating, checking if the stage is the first in the workflow
         if [s for s in self.requires()]:
-            logger.debug(f'For {self.stage} we are running the regular templating')
+            logger.debug(f"For {self.stage} we are running the regular templating")
             self.run_templating()
         else:
             # First stage of the workflow
-            logger.debug(f'For {self.stage} we are running the templating without requires')
+            logger.debug(
+                f"For {self.stage} we are running the templating without requires"
+            )
             self.run_templating_without_requires()
         # Run the fccanalysis command for stage
         logger.info(f"Running anaysis for {self.stage.name}")
