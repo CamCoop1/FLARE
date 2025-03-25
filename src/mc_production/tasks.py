@@ -70,7 +70,6 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
     datatype = luigi.Parameter()
     stage: str
     results_subdir: str
-    batch_system = "local"
 
     @property
     def input_file_path(self):

@@ -122,13 +122,15 @@ class GenerateAnalysisDescription(OutputMixin, luigi.Task):
         tmp_output_path.rename(output_path)
 
 
-class FCCAnalysisWrapper(luigi.WrapperTask):
+class FCCAnalysisWrapper(OutputMixin, luigi.WrapperTask):
     """
     Wrapper task that allows for multiple tasks to be ran in parallel
 
     Here be begin the FCC analysis workflow along with generating documentation for this sample set
     using the analysis/config/details.yaml
     """
+
+    results_subdir = results_subdir
 
     def requires(self):
         yield AnalysisPlot()

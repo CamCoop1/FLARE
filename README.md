@@ -1,6 +1,6 @@
 ![CI](https://github.com/amanmdesai/FCC_Software_Framework/actions/workflows/ci.yaml/badge.svg)
 
-# FLARE: FCCee Luigi Automated Reconstruction And Event processing
+# FLARE: FCCee b2Luigi Automated Reconstruction and Event processing
 
 Framework powered by b2luigi to enable streamlined use of MC generators and fccanalysis commandline tool.
 
@@ -42,6 +42,17 @@ To begin, you can place all of your analysis scripting and tooling inside the `a
 1. Your analysis stage scripts must be prefixed by which stage it is, as per the `Stages` enum in src/utils/stages.py. What this boils down to is your stage 1 analysis script must be named `stage1_{detailed name}.py`, likewise your final stage analysis script must be named `final_{detailed name}.py`. This is necessary as these prefixes are how the framework knows what stages need to be ran for your analysis.
 
 2. You must not define an `inputDir` or `outputDir` variable in your analysis scripts for any stage. These are reserved for b2luigi to determine during runtime. The only exception is the very first stage or your analysis requires an `inputDir` to define where to look for the MC. The framework checks during runtime if you have accidentally added one of these variables to your scripts and lets you know what you need to change to fix it. Apart from this, you the analyst can define your analysis scripts are you usually would, including adding additional `includePaths` and so forth.
+
+The last thing that requires attention is the `settings.json` located in the root of the FLARE framework. This is where you can globally set any b2luigi settings you require, specifically you must define the batch system you require b2luigi to submit to. You must set the `batch_system` value inside `settings.json` to one of the following, depending on your required batch system:
+
+- lsf
+- htcondor
+- slurm
+- local
+
+Note, if 'local' is set then b2luigi will not submit to the batch system instead just submitting to the head node that you are currently on. This is usually for when your batch system is not available in b2luigi or you wish to do some basic testing.
+
+For more details on the available batch systems see [b2luigi Batch System Specific Settings](https://b2luigi.belle2.org/usage/batch.html?highlight=batch#batch-system-specific-settings). Note some batch systems require/allow for you to pass batch-specific arguments using `settings.json`.
 
 ## Running Your Analysis
 

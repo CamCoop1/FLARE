@@ -145,7 +145,6 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
     """
 
     stage: Stages
-    batch_system = "local"
     fcc_cmd = ["fccanalysis", "run"]
 
     def symlink_includePaths_in_python_code(self):
