@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "FLARE"
+version = "0.2.0"
+description = "Framework for streamlining the FCC framework powered by b2luigi"
+authors = [
+    { name = "Cameron Harris", email = "cameron.harris@adelaide.edu.au" }
+]
+requires-python = ">=3.6"
+dependencies = [
+    "b2luigi>=1.1.1",
+    "jsonschema>=4.17.3",
+    "PyYAML>=6.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/CamCoop1/FLARE.git"
+
+[tool.setuptools]
+packages = ["src", "analysis"]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+max-complexity = 10
+
+[tool.isort]
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+known_first_party = ["util", "exe", "test"]
+known_third_party = ["yaml", "b2luigi"]
+
+[tool.pydocstyle]
+ignore = ["D203", "D212", "D406", "D407", "D408", "D409", "D413"]
