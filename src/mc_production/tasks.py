@@ -51,7 +51,7 @@ def _create_mc_stage_classes() -> dict:
         )
 
         tasks.update({stage: new_class})
-        logging.debug(f"Created and registered: {class_name}")
+        logger.debug(f"Created and registered: {class_name}")
 
     return tasks
 
@@ -232,7 +232,7 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
         # Get final output dir
         target = self.tmp_output_parent_dir.with_suffix("")
 
-        logging.info(f"Moving {self.tmp_output_parent_dir} -> {target}")
+        logger.info(f"Moving {self.tmp_output_parent_dir} -> {target}")
 
         # Move the contents of the tmp dir to the output dir. Not we cannot just move the
         # directory as b2luigi's batch submitter saves the executable_wrapper.sh to the output dir
