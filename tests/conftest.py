@@ -1,3 +1,5 @@
+import os
+import shutil
 from functools import partial
 
 import pytest
@@ -206,3 +208,25 @@ def get_full_whizard_setup(tmp_path):
     )
 
     return mc_prod_dir, datatype, stage1_prod_cmd, stage2_prod_cmd
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """This will run after all tests in the session have completed."""
+
+    # Define the base directory of your framework (adjust if necessary)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    # Define paths for 'data' and 'logs' directories
+    data_dir = os.path.join(base_dir, "data")
+    logs_dir = os.path.join(base_dir, "logs")
+
+    # Remove 'data' folder and its contents if it exists
+    if os.path.exists(data_dir):
+        shutil.rmtree(data_dir)
+
+    # Remove 'logs' folder and its contents if it exists
+    if os.path.exists(logs_dir):
+        print(f"Removing directory: {logs_dir}")
+        shutil.rmtree(logs_dir)
+
+    print("Cleaning up artifacts")
