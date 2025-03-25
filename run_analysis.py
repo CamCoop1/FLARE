@@ -42,4 +42,4 @@ if __name__ == "__main__":
             " and rerun"
         )
 
-    luigi.process(FCCAnalysisWrapper(), workers=4)
+    luigi.process(FCCAnalysisWrapper(), workers=4, batch=True)
