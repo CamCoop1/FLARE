@@ -43,6 +43,17 @@ To begin, you can place all of your analysis scripting and tooling inside the `a
 
 2. You must not define an `inputDir` or `outputDir` variable in your analysis scripts for any stage. These are reserved for b2luigi to determine during runtime. The only exception is the very first stage or your analysis requires an `inputDir` to define where to look for the MC. The framework checks during runtime if you have accidentally added one of these variables to your scripts and lets you know what you need to change to fix it. Apart from this, you the analyst can define your analysis scripts are you usually would, including adding additional `includePaths` and so forth.
 
+The last thing that requires attention is the `settings.json` located in the root of the FLARE framework. This is where you can globally set any b2luigi settings you require, specifically you must define the batch system you require b2luigi to submit to. You must set the `batch_system` value inside `settings.json` to one of the following, depending on your required batch system:
+
+- lsf
+- htcondor
+- slurm
+- local
+
+Note, if 'local' is set then b2luigi will not submit to the batch system instead just submitting to the head node that you are currently on. This is usually for when your batch system is not available in b2luigi or you wish to do some basic testing.
+
+For more details on the available batch systems see [b2luigi Batch System Specific Settings](https://b2luigi.belle2.org/usage/batch.html?highlight=batch#batch-system-specific-settings). Note some batch systems require/allow for you to pass batch-specific arguments using `settings.json`.
+
 ## Running Your Analysis
 
 To run the framework simply go to the command line and run
