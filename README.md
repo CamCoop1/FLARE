@@ -1,6 +1,6 @@
 ![CI](https://github.com/amanmdesai/FCC_Software_Framework/actions/workflows/ci.yaml/badge.svg)
 
-# FLARE: FCCee b2Luigi Automated Reconstruction And Event processing
+# FLARE: FCCee b2Luigi Automated Reconstruction and Event processing
 
 Framework powered by b2luigi to enable streamlined use of MC generators and fccanalysis commandline tool.
 
