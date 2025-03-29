@@ -3,3 +3,4 @@
 Name: default
 Version: v.0.0.1
 Description: 'Basic details.yaml for CI-CL pipeline'
+StudyDir: analysis
