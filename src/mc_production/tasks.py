@@ -6,7 +6,7 @@ from pathlib import Path
 
 import b2luigi as luigi
 
-from src import results_subdir
+from src import dataprod_config, dataprod_dir, results_subdir
 from src.mc_production.generator_specific_methods import MadgraphMethods
 from src.mc_production.production_types import (
     BracketMappings,
@@ -14,17 +14,12 @@ from src.mc_production.production_types import (
     get_mc_production_types,
     get_suffix_from_arg,
 )
-from src.utils.dirs import find_file
 from src.utils.tasks import OutputMixin
 from src.utils.yaml import get_config
 
-prod_config_dir = find_file("analysis/mc_production")
+prod_config_dir = dataprod_dir
 
 logger = logging.getLogger("luigi-interface")
-
-
-def _prod_config():
-    return get_config("details.yaml", prod_config_dir)
 
 
 @lru_cache
@@ -33,7 +28,7 @@ def _create_mc_stage_classes() -> dict:
 
     Returns a dict of tasks
     """
-    prodtype = _prod_config()["prodtype"]
+    prodtype = dataprod_config["prodtype"]
     stages = get_config("production_types.yaml", "src/mc_production")[prodtype]
 
     tasks = {}
@@ -317,7 +312,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             yield self.add_to_output(path.name)
 
     def requires(self):
-        for datatype in _prod_config()["datatype"]:
+        for datatype in dataprod_config["datatype"]:
             yield get_last_stage_task()(
                 prodtype=get_mc_production_types()[self.prodtype], datatype=datatype
             )

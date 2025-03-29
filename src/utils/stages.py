@@ -1,9 +1,9 @@
 from enum import Enum, auto
 from functools import lru_cache
 
-from src.utils.dirs import find_file
+from src import flare_config
 
-stages_directory = find_file("analysis")
+stages_directory = flare_config["StudyDir"]
 
 
 class Stages(Enum):
