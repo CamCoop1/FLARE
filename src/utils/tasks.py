@@ -7,8 +7,8 @@ import b2luigi as luigi
 
 from src import results_subdir
 from src.utils.dirs import find_file
+from src.utils.fcc_stages import Stages
 from src.utils.jinja2_utils import get_template
-from src.utils.stages import Stages, get_stage_script
 
 logger = logging.getLogger("luigi-interface")
 
@@ -73,7 +73,7 @@ class TemplateMethodMixin:
         return find_file(output_dir, f"steering_{self.stage.name}.py")
 
     def run_templating(self):
-        with get_stage_script(self.stage).open("r") as f:
+        with Stages.get_stage_script(self.stage).open("r") as f:
             python_code = f.read()
 
         if self.stage != Stages.plot:
@@ -100,7 +100,7 @@ class TemplateMethodMixin:
             f.write(rendered_tex)
 
     def run_templating_without_requires(self):
-        with get_stage_script(self.stage).open("r") as f:
+        with Stages.get_stage_script(self.stage).open("r") as f:
             python_code = f.read()
 
         assert (

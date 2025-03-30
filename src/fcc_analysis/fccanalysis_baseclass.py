@@ -5,7 +5,7 @@ import subprocess
 
 import b2luigi as luigi
 
-from src.utils.stages import Stages, get_stage_script
+from src.utils.fcc_stages import Stages
 from src.utils.tasks import TemplateMethodMixin
 
 logger = logging.getLogger("luigi-interface")
@@ -48,7 +48,7 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
         """
         # This keeps track of symlinked files and by attaching to the class we can access it later
         self.symlinked_scripts = []
-        with get_stage_script(self.stage).open("r") as f:
+        with Stages.get_stage_script(self.stage).open("r") as f:
             python_code = f.read()
 
         file_destination_base = os.path.dirname(self.outputDir_path_tmp)
@@ -61,7 +61,7 @@ class FCCAnalysisRunnerBaseClass(TemplateMethodMixin, luigi.DispatchableTask):
                 for path in paths_list:
                     file_destination = f"{file_destination_base}/{path}"
                     logger.info(f"Symlinking {path} to {file_destination}")
-                    stages_directory = get_stage_script(self.stage).parent
+                    stages_directory = Stages.get_stage_script(self.stage).parent
                     file_src = f"{stages_directory}/{path}"
                     os.symlink(file_src, file_destination, target_is_directory=False)
                     self.symlinked_scripts.append(file_destination)

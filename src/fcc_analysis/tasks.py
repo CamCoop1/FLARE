@@ -6,7 +6,7 @@ import b2luigi as luigi
 from src import dataprod_config, find_file, flare_config, results_subdir
 from src.fcc_analysis.fccanalysis_baseclass import FCCAnalysisRunnerBaseClass
 from src.mc_production.tasks import MCProductionWrapper
-from src.utils.stages import Stages, get_stage_ordering
+from src.utils.fcc_stages import Stages
 from src.utils.tasks import OutputMixin, _class_generator_closure_function
 
 logger = logging.getLogger("luigi-interface")
@@ -46,7 +46,7 @@ def get_fcc_stages_dict() -> dict:
     ```
     """
     return _class_generator_closure_function(
-        stages=get_stage_ordering(),
+        stages=Stages.get_stage_ordering(),
         class_name="Analysis",
         base_class=FCCAnalysisRunnerBaseClass,
         class_attrs={

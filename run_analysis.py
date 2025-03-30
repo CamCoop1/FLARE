@@ -1,13 +1,13 @@
 import b2luigi as luigi
 
 from src.fcc_analysis.tasks import FCCAnalysisWrapper
+from src.utils.fcc_stages import Stages
 from src.utils.logo import print_b2luigi_logo
-from src.utils.stages import check_for_unregistered_stage_file
 
 if __name__ == "__main__":
     luigi.set_setting("run_mc_prod", False)
     print_b2luigi_logo()
-    if check_for_unregistered_stage_file():
+    if Stages.check_for_unregistered_stage_file():
         raise RuntimeError(
             "There exists unregistered stages in your analysis. Please register them following the README.md"
             " and rerun"
