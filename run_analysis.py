@@ -1,7 +1,7 @@
 import b2luigi as luigi
 
+from src.fcc_analysis.fcc_stages import Stages
 from src.fcc_analysis.tasks import FCCAnalysisWrapper
-from src.utils.fcc_stages import Stages
 from src.utils.logo import print_b2luigi_logo
 
 if __name__ == "__main__":

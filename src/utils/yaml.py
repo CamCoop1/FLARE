@@ -30,7 +30,6 @@ def get_config(config_name, dir="analysis/config"):
     with open(YAMLFile) as f:
         contents = yaml.safe_load(f)
 
-    # TODO Bring back the schema check for each yaml file
     try:
         schema_path = contents.pop("$schema")
         with open(find_file(schema_path)) as f:

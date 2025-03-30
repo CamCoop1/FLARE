@@ -15,7 +15,7 @@ from src.utils.bracket_mappings import (
     check_if_path_matches_mapping,
     get_suffix_from_arg,
 )
-from src.utils.tasks import OutputMixin, _class_generator_closure_function
+from src.utils.tasks import OutputMixin, _linear_task_workflow_generator
 from src.utils.yaml import get_config
 
 prod_config_dir = dataprod_dir
@@ -273,7 +273,7 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None):
     For the MC Production of FLARE, the following configuration is passed to `_class_generator_closure_function`:
 
     ```
-    _class_generator_closure_function(
+    _linear_task_workflow_generator(
         stages=_get_mc_prod_stages(),
         class_name="MCProduction",
         base_class=MCProductionBaseTask,
@@ -281,7 +281,7 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None):
     )
     ```
     """
-    return _class_generator_closure_function(
+    return _linear_task_workflow_generator(
         stages=_get_mc_prod_stages(),
         class_name="MCProduction",
         base_class=MCProductionBaseTask,

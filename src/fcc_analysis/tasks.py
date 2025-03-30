@@ -3,11 +3,11 @@ from functools import lru_cache
 
 import b2luigi as luigi
 
+from FLARE.src.fcc_analysis.fcc_stages import Stages
 from src import dataprod_config, find_file, flare_config, results_subdir
 from src.fcc_analysis.fccanalysis_baseclass import FCCAnalysisRunnerBaseClass
 from src.mc_production.tasks import MCProductionWrapper
-from src.utils.fcc_stages import Stages
-from src.utils.tasks import OutputMixin, _class_generator_closure_function
+from src.utils.tasks import OutputMixin, _linear_task_workflow_generator
 
 logger = logging.getLogger("luigi-interface")
 
@@ -33,7 +33,7 @@ def get_fcc_stages_dict() -> dict:
     For the FCC Analysis in FLARE, the following configuration is passed to `_class_generator_closure_function`:
 
     ```
-    _class_generator_closure_function(
+    _linear_task_workflow_generator(
         stages=get_stage_ordering(),
         class_name="Analysis",
         base_class=FCCAnalysisRunnerBaseClass,
@@ -45,7 +45,7 @@ def get_fcc_stages_dict() -> dict:
     )
     ```
     """
-    return _class_generator_closure_function(
+    return _linear_task_workflow_generator(
         stages=Stages.get_stage_ordering(),
         class_name="Analysis",
         base_class=FCCAnalysisRunnerBaseClass,

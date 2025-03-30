@@ -1,6 +1,6 @@
 import jinja2
 
-from src.utils import find_file
+from src import find_file
 
 
 def get_template(name: str, dir="src/templates"):
