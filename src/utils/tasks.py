@@ -1,6 +1,11 @@
 import logging
+from itertools import pairwise
 from pathlib import Path
+from typing import Any
 
+import b2luigi as luigi
+
+from src import results_subdir
 from src.utils.dirs import find_file
 from src.utils.jinja2_utils import get_template
 from src.utils.stages import Stages, get_stage_script
@@ -116,4 +121,79 @@ class TemplateMethodMixin:
             f.write(rendered_tex)
 
 
-def _class_generator_hyper_function(stages: list[str], class_name: str): ...
+def _class_generator_closure_function(
+    stages: list[str],
+    class_name: str,
+    base_class: luigi.Task,
+    class_attrs: dict[Any, dict[str, Any]] | None = None,
+):
+    """The closure function will take a list of stage strings, a class name and a luigi.Task base class
+    and return a function _create_stage_task_classes. The function that is returned can then be used to
+    generate the ordered dict of luigi.Tasks.
+
+
+    class_attrs can be passed if certain Stage Task require unique class attributes.
+    """
+    assert issubclass(
+        base_class, luigi.Task
+    ), "To use this hyperfunction the base_class must be a subclass of luigi.Task"
+
+    def _create_stage_task_classes(
+        inject_stage1_dependency: None | luigi.Task = None,
+    ) -> dict:
+        """Dynamically create and register MC production task classes.
+
+        Returns a dict of tasks
+        """
+
+        def requires_func(task, dependency):
+            """
+            The generic requires function for stage dependency
+            """
+
+            def _requires(stage_task):
+                yield stage_task.clone(dependency)
+
+            return _requires(task)
+
+        # initialised a dictionary where we will store the tasks
+        tasks = {}
+        for i, stage in enumerate(stages):
+            name = f"{class_name}{stage.capitalize()}"  # e.g., "MCProductionStage1"
+            subclass_attributes = {
+                "stage": stage,
+                "results_subdir": results_subdir,
+            }  # Class attributes
+            if class_attrs and class_attrs.get(stage):
+                subclass_attributes.update(class_attrs[stage])
+
+            # Define the class dynamically
+            new_class = type(
+                name,  # Class name
+                (
+                    OutputMixin,
+                    base_class,
+                ),  # Inherit from MCProductionBaseTask
+                subclass_attributes,
+            )
+            if i == 0 and inject_stage1_dependency:
+                assert issubclass(
+                    inject_stage1_dependency, luigi.Task
+                ), "Injected dependency must be a child class of luigi.Task"
+                new_class.requires = lambda self=new_class: requires_func(
+                    self, inject_stage1_dependency
+                )
+            tasks.update({stage: new_class})
+            logger.debug(f"Created and registered: {name}")
+
+            for upsteam_task, downstream_task in pairwise(tasks.values()):
+                downstream_task.requires = (
+                    lambda task=downstream_task, dep=upsteam_task: requires_func(
+                        task=task, dependency=dep
+                    )
+                )
+                tasks[downstream_task.stage] = downstream_task
+
+        return tasks
+
+    return _create_stage_task_classes

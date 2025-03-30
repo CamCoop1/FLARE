@@ -1,9 +1,9 @@
 from enum import Enum, auto
 from functools import lru_cache
 
-from src import flare_config
+from src import find_file, flare_config
 
-stages_directory = flare_config["StudyDir"]
+stages_directory = find_file(flare_config["StudyDir"])
 
 
 class Stages(Enum):
@@ -19,6 +19,12 @@ class Stages(Enum):
     stage2 = auto()  # 2
     final = auto()  # 3
     plot = auto()  # 4
+
+    def __str__(self):
+        return self.name
+
+    def capitalize(self):
+        return self.name.capitalize()
 
 
 def _get_steering_script_names():
@@ -86,8 +92,9 @@ def get_stage_script(stage: Stages):
 
 
 @lru_cache()
-def get_stage_ordering() -> list:
+def get_stage_ordering() -> list[Stages]:
     """
+
     This function will serve to return a list of the ordering the analyst requires in their fcc analysis.
 
     For example if inside their analysis they require the stage1, stage2, final and plot stages to run,

@@ -14,45 +14,12 @@ from src.mc_production.production_types import (
     get_mc_production_types,
     get_suffix_from_arg,
 )
-from src.utils.tasks import OutputMixin
+from src.utils.tasks import OutputMixin, _class_generator_closure_function
 from src.utils.yaml import get_config
 
 prod_config_dir = dataprod_dir
 
 logger = logging.getLogger("luigi-interface")
-
-
-@lru_cache
-def _create_mc_stage_classes() -> dict:
-    """Dynamically create and register MC production task classes.
-
-    Returns a dict of tasks
-    """
-    prodtype = dataprod_config["prodtype"]
-    stages = get_config("production_types.yaml", "src/mc_production")[prodtype]
-
-    tasks = {}
-    for stage in stages:
-        class_name = f"MCProduction{stage}"  # e.g., "MCProductionStage1"
-
-        # Define the class dynamically
-        new_class = type(
-            class_name,  # Class name
-            (
-                OutputMixin,
-                MCProductionBaseTask,
-            ),  # Inherit from MCProductionBaseTask
-            {"stage": stage, "results_subdir": results_subdir},  # Class attributes
-        )
-
-        tasks.update({stage: new_class})
-        logger.debug(f"Created and registered: {class_name}")
-
-    return tasks
-
-
-def get_last_stage_task():
-    return next(reversed(_create_mc_stage_classes().values()))
 
 
 class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
@@ -235,20 +202,6 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
         # Delete output dir
         shutil.rmtree(self.tmp_output_parent_dir)
 
-    def requires(self):
-        """
-        This function dynamically assigns any required functions per the stage hierarchy
-
-        stage1 -> stage2 -> stage3
-
-        i.e stage3 requires stage2, stage2 requires stage1
-        """
-        if "1" in self.stage:
-            return []
-        required_stage = f"stage{int(self.stage[-1])-1}"
-
-        yield self.clone(_create_mc_stage_classes()[required_stage])
-
     def on_completion(self):
         """
         This function is intended to run the required functions to be ran after the main cmd
@@ -316,3 +269,25 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             yield get_last_stage_task()(
                 prodtype=get_mc_production_types()[self.prodtype], datatype=datatype
             )
+
+
+def _get_mc_prod_stages():
+    prodtype = dataprod_config["prodtype"]
+    return get_config("production_types.yaml", "src/mc_production")[prodtype]
+
+
+# This is a function, the _create_stage_task_classes tailored for this production
+_mc_prod_stage_tasks_func = _class_generator_closure_function(
+    stages=_get_mc_prod_stages(),
+    class_name="MCProduction",
+    base_class=MCProductionBaseTask,
+)
+
+
+@lru_cache
+def get_mc_prod_stages_dict():
+    return _mc_prod_stage_tasks_func()
+
+
+def get_last_stage_task():
+    return next(reversed(_mc_prod_stage_tasks_func().values()))
