@@ -1,6 +1,6 @@
 import b2luigi as luigi
 
-from src.mc_production.production_types import get_mc_production_types
+from src.mc_production.mc_production_types import get_mc_production_types
 from src.mc_production.tasks import MCProductionWrapper
 from src.utils.logo import print_b2luigi_logo
 from src.utils.yaml import get_config

@@ -1,6 +1,6 @@
 "$schema": "src/schemas/config_details.json"
 
 Name: default
-Version: v.0.0.1
+Version: v.0.0.4
 Description: 'Basic details.yaml for CI-CL pipeline'
 StudyDir: analysis

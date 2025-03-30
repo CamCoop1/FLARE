@@ -1,8 +1,7 @@
-from enum import Enum
-from functools import lru_cache
+import logging
 from pathlib import Path
 
-from src.utils.yaml import get_config
+logger = logging.getLogger("luigi-interface")
 
 
 class BracketMappings:
@@ -83,12 +82,73 @@ def get_suffix_from_arg(arg) -> str:
     return str(Path(arg).suffix)
 
 
-@lru_cache
-def get_mc_production_types():
-    """
-    This function creates and returns an Enum of all the production types inside
-    the src/mc_production/production_types.yaml
-    """
-    return Enum(
-        "ProductionTypes", get_config("production_types", dir="src/mc_production")
-    )
+"""
+Have totall unique Bracket Mapping class that simply just matches the elements of the BracketMapping class,
+and sets a series of functions the user must fill in for each bracket mapping
+"""
+
+
+class BracketMappingCMDBuilderMixin:
+
+    @property
+    def unparsed_args(self):
+        raise NotImplementedError
+
+    def get_file_paths(self):
+        raise NotImplementedError
+
+    def cmd_files_dir(self):
+        file = next(iter(self.get_file_paths()))
+        if not isinstance(file, Path):
+            file = Path(file)
+        return file.parent
+
+    def bm_output(self):
+        raise NotImplementedError
+
+    def bm_input(self):
+        raise NotImplementedError
+
+    def bm_datatype_parameter(self):
+        raise NotImplementedError
+
+    def bm_free_name(self):
+        raise NotImplementedError
+
+    def collect_cmd_inputs(self) -> list:
+        """
+        Here should be the code required to get the ordered
+        list of inputs for the given MC production type
+
+        We rely on the BracketMappings class to handle transformations
+        along with the helper functions inside production_types.py
+
+        """
+        logger.info("Gathering cmd arguments for cmd")
+        cmd_inputs = []
+        for arg in self.unparsed_args:
+            # Match the type of argument
+            match BracketMappings.determine_bracket_mapping(arg):
+                case BracketMappings.output:
+                    path = self.bm_output()
+                    cmd_inputs.append(str(path))
+
+                case BracketMappings.input:
+                    path = self.bm_input()
+                    cmd_inputs.append(str(path))
+
+                case BracketMappings.datatype_parameter:
+                    path = self.bm_datatype_parameter()
+                    cmd_inputs.append(str(path))
+
+                case BracketMappings.free_name:
+                    # Find the associated file using the check_if_path_maetches_mapping function
+                    path = self.bm_free_name()
+                    cmd_inputs.append(path)
+
+                case _:
+                    raise FileNotFoundError(
+                        f"There is no file in {self.cmd_files_dir()} that"
+                        f" matches {arg}. Please ensure all files are present"
+                    )
+        return cmd_inputs

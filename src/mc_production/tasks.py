@@ -8,10 +8,10 @@ import b2luigi as luigi
 
 from src import dataprod_config, dataprod_dir, results_subdir
 from src.mc_production.generator_specific_methods import MadgraphMethods
-from src.mc_production.production_types import (
+from src.mc_production.mc_production_types import get_mc_production_types
+from src.utils.bracket_mappings import (
     BracketMappings,
     check_if_path_matches_mapping,
-    get_mc_production_types,
     get_suffix_from_arg,
 )
 from src.utils.tasks import OutputMixin, _class_generator_closure_function
@@ -271,23 +271,56 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             )
 
 
-def _get_mc_prod_stages():
+def _get_mc_prod_stages() -> dict[str, dict]:
+    """
+    Returns
+    --------
+    `prod_dict` : dict[str, dict]
+        Returned dictionary is that specific to the production type as per src/mc_production/production_types.yaml'
+    """
     prodtype = dataprod_config["prodtype"]
     return get_config("production_types.yaml", "src/mc_production")[prodtype]
 
 
-# This is a function, the _create_stage_task_classes tailored for this production
-_mc_prod_stage_tasks_func = _class_generator_closure_function(
-    stages=_get_mc_prod_stages(),
-    class_name="MCProduction",
-    base_class=MCProductionBaseTask,
-)
+@lru_cache(typed=True)
+def get_mc_prod_stages_dict(inject_stage1_dependency=None):
+    """
+    Get the ordered dictionary of MCProduction tasks.
 
+    Parameters
+    -----------
+    `inject_stage1_dependency`: luigi.Task, default=None
+        If the stage1 task of the MC Production needs to require another task, massing a Task to this parameter will set that dependency
 
-@lru_cache
-def get_mc_prod_stages_dict():
-    return _mc_prod_stage_tasks_func()
+    Returns
+    --------
+    `tasks` : dict[Any, luigi.Task]
+        The returned ordered dictionary has keys as per the `stages` list passed to _class_generator_closure_function.
+        The values are the associated luigi Tasks that are created as child classes of `MCProductionBaseTask`
+
+    Note
+    -----
+    For the MC Production of FLARE, the following configuration is passed to `_class_generator_closure_function`:
+
+    ```
+    _class_generator_closure_function(
+        stages=_get_mc_prod_stages(),
+        class_name="MCProduction",
+        base_class=MCProductionBaseTask,
+        inject_stage1_dependency=inject_stage1_dependency
+    )
+    ```
+    """
+    return _class_generator_closure_function(
+        stages=_get_mc_prod_stages(),
+        class_name="MCProduction",
+        base_class=MCProductionBaseTask,
+        inject_stage1_dependency=inject_stage1_dependency,
+    )
 
 
 def get_last_stage_task():
-    return next(reversed(_mc_prod_stage_tasks_func().values()))
+    """
+    Returns the last luigi Task inside `get_mc_prod_stages_dict`
+    """
+    return next(reversed(get_mc_prod_stages_dict().values()))

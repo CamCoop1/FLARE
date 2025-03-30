@@ -122,78 +122,112 @@ class TemplateMethodMixin:
 
 
 def _class_generator_closure_function(
-    stages: list[str],
+    stages: list[Any],
     class_name: str,
     base_class: luigi.Task,
     class_attrs: dict[Any, dict[str, Any]] | None = None,
-):
-    """The closure function will take a list of stage strings, a class name and a luigi.Task base class
-    and return a function _create_stage_task_classes. The function that is returned can then be used to
-    generate the ordered dict of luigi.Tasks.
+    inject_stage1_dependency: None | luigi.Task = None,
+) -> dict[Any, luigi.Task]:
+    """The function will take a list of stage strings, a class name and a luigi.Task base class
+    and return a dictionary of uninitialised classes that inherit from `luigi.Task` and the `base_class`.
 
+    Each Task is assigned its `requires` function based on the ordering of the `stages` parameter.
+    I.e if `stages = ['stage1', 'stage2'] then the luigi Task for stage2 will require the luigi
+    Task for stage1
 
     class_attrs can be passed if certain Stage Task require unique class attributes.
+    inject_stage1_dependency can be passed to set the stage one task to require that dependency
+
+    Parameters
+    -----------
+    `stages` : list[Any]
+        The stages list is used to create unique luigi.Task classes and keep the ordering
+        set out by this variable. The list can be anything, likely an enum or string but
+        what is passed into it will be preserved as the keys of the output dictionary
+    `class_name` : str
+        The base name used when creating the class. The created class will have name f'{class_name}{stage.capitalise()}'
+    `base_class` : luigi.Task
+        The base class must be a child of luigi.Task. The base class is intended to be an interface that exploits the symmetries
+        of a given production workflow. For example, FCC Analysis tools always has its cmd executables beginning with 'fccanalysis'
+    `class_attrs` : dict[Any, dict[str,Any]] | None = None
+        The class_attrs are passed if some stage tasks require unique attributes compared to the rest. For example, the FCCAnalysisRunnerBaseClass
+        sets the `fcc_cmd = ['fccanalysis', 'run']` This changes for the `final` and `plot` stage, so this can be passed to the `class_attrs`
+    `inject_stage1_dependency` : None | luigi.Task = None
+        The `inject_stage1_dependency` is a way to make the first stage luigi Task created from the ordered `stages` list to require another luigi Task
+
+    Returns
+    ---------
+    `tasks` : dict[Any, luigi.Task]
+        The keys of this dictionary are the ordered elements of `stages` and the values are the associated luigi Task.
+
+    Note
+    ------
+    The returned Tasks are **NOT** initialised. What is essentially happening is we are declaring a class as you would normally eg:
+
+    ```
+    # Standard class declaration
+    class Foo:
+        bar = 'hello world'
+
+    # Functional class declaration
+    Foo = type(
+        'Foo',                   # Name of class
+        (),                      # Parent classes
+        {'bar' : 'hello world'}  # Attributes
+    )
+    ```
+    The goal of this function is to easily create a linear workflow of any size given the basic parameters.
     """
     assert issubclass(
         base_class, luigi.Task
     ), "To use this hyperfunction the base_class must be a subclass of luigi.Task"
 
-    def _create_stage_task_classes(
-        inject_stage1_dependency: None | luigi.Task = None,
-    ) -> dict:
-        """Dynamically create and register MC production task classes.
-
-        Returns a dict of tasks
+    def requires_func(task, dependency):
+        """
+        The generic requires function for stage dependency
         """
 
-        def requires_func(task, dependency):
-            """
-            The generic requires function for stage dependency
-            """
+        def _requires(stage_task):
+            yield stage_task.clone(dependency)
 
-            def _requires(stage_task):
-                yield stage_task.clone(dependency)
+        return _requires(task)
 
-            return _requires(task)
+    # initialised a dictionary where we will store the tasks
+    tasks = dict()
+    for i, stage in enumerate(stages):
+        name = f"{class_name}{stage.capitalize()}"  # e.g., "MCProductionStage1"
+        subclass_attributes = {
+            "stage": stage,
+            "results_subdir": results_subdir,
+        }  # Class attributes
+        if class_attrs and class_attrs.get(stage):
+            subclass_attributes.update(class_attrs[stage])
 
-        # initialised a dictionary where we will store the tasks
-        tasks = {}
-        for i, stage in enumerate(stages):
-            name = f"{class_name}{stage.capitalize()}"  # e.g., "MCProductionStage1"
-            subclass_attributes = {
-                "stage": stage,
-                "results_subdir": results_subdir,
-            }  # Class attributes
-            if class_attrs and class_attrs.get(stage):
-                subclass_attributes.update(class_attrs[stage])
-
-            # Define the class dynamically
-            new_class = type(
-                name,  # Class name
-                (
-                    OutputMixin,
-                    base_class,
-                ),  # Inherit from MCProductionBaseTask
-                subclass_attributes,
+        # Define the class dynamically
+        new_class = type(
+            name=name,  # Class name
+            bases=(
+                OutputMixin,
+                base_class,
+            ),  # Inherit from MCProductionBaseTask
+            dict=subclass_attributes,
+        )
+        if i == 0 and inject_stage1_dependency:
+            assert issubclass(
+                inject_stage1_dependency, luigi.Task
+            ), "Injected dependency must be a child class of luigi.Task"
+            new_class.requires = lambda self=new_class: requires_func(
+                self, inject_stage1_dependency
             )
-            if i == 0 and inject_stage1_dependency:
-                assert issubclass(
-                    inject_stage1_dependency, luigi.Task
-                ), "Injected dependency must be a child class of luigi.Task"
-                new_class.requires = lambda self=new_class: requires_func(
-                    self, inject_stage1_dependency
+        tasks.update({stage: new_class})
+        logger.debug(f"Created and registered: {name}")
+
+        for upsteam_task, downstream_task in pairwise(tasks.values()):
+            downstream_task.requires = (
+                lambda task=downstream_task, dep=upsteam_task: requires_func(
+                    task=task, dependency=dep
                 )
-            tasks.update({stage: new_class})
-            logger.debug(f"Created and registered: {name}")
+            )
+            tasks[downstream_task.stage] = downstream_task
 
-            for upsteam_task, downstream_task in pairwise(tasks.values()):
-                downstream_task.requires = (
-                    lambda task=downstream_task, dep=upsteam_task: requires_func(
-                        task=task, dependency=dep
-                    )
-                )
-                tasks[downstream_task.stage] = downstream_task
-
-        return tasks
-
-    return _create_stage_task_classes
+    return tasks

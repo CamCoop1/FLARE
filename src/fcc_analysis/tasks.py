@@ -3,34 +3,68 @@ from functools import lru_cache
 
 import b2luigi as luigi
 
-from src import dataprod_config, flare_config, results_subdir
+from src import dataprod_config, find_file, flare_config, results_subdir
 from src.fcc_analysis.fccanalysis_baseclass import FCCAnalysisRunnerBaseClass
 from src.mc_production.tasks import MCProductionWrapper
-from src.utils.dirs import find_file
 from src.utils.stages import Stages, get_stage_ordering
 from src.utils.tasks import OutputMixin, _class_generator_closure_function
 
 logger = logging.getLogger("luigi-interface")
 
-_fcc_stage_tasks_func = _class_generator_closure_function(
-    stages=get_stage_ordering(),
-    class_name="Analysis",
-    base_class=FCCAnalysisRunnerBaseClass,
-    class_attrs={
-        Stages.final: {"fcc_cmd": ["fccanalysis", "final"]},
-        Stages.plot: {"fcc_cmd": ["fccanalysis", "plots"]},
-    },
-)
-
 
 @lru_cache
 def get_fcc_stages_dict() -> dict:
-    if dataprod_config and luigi.get_setting("run_mc_prod", default=False):
-        return _fcc_stage_tasks_func(inject_stage1_dependency=MCProductionWrapper)
-    return _fcc_stage_tasks_func()
+    """
+    Get the ordered dictionary of FCC analysis tasks.
+
+    Parameters
+    -----------
+    `inject_stage1_dependency`: luigi.Task, default=None
+        If the stage1 task of the FCC Analysis needs to require another task, massing a Task to this parameter will set that dependency
+
+    Returns
+    --------
+    `tasks` : dict[Any, luigi.Task]
+        The returned ordered dictionary has keys as per the `stages` list passed to _class_generator_closure_function.
+        The values are the associated luigi Tasks that are created as child classes of `FCCAnalysisRunnerBaseClass`
+
+    Note
+    -----
+    For the FCC Analysis in FLARE, the following configuration is passed to `_class_generator_closure_function`:
+
+    ```
+    _class_generator_closure_function(
+        stages=get_stage_ordering(),
+        class_name="Analysis",
+        base_class=FCCAnalysisRunnerBaseClass,
+        class_attrs={
+            Stages.final: {"fcc_cmd": ["fccanalysis", "final"]},
+            Stages.plot: {"fcc_cmd": ["fccanalysis", "plots"]},
+        },
+        inject_stage1_dependency= MCProductionWrapper if dataprod_config and luigi.get_setting("run_mc_prod", default=False) else None
+    )
+    ```
+    """
+    return _class_generator_closure_function(
+        stages=get_stage_ordering(),
+        class_name="Analysis",
+        base_class=FCCAnalysisRunnerBaseClass,
+        class_attrs={
+            Stages.final: {"fcc_cmd": ["fccanalysis", "final"]},
+            Stages.plot: {"fcc_cmd": ["fccanalysis", "plots"]},
+        },
+        inject_stage1_dependency=(
+            MCProductionWrapper
+            if dataprod_config and luigi.get_setting("run_mc_prod", default=False)
+            else None
+        ),
+    )
 
 
 def get_last_task() -> luigi.Task:
+    """
+    Returns the last luigi Task inside `get_mc_prod_stages_dict`
+    """
     return next(reversed(get_fcc_stages_dict().values()))()
 
 
