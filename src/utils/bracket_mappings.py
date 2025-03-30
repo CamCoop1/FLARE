@@ -82,12 +82,6 @@ def get_suffix_from_arg(arg) -> str:
     return str(Path(arg).suffix)
 
 
-"""
-Have totall unique Bracket Mapping class that simply just matches the elements of the BracketMapping class,
-and sets a series of functions the user must fill in for each bracket mapping
-"""
-
-
 class BracketMappingCMDBuilderMixin:
 
     @property
@@ -103,16 +97,16 @@ class BracketMappingCMDBuilderMixin:
             file = Path(file)
         return file.parent
 
-    def bm_output(self):
+    def bm_output(self) -> Path:
         raise NotImplementedError
 
-    def bm_input(self):
+    def bm_input(self) -> Path:
         raise NotImplementedError
 
-    def bm_datatype_parameter(self):
+    def bm_datatype_parameter(self, arg: str) -> Path:
         raise NotImplementedError
 
-    def bm_free_name(self):
+    def bm_free_name(self, arg: str) -> Path:
         raise NotImplementedError
 
     def collect_cmd_inputs(self) -> list:
@@ -138,12 +132,12 @@ class BracketMappingCMDBuilderMixin:
                     cmd_inputs.append(str(path))
 
                 case BracketMappings.datatype_parameter:
-                    path = self.bm_datatype_parameter()
+                    path = self.bm_datatype_parameter(arg=arg)
                     cmd_inputs.append(str(path))
 
                 case BracketMappings.free_name:
                     # Find the associated file using the check_if_path_maetches_mapping function
-                    path = self.bm_free_name()
+                    path = self.bm_free_name(arg=arg)
                     cmd_inputs.append(path)
 
                 case _:

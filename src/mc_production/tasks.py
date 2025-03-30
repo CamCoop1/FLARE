@@ -10,6 +10,7 @@ from src import dataprod_config, dataprod_dir, results_subdir
 from src.mc_production.generator_specific_methods import MadgraphMethods
 from src.mc_production.mc_production_types import get_mc_production_types
 from src.utils.bracket_mappings import (
+    BracketMappingCMDBuilderMixin,
     BracketMappings,
     check_if_path_matches_mapping,
     get_suffix_from_arg,
@@ -22,7 +23,9 @@ prod_config_dir = dataprod_dir
 logger = logging.getLogger("luigi-interface")
 
 
-class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
+class MCProductionBaseTask(
+    luigi.DispatchableTask, BracketMappingCMDBuilderMixin, MadgraphMethods
+):
     """
     This base class is total generalised to be able to run on any N-stage MC production
     workflow.
@@ -32,13 +35,6 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
     datatype = luigi.Parameter()
     stage: str
     results_subdir: str
-
-    @property
-    def input_file_path(self):
-        """
-        This is the path to the input file from a task downstream that has ran previously
-        """
-        return next(iter(self.get_input_file_names().values()))[0]
 
     @property
     def _unparsed_output_file_name(self):
@@ -99,78 +95,52 @@ class MCProductionBaseTask(luigi.DispatchableTask, MadgraphMethods):
     def get_file_paths(self):
         return prod_config_dir.glob("*")
 
-    def collect_cmd_inputs(self) -> list:
-        """
-        Here should be the code required to get the ordered
-        list of inputs for the given MC production type
+    @property
+    def unparsed_args(self):
+        return self.stage_dict["args"]
 
-        We rely on the BracketMappings class to handle transformations
-        along with the helper functions inside production_types.py
+    def bm_output(self) -> Path:
+        # Create the path to the tmp dir
+        return self.tmp_output_parent_dir / self.output_file_name
 
-        """
-        logger.info("Gathering cmd arguments for cmd")
-        cmd_inputs = []
+    def bm_input(self) -> Path:
+        return next(iter(self.get_input_file_names().values()))[0]
+
+    def bm_datatype_parameter(self, arg) -> Path:
+        return self._find_file_path_given_arg_and_bracketmapping(
+            arg=arg, bracket_mapping=BracketMappings.datatype_parameter
+        )
+
+    def bm_free_name(self, arg):
+        return self._find_file_path_given_arg_and_bracketmapping(
+            arg=arg, bracket_mapping=BracketMappings.free_name
+        )
+
+    def _find_file_path_given_arg_and_bracketmapping(
+        self, arg: str, bracket_mapping: BracketMappings
+    ) -> Path:
         file_paths = [f for f in self.get_file_paths()]
-        for arg in self.stage_dict["args"]:
-            # Match the type of argument
-            match BracketMappings.determine_bracket_mapping(arg):
-                case BracketMappings.output:
-                    # Create the path to the tmp dir
-                    output_path = self.tmp_output_parent_dir / self.output_file_name
-                    cmd_inputs.append(str(output_path))
-
-                case BracketMappings.input:
-                    cmd_inputs.append(self.input_file_path)
-
-                case BracketMappings.datatype_parameter:
-                    # Must replace the datatype_parameter mapping to the datatype attribute
-                    parsed_arg = arg.replace(
-                        BracketMappings.datatype_parameter, self.datatype
-                    )
-                    # Find the associated file using the check_if_path_matches_mapping function
-                    try:
-                        file_path = [
-                            str(f)
-                            for f in file_paths
-                            if check_if_path_matches_mapping(
-                                parsed_arg, f, BracketMappings.datatype_parameter
-                            )
-                        ][0]
-                    except IndexError:
-                        raise FileNotFoundError(
-                            f"There is no file associated with {arg} inside {str(prod_config_dir)}."
-                            " The framework will exit, ensure this file is present and try again."
-                        )
-                    # We copy this file to the tmp output dir so we have a history of what input files were used
-                    self.copy_input_file_to_output_dir(file_path)
-                    cmd_inputs.append(file_path)
-
-                case BracketMappings.free_name:
-                    # Find the associated file using the check_if_path_matches_mapping function
-                    try:
-                        file_path = [
-                            str(f)
-                            for f in file_paths
-                            if check_if_path_matches_mapping(
-                                arg, f, BracketMappings.free_name
-                            )
-                        ][0]
-                    except IndexError:
-                        raise FileNotFoundError(
-                            f"There is no file associated with {arg} inside analysis/mc_production."
-                            " The framework will exit, ensure this file is present and try again."
-                        )
-                    # We copy this file to the tmp output dir so we have a history of what input files were used
-                    self.copy_input_file_to_output_dir(file_path)
-                    cmd_inputs.append(file_path)
-
-                case _:
-                    raise FileNotFoundError(
-                        "There is no file in analysis/mc_production that"
-                        f" matches {arg}. Please ensure all files are present for your"
-                        f" chosen MC production workflow {self.prodtype.name}"
-                    )
-        return cmd_inputs
+        # Must replace the datatype_parameter mapping to the datatype attribute
+        parsed_arg = (
+            arg.replace(bracket_mapping, self.datatype)
+            if bracket_mapping == BracketMappings.datatype_parameter
+            else arg
+        )
+        # Find the associated file using the check_if_path_matches_mapping function
+        try:
+            file_path = [
+                str(f)
+                for f in file_paths
+                if check_if_path_matches_mapping(parsed_arg, f, bracket_mapping)
+            ][0]
+        except IndexError:
+            raise FileNotFoundError(
+                f"There is no file associated with {arg} inside {str(prod_config_dir)}."
+                " The framework will exit, ensure this file is present and try again."
+            )
+        # We copy this file to the tmp output dir so we have a history of what input files were used
+        self.copy_input_file_to_output_dir(file_path)
+        return file_path
 
     def process(self):
         """

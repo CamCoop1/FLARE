@@ -205,12 +205,12 @@ def _class_generator_closure_function(
 
         # Define the class dynamically
         new_class = type(
-            name=name,  # Class name
-            bases=(
+            name,  # Class name
+            (
                 OutputMixin,
                 base_class,
             ),  # Inherit from MCProductionBaseTask
-            dict=subclass_attributes,
+            subclass_attributes,
         )
         if i == 0 and inject_stage1_dependency:
             assert issubclass(
