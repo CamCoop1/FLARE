@@ -19,8 +19,8 @@ jobs:
 
     - name: Install dependencies
       run: pip install -e ./
- 
-    -name: Install pytest-mock
+
+    - name: Install pytest-mock
       run: pip install pytest-mock
 
     - name: Run tests
