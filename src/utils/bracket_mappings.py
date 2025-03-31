@@ -84,9 +84,7 @@ def get_suffix_from_arg(arg) -> str:
 
 class BracketMappingCMDBuilderMixin:
 
-    @property
-    def unparsed_args(self):
-        raise NotImplementedError
+    unparsed_args = []
 
     def get_file_paths(self):
         raise NotImplementedError
@@ -138,7 +136,7 @@ class BracketMappingCMDBuilderMixin:
                 case BracketMappings.free_name:
                     # Find the associated file using the check_if_path_maetches_mapping function
                     path = self.bm_free_name(arg=arg)
-                    cmd_inputs.append(path)
+                    cmd_inputs.append(str(path))
 
                 case _:
                     raise FileNotFoundError(
