@@ -16,6 +16,11 @@ dependencies = [
     "PyYAML>=6.0"
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest-mock"
+]
+
 [project.urls]
 Homepage = "https://github.com/CamCoop1/FLARE.git"
 
