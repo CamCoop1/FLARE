@@ -1,29 +1,24 @@
-from enum import Enum, auto
+"""
+This modules function is to be an interface between the FCCAnalysisBaseClass and the analysis directory (StudyDir) defined in
+analysis/config/details.yaml. Because the FCC workflow can have any combinations of Stages (stage1, stage2, final, plots) we must
+first be able to identify what stages are required before creating the b2luigi.
+"""
+
+from enum import Enum
 from functools import lru_cache
 
-from src import find_file, flare_config
+from src import find_file, flare_config, get_config
 
 stages_directory = find_file(flare_config["StudyDir"])
 
 
-class Stages(Enum):
+class _Stages(Enum):
     """
     This enum will be the interface between analyst steering scripts and the b2luigi workflow
 
     NOTE that this enum is structured to reflect the order in which tasks should fun, with the first
     variant of the enum being the first task that needs to run and so forth. The `auto()` method will automatically
     set the corresponding value to reflect this ordering, 0 through to the final variant.
-    """
-
-    stage1 = auto()  # 1
-    stage2 = auto()  # 2
-    final = auto()  # 3
-    plot = auto()  # 4
-
-    """
-    This enum serves as an interface between analyst steering scripts and the b2luigi workflow.
-
-    The order of the tasks in this enum determines the execution order, with auto-incrementing values.
     """
 
     def __str__(self):
@@ -89,3 +84,9 @@ class Stages(Enum):
         Returns a list of `Stages` variants in the order required by the analyst.
         """
         return cls._get_active_stages()
+
+
+Stages = _Stages(
+    "FCCProductionTypes",
+    get_config("fcc_production.yaml", "src/fcc_analysis")["fccanalysis"],
+)

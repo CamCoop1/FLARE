@@ -5,7 +5,7 @@ import b2luigi as luigi
 
 from FLARE.src.fcc_analysis.fcc_stages import Stages
 from src import dataprod_config, find_file, flare_config, results_subdir
-from src.fcc_analysis.fccanalysis_baseclass import FCCAnalysisRunnerBaseClass
+from src.fcc_analysis.fcc_analysis_baseclass import FCCAnalysisBaseClass
 from src.mc_production.tasks import MCProductionWrapper
 from src.utils.tasks import OutputMixin, _linear_task_workflow_generator
 
@@ -48,7 +48,7 @@ def get_fcc_stages_dict() -> dict:
     return _linear_task_workflow_generator(
         stages=Stages.get_stage_ordering(),
         class_name="Analysis",
-        base_class=FCCAnalysisRunnerBaseClass,
+        base_class=FCCAnalysisBaseClass,
         class_attrs={
             Stages.final: {"fcc_cmd": ["fccanalysis", "final"]},
             Stages.plot: {"fcc_cmd": ["fccanalysis", "plots"]},
@@ -63,7 +63,7 @@ def get_fcc_stages_dict() -> dict:
 
 def get_last_task() -> luigi.Task:
     """
-    Returns the last luigi Task inside `get_mc_prod_stages_dict`
+    Returns the last luigi Task inside `get_mc_prod_stages_dict` and instantiates it
     """
     return next(reversed(get_fcc_stages_dict().values()))()
 
