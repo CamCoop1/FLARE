@@ -10,8 +10,7 @@ logger = logging.getLogger("luigi-interface")
 
 class FCCInputFilesMixin:
 
-    def get_output_file_name(self, key: str):
-        raise NotImplementedError
+    stage: Stages
 
     @property
     def output_dir(self):
@@ -49,7 +48,6 @@ class FCCInputFilesMixin:
                 )
                 paths_list = json.loads(unparsed_paths_list)
                 for path in paths_list:
-                    logger.info(f"Symlinking {path} to output directory")
                     stages_directory = Stages.get_stage_script(self.stage).parent
                     file_src = f"{stages_directory}/{path}"
                     self.copy_input_file_to_output_dir(file_src)

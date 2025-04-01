@@ -3,9 +3,9 @@ from functools import lru_cache
 
 import b2luigi as luigi
 
-from FLARE.src.fcc_analysis.fcc_stages import Stages
 from src import dataprod_config, find_file, flare_config, results_subdir
 from src.fcc_analysis.fcc_analysis_baseclass import FCCAnalysisBaseClass
+from src.fcc_analysis.fcc_stages import Stages
 from src.mc_production.tasks import MCProductionWrapper
 from src.utils.tasks import OutputMixin, _linear_task_workflow_generator
 

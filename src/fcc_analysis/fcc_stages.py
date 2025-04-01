@@ -78,7 +78,7 @@ class _Stages(Enum):
         return stage_steering_file[0]
 
     @classmethod
-    @lru_cache()
+    @lru_cache
     def get_stage_ordering(cls):
         """
         Returns a list of `Stages` variants in the order required by the analyst.

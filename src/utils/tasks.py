@@ -90,6 +90,9 @@ def _linear_task_workflow_generator(
     assert issubclass(
         base_class, luigi.Task
     ), "To use this hyperfunction the base_class must be a subclass of luigi.Task"
+    assert isinstance(stages, list) or isinstance(
+        stages, dict
+    ), "Argument (1), stages, must be a list or a dict"
 
     def requires_func(task, dependency):
         """
