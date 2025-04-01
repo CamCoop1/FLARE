@@ -7,7 +7,7 @@ import b2luigi as luigi
 from src import find_file
 from src.fcc_analysis.fcc_inputfiles_mixin import FCCInputFilesMixin
 from src.fcc_analysis.fcc_stages import Stages
-from src.utils.bracket_mappings import BracketMappingCMDBuilderMixin, BracketMappings
+from src.utils.bracket_mappings import BracketMappingCMDBuilderMixin
 from src.utils.jinja2_utils import get_template
 
 logger = logging.getLogger("luigi-interface")
@@ -131,14 +131,6 @@ class FCCAnalysisBaseClass(
     stage: Stages
 
     @property
-    def _unparsed_output_file_name(self):
-        """
-        The raw output file name from the fcc_production.yaml. This is then checked inside the property
-        output_file_name and transformed as required
-        """
-        return self.stage_dict["output_file"]
-
-    @property
     def stage_dict(self):
         """
         The dictionary of information for this stage
@@ -159,13 +151,7 @@ class FCCAnalysisBaseClass(
         The output file may be dependent on a datatype parameter so must determine if the output
         file name needs to be parsed and transformed or if we can return the unparsed output file name
         """
-        if (
-            BracketMappings.determine_bracket_mapping(self._unparsed_output_file_name)
-            == BracketMappings.datatype_parameter
-        ):
-            suffix = Stages.get_suffix_from_arg(self._unparsed_output_file_name)
-            return f"{self.datatype}{suffix}"
-        return self._unparsed_output_file_name
+        return self.stage_dict["output_file"]
 
     @property
     def output_dir(self):

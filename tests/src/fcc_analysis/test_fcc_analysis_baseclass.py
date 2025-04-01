@@ -3,8 +3,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.fcc_analysis.fcc_analysis_baseclass import FCCTemplateMethodMixin
+from src.fcc_analysis.fcc_analysis_baseclass import (
+    FCCAnalysisBaseClass,
+    FCCTemplateMethodMixin,
+)
 from src.fcc_analysis.fcc_stages import Stages
+
+"""
+FCCTemplateMethodMixin Tests
+"""
 
 
 # Create a minimal test class to use the mixin
@@ -202,3 +209,95 @@ def test_run_templating_success(test_instance, mocker, read_data, requires):
         assert mocked_open.call_count == 2
         # Check the open function was called with w
         mocked_open.assert_any_call("w")
+
+
+"""
+FCCAnalysisBaseClass Tests
+"""
+
+
+def test_FCCAnalysisBaseClass_output_dir_name_success(mocker):
+    """Test the output_dir_name property to ensure it returns the correct value"""
+    mocker.patch.object(
+        FCCAnalysisBaseClass,
+        "stage_dict",
+        new_callable=mocker.PropertyMock,
+        return_value={"output_file": "mocked"},
+    )
+    test_instance = FCCAnalysisBaseClass()
+
+    assert test_instance.output_dir_name == "mocked"
+
+
+def test_FCCAnalysisBaseClass_unparsed_args_success(mocker):
+    """Test the unparsed_args property to ensure it returns the correct value"""
+    mocker.patch.object(
+        FCCAnalysisBaseClass,
+        "stage_dict",
+        new_callable=mocker.PropertyMock,
+        return_value={"args": "mocked"},
+    )
+    test_instance = FCCAnalysisBaseClass()
+
+    assert test_instance.unparsed_args == "mocked"
+
+
+def test_FCCAnalysisBaseClass_output_dir(mocker):
+    """Test the _unparsed_output_file_name property to ensure it returns the correct value"""
+    mocked_path = Path("mocked/path")
+    mocker.patch.object(
+        FCCAnalysisBaseClass, "get_output_file_name", return_value=str(mocked_path)
+    )
+    test_instance = FCCAnalysisBaseClass()
+    test_instance.stage = Stages.stage1
+
+    # The returned output_dir is an absolute path
+    assert str(mocked_path) in str(test_instance.output_dir)
+
+
+def test_FCCAnalysisBaseClass_bm_free_name_returns_rendered_template_path():
+    """Test the bm_free_name function for the BracketMappingMixin returns the rendered_template_path
+    from the TemplateMixin"""
+    test_instance = FCCAnalysisBaseClass()
+    test_instance.stage = Stages.stage1
+
+    assert test_instance.bm_free_name() == test_instance.rendered_template_path
+
+
+def test_FCCAnalysisBaseClass_run_fcc_analysis_stage(mocker):
+    """Check that the run_fcc_analysis_stage called pre_run, subprocess.check_call with appropriate
+    inputs and the on_completion method"""
+    mock_pre_run = mocker.patch.object(FCCAnalysisBaseClass, "pre_run")
+    mock_subprocess = mocker.patch("subprocess.check_call")
+    mock_on_completion = mocker.patch.object(FCCAnalysisBaseClass, "on_completion")
+
+    test_instance = FCCAnalysisBaseClass()
+    test_instance.stage = Stages.stage1
+
+    test_instance.run_fcc_analysis_stage()
+
+    mock_pre_run.assert_called_once()
+    mock_subprocess.assert_called_once_with(
+        test_instance.prod_cmd, cwd=test_instance.output_dir, shell=True
+    )
+    mock_on_completion.assert_called_once()
+
+
+def test_FCCAnalysisBaseClass_process_success(mocker):
+    """Test the process function to ensure the making of directories, templating and fcc running is done"""
+    mock_run_templating = mocker.patch.object(FCCAnalysisBaseClass, "run_templating")
+    mock_run_fcc_analysis_stage = mocker.patch.object(
+        FCCAnalysisBaseClass, "run_fcc_analysis_stage"
+    )
+    mock_mkdir = mocker.patch.object(Path, "mkdir")
+    # When mocking mkdir must also patch the os.replace function
+    mocker.patch("os.replace")
+
+    test_instance = FCCAnalysisBaseClass()
+    test_instance.stage = Stages.stage1
+
+    test_instance.process()
+
+    mock_run_templating.assert_called_once()
+    mock_run_fcc_analysis_stage.assert_called_once()
+    mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)

@@ -49,10 +49,6 @@ def get_fcc_stages_dict() -> dict:
         stages=Stages.get_stage_ordering(),
         class_name="Analysis",
         base_class=FCCAnalysisBaseClass,
-        class_attrs={
-            Stages.final: {"fcc_cmd": ["fccanalysis", "final"]},
-            Stages.plot: {"fcc_cmd": ["fccanalysis", "plots"]},
-        },
         inject_stage1_dependency=(
             MCProductionWrapper
             if dataprod_config and luigi.get_setting("run_mc_prod", default=False)
