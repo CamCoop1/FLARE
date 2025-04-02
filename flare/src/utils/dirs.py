@@ -20,7 +20,7 @@ def find_file(*path, string=False):
 
 
 def find_external_file(*path, string=False):
-    from flare.cli.arguments import get_flare_cwd
+    from flare.cli.run_command import get_flare_cwd
 
     path = Path(get_flare_cwd(), *path)
     return str(path) if string else path
