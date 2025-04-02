@@ -6,7 +6,6 @@ from flare.src.utils.logo import print_b2luigi_logo
 
 
 def main(executable=list[str]):
-    luigi.set_setting("run_mc_prod", False)
     print_b2luigi_logo()
     if Stages.check_for_unregistered_stage_file():
         raise RuntimeError(
