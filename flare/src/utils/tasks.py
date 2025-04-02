@@ -128,13 +128,24 @@ def _linear_task_workflow_generator(
             ),  # Inherit from MCProductionBaseTask
             subclass_attributes,
         )
+        # Check if injected stage1 dependency is required
         if i == 0 and inject_stage1_dependency:
+            # Assert the stage1 dependency is a luigi.Task
             assert issubclass(
                 inject_stage1_dependency, luigi.Task
             ), "Injected dependency must be a child class of luigi.Task"
+            # Check if any attributes have been passes to the class_attrs that need
+            # to be added to the inject_stage1_dependency class
+            if class_attrs.get("inject_stage1_dependency"):
+                attr_dict = class_attrs.pop("inject_stage1_dependency")
+                _assigne_inject_stage1_dependency_attrs(
+                    attr_dict, inject_stage1_dependency
+                )
+            # Create the dependency
             new_class.requires = lambda self=new_class: requires_func(
                 self, inject_stage1_dependency
             )
+
         tasks.update({stage: new_class})
         logger.debug(f"Created and registered: {name}")
 
@@ -147,3 +158,10 @@ def _linear_task_workflow_generator(
             tasks[downstream_task.stage] = downstream_task
 
     return tasks
+
+
+def _assigne_inject_stage1_dependency_attrs(attr_dict, stage1_dependency):
+    """Assign the attributes to the stage1 injected dependency"""
+    # Loop through attrs and assign to the task
+    for attr_name, attr_value in attr_dict.items():
+        setattr(stage1_dependency, attr_name, attr_value)

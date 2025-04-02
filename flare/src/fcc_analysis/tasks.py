@@ -53,8 +53,17 @@ def get_fcc_stages_dict() -> dict:
         inject_stage1_dependency=(
             MCProductionWrapper
             if settings.get_setting("dataprod_config")
-            and luigi.get_setting("run_mc_prod", default=False)
+            and settings.get_setting("mcprod", default=False)
             else None
+        ),
+        class_attrs=(
+            {
+                "inject_stage1_dependency": {
+                    "prodtype": settings.get_setting("dataprod_config").get("prodtype")
+                }
+            }
+            if settings.get_setting("dataprod_config")
+            else {}
         ),
     )
 
@@ -71,7 +80,9 @@ class GenerateAnalysisDescription(OutputMixin, luigi.Task):
     This task serves to generate documentation for the current sample set being generated.
     """
 
-    results_subdir = settings.get_setting("results_subdir")
+    @property
+    def results_subdir(self):
+        return settings.get_setting("results_subdir")
 
     def get_output_key_path_pair(self):
         output_path = find_external_file("data", self.results_subdir, "README.md")
@@ -83,7 +94,7 @@ class GenerateAnalysisDescription(OutputMixin, luigi.Task):
         return {output_key: luigi.LocalTarget(str(output_path))}
 
     def run(self):
-        description = luigi.get_setting("description")
+        description = settings.get_setting("description")
         print(description)
         _, output_path = self.get_output_key_path_pair()
         output_path.parent.mkdir(parents=True, exist_ok=True)
