@@ -1,6 +1,7 @@
 import logging
 import shutil
 import subprocess
+import sys
 from functools import lru_cache
 from pathlib import Path
 
@@ -213,7 +214,10 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     """
 
     prodtype = luigi.Parameter()
-    results_subdir = settings.get_setting("results_subdir")
+
+    @property
+    def results_subdir(self):
+        return settings.get_setting("results_subdir")
 
     @property
     def input_paths(self):
@@ -222,6 +226,11 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     @luigi.on_temporary_files
     def process(self):
         # Copy the file and its metadata (hence copy2) to the output directory
+        sys.stderr.write(f"results_subdir of class: {self.results_subdir}\n")
+        sys.stderr.write(
+            f"results_subdir as per settings: {settings.get_setting('results_subdir')}"
+        )
+        sys.stderr.flush()
         for input_file in self.input_paths:
             source = Path(input_file)
             target = self.get_output_file_name(source.name)
