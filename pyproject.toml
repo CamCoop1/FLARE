@@ -27,8 +27,13 @@ flare = "flare.cli.main:main"
 [project.urls]
 Homepage = "https://github.com/CamCoop1/FLARE.git"
 
-[tool.setuptools]
-packages = ["flare", "flare.src", "analysis"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["flare*"]
+
+[tool.setuptools.package-data]
+"flare" = ["**/*.yaml", "**/*.json"]
 
 [tool.flake8]
 max-line-length = 88
