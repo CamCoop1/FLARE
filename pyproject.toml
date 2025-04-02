@@ -33,7 +33,7 @@ where = ["."]
 include = ["flare*"]
 
 [tool.setuptools.package-data]
-"flare" = ["**/*.yaml", "**/*.json"]
+"flare" = ["**/*.yaml", "**/*.json", "**/*.jinja2"]
 
 [tool.flake8]
 max-line-length = 88
