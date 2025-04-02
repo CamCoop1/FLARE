@@ -8,7 +8,8 @@ from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
-from flare.flare_settings import settings
+import b2luigi as luigi
+
 from flare.src.utils.yaml import get_config
 
 
@@ -29,7 +30,7 @@ class _Stages(Enum):
         """Gets the list of steering script names from the `stages_directory`."""
         return [
             x.stem
-            for x in settings.get_setting("studydir").glob("*.py")
+            for x in luigi.get_setting("studydir").glob("*.py")
             if any(s.name in x.stem for s in cls)
         ]
 
@@ -64,7 +65,7 @@ class _Stages(Enum):
         ), f"get_stage_script expects a stage of type {cls.__name__}, got {type(stage).__name__} instead."
 
         stage_steering_file = list(
-            settings.get_setting("studydir").glob(f"{stage.name}*.py")
+            luigi.get_setting("studydir").glob(f"{stage.name}*.py")
         )
         if not stage_steering_file:
             raise FileNotFoundError(

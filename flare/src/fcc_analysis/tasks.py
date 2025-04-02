@@ -3,7 +3,6 @@ from functools import lru_cache
 
 import b2luigi as luigi
 
-from flare.flare_settings import settings
 from flare.src.fcc_analysis.fcc_analysis_baseclass import FCCAnalysisBaseClass
 from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.mc_production.tasks import MCProductionWrapper
@@ -52,17 +51,17 @@ def get_fcc_stages_dict() -> dict:
         base_class=FCCAnalysisBaseClass,
         inject_stage1_dependency=(
             MCProductionWrapper
-            if settings.get_setting("dataprod_config")
-            and settings.get_setting("mcprod", default=False)
+            if luigi.get_setting("dataprod_config")
+            and luigi.get_setting("mcprod", default=False)
             else None
         ),
         class_attrs=(
             {
                 "inject_stage1_dependency": {
-                    "prodtype": settings.get_setting("dataprod_config").get("prodtype")
+                    "prodtype": luigi.get_setting("dataprod_config").get("prodtype")
                 }
             }
-            if settings.get_setting("dataprod_config")
+            if luigi.get_setting("dataprod_config")
             else {}
         ),
     )
@@ -82,7 +81,7 @@ class GenerateAnalysisDescription(OutputMixin, luigi.Task):
 
     @property
     def results_subdir(self):
-        return settings.get_setting("results_subdir")
+        return luigi.get_setting("results_subdir")
 
     def get_output_key_path_pair(self):
         output_path = find_external_file("data", self.results_subdir, "README.md")
@@ -94,7 +93,7 @@ class GenerateAnalysisDescription(OutputMixin, luigi.Task):
         return {output_key: luigi.LocalTarget(str(output_path))}
 
     def run(self):
-        description = settings.get_setting("description")
+        description = luigi.get_setting("description")
         print(description)
         _, output_path = self.get_output_key_path_pair()
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -116,7 +115,9 @@ class FCCAnalysisWrapper(OutputMixin, luigi.WrapperTask):
     using the analysis/config/details.yaml
     """
 
-    results_subdir = settings.get_setting("results_subdir")
+    @property
+    def results_subdir(self):
+        return luigi.get_setting("results_subdir")
 
     def requires(self):
         yield get_last_task()

@@ -7,7 +7,6 @@ from pathlib import Path
 
 import b2luigi as luigi
 
-from flare.flare_settings import settings
 from flare.src.mc_production.generator_specific_methods import MadgraphMethods
 from flare.src.mc_production.mc_production_types import get_mc_production_types
 from flare.src.utils.bracket_mappings import (
@@ -92,7 +91,7 @@ class MCProductionBaseTask(
         shutil.copy(source, destination)
 
     def get_file_paths(self):
-        return settings.get_setting("dataprod_dir").glob("*")
+        return luigi.get_setting("dataprod_dir").glob("*")
 
     @property
     def unparsed_args(self):
@@ -134,7 +133,7 @@ class MCProductionBaseTask(
             ][0]
         except IndexError:
             raise FileNotFoundError(
-                f"There is no file associated with {arg} inside {str(settings.get_setting('dataprod_dir'))}."
+                f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
                 " The framework will exit, ensure this file is present and try again."
             )
         # We copy this file to the tmp output dir so we have a history of what input files were used
@@ -217,7 +216,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
 
     @property
     def results_subdir(self):
-        return settings.get_setting("results_subdir")
+        return luigi.get_setting("results_subdir")
 
     @property
     def input_paths(self):
@@ -228,7 +227,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
         # Copy the file and its metadata (hence copy2) to the output directory
         sys.stderr.write(f"results_subdir of class: {self.results_subdir}\n")
         sys.stderr.write(
-            f"results_subdir as per settings: {settings.get_setting('results_subdir')}"
+            f"results_subdir as per settings: {luigi.get_setting('results_subdir')}"
         )
         sys.stderr.flush()
         for input_file in self.input_paths:
@@ -243,7 +242,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             yield self.add_to_output(path.name)
 
     def requires(self):
-        for datatype in settings.get_setting("dataprod_config")["datatype"]:
+        for datatype in luigi.get_setting("dataprod_config")["datatype"]:
             yield get_last_stage_task()(
                 prodtype=get_mc_production_types()[self.prodtype], datatype=datatype
             )
@@ -256,7 +255,7 @@ def _get_mc_prod_stages() -> dict[str, dict]:
     `prod_dict` : dict[str, dict]
         Returned dictionary is that specific to the production type as per src/mc_production/production_types.yaml'
     """
-    prodtype = settings.get_setting("dataprod_config")["prodtype"]
+    prodtype = luigi.get_setting("dataprod_config")["prodtype"]
     return get_config("production_types.yaml", "flare/src/mc_production")[prodtype]
 
 

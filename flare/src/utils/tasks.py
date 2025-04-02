@@ -4,7 +4,6 @@ from typing import Any
 
 import b2luigi as luigi
 
-from flare.flare_settings import settings
 from flare.src.utils.dirs import find_external_file
 
 logger = logging.getLogger("luigi-interface")
@@ -114,7 +113,7 @@ def _linear_task_workflow_generator(
         name = f"{class_name}{stage.capitalize()}"  # e.g., "MCProductionStage1"
         subclass_attributes = {
             "stage": stage,
-            "results_subdir": settings.get_setting("results_subdir"),
+            "results_subdir": luigi.get_setting("results_subdir"),
         }  # Class attributes
         if class_attrs and class_attrs.get(stage):
             subclass_attributes.update(class_attrs[stage])

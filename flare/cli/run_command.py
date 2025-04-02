@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 
+import b2luigi as luigi
+
 from flare.cli.logging import logger
-from flare.flare_settings import settings
 from flare.run_analysis import main as analysis_main
 from flare.run_mc_production import main as mc_main
 from flare.src.utils.yaml import get_config
@@ -53,43 +54,39 @@ def _load_settings_into_manager(args):
     cwd = get_flare_cwd()
     logger.info("Loading Settings into FLARE")
     # Add name to the settings
-    settings.set_setting(
-        key="name", value=args.name or config.get("Name", "default_name")
-    )
-    logger.info(f"Name: {settings.get_setting('name')}")
+    luigi.set_setting(key="name", value=args.name or config.get("Name", "default_name"))
+    logger.info(f"Name: {luigi.get_setting('name')}")
     # Add version to the settings
-    settings.set_setting("version", args.version or config.get("Version", "1.0"))
-    logger.info(f"Version: {settings.get_setting('version')}")
+    luigi.set_setting("version", args.version or config.get("Version", "1.0"))
+    logger.info(f"Version: {luigi.get_setting('version')}")
     # Add the description to the settings
-    settings.set_setting(
+    luigi.set_setting(
         "description", args.description or config.get("Description", "No description")
     )
-    logger.info(f"description: {settings.get_setting('description')}")
+    logger.info(f"description: {luigi.get_setting('description')}")
     # At the study directory to the settings
-    settings.set_setting(
+    luigi.set_setting(
         "studydir", (cwd / args.study_dir) or (cwd / config.get("StudyDir", cwd))
     )
-    logger.info(f"Study Directory: {settings.get_setting('studydir')}")
+    logger.info(f"Study Directory: {luigi.get_setting('studydir')}")
     # At the results_subdir used in the OutputMixin to the settings
-    settings.set_setting(
+    luigi.set_setting(
         "results_subdir",
-        Path(settings.get_setting("name")) / settings.get_setting("version"),
+        Path(luigi.get_setting("name")) / luigi.get_setting("version"),
     )
-    results_dir = cwd / "data" / settings.get_setting("results_subdir")
+    results_dir = cwd / "data" / luigi.get_setting("results_subdir")
     logger.info(f"Results Directory: {results_dir}")
     # Add the dataprod_dir to the settings
-    settings.set_setting(
-        "dataprod_dir", settings.get_setting("studydir") / "mc_production"
-    )
-    dataprod_dir = settings.get_setting("dataprod_dir")
+    luigi.set_setting("dataprod_dir", luigi.get_setting("studydir") / "mc_production")
+    dataprod_dir = luigi.get_setting("dataprod_dir")
     # Add the dataprod config to the settings, returns None if no config is present
-    settings.set_setting(
+    luigi.set_setting(
         "dataprod_config",
         (get_config("details.yaml", dataprod_dir) if dataprod_dir.exists() else None),
     )
     # Set the mcprod
-    settings.set_setting("mcprod", args.mcprod)
-    logger.debug(settings.get_setting("dataprod_config"))
+    luigi.set_setting("mcprod", args.mcprod)
+    logger.debug(luigi.get_setting("dataprod_config"))
 
 
 def _build_executable(args):
