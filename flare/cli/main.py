@@ -1,8 +1,8 @@
-from flare.cli.arguments import get_arguments
+from flare.cli.arguments import get_args
 
 
 def main():
-    args = get_arguments()
+    args = get_args()
 
     if hasattr(args, "func"):
         args.func(args)
