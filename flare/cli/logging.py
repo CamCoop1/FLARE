@@ -60,16 +60,15 @@ class MyInterfaceLogging:
         return logging.getLogger("my-interface")
 
 
-# === USAGE ===
-class MockOpts:
+class Opts:
     logging_conf_file = None  # Set to a path if using a config file
     log_level = "INFO"  # Set log level
 
 
-opts = MockOpts()
+opts = Opts()
 
 # Initialize logging
-MyInterfaceLogging.setup(opts)
+MyInterfaceLogging.setup()
 
 # Use the logger
 logger = MyInterfaceLogging.get_logger()
