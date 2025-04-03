@@ -3,7 +3,7 @@ from itertools import pairwise
 import b2luigi as luigi
 import pytest
 
-from flare.src import find_file, results_subdir
+from flare.src.utils.dirs import find_external_file
 from flare.src.utils.tasks import OutputMixin, _linear_task_workflow_generator
 
 
@@ -31,8 +31,10 @@ def test_OutputMixin_no_results_subdir():
     when no results_subdir is passed to the class"""
     mock_instance = OutputMixin()
 
-    assert mock_instance.log_dir == find_file("log", mock_instance.__class__.__name__)
-    assert mock_instance.result_dir == find_file(
+    assert mock_instance.log_dir == find_external_file(
+        "log", mock_instance.__class__.__name__
+    )
+    assert mock_instance.result_dir == find_external_file(
         "data", mock_instance.__class__.__name__
     )
 
@@ -43,10 +45,10 @@ def test_OutputMixin_results_subdir():
     mock_instance = OutputMixin()
     mock_instance.results_subdir = "test"
 
-    assert mock_instance.log_dir == find_file(
+    assert mock_instance.log_dir == find_external_file(
         "log", "test", mock_instance.__class__.__name__
     )
-    assert mock_instance.result_dir == find_file(
+    assert mock_instance.result_dir == find_external_file(
         "data", "test", mock_instance.__class__.__name__
     )
 
@@ -59,8 +61,10 @@ def test_OutputMixin_inheritance():
         pass
 
     mock_instance = MockClass()
-    assert mock_instance.log_dir == find_file("log", mock_instance.__class__.__name__)
-    assert mock_instance.result_dir == find_file(
+    assert mock_instance.log_dir == find_external_file(
+        "log", mock_instance.__class__.__name__
+    )
+    assert mock_instance.result_dir == find_external_file(
         "data", mock_instance.__class__.__name__
     )
 
@@ -86,10 +90,10 @@ def test__linear_task_workflow_generator_assertion_for_incorrect_stages(task_set
         )
 
 
-def test__linear_task_workflow_generator_returned_task_inheritance(task_setup):
+def test__linear_task_workflow_generator_returned_task_inheritance(task_setup, mocker):
     """Test that the returned tasks inherit from OutputMixin and the given base_class"""
     stages, class_name, base_class = task_setup
-
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
     task_dict = _linear_task_workflow_generator(
         stages=stages, class_name=class_name, base_class=base_class
     )
@@ -98,12 +102,17 @@ def test__linear_task_workflow_generator_returned_task_inheritance(task_setup):
         assert issubclass(task, OutputMixin)
         assert issubclass(task, base_class)
 
+    assert mock_get_setting.call_count == len(stages)
 
-def test__linear_task_workflow_generator_returned_task_standard_attributes(task_setup):
+
+def test__linear_task_workflow_generator_returned_task_standard_attributes(
+    task_setup, mocker
+):
     """Test that the returned tasks have attributes `stage` and `results_subdir`
     and that `stage` matches that given in the stages list and `results_subdir` matches that defined in src/__init__.py
     """
     stages, class_name, base_class = task_setup
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
 
     task_dict = _linear_task_workflow_generator(
         stages=stages, class_name=class_name, base_class=base_class
@@ -113,16 +122,18 @@ def test__linear_task_workflow_generator_returned_task_standard_attributes(task_
         assert hasattr(task, "stage")
         assert getattr(task, "stage") == stage
         assert hasattr(task, "results_subdir")
-        assert getattr(task, "results_subdir") == results_subdir
+        assert getattr(task, "results_subdir") == "/tmp/mock"
+
+    assert mock_get_setting.call_count == len(stages)
 
 
 def test__linear_task_workflow_generator_returned_task_additional_attributes_through_class_attrs(
-    task_setup,
+    task_setup, mocker
 ):
     """Test that the returned tasks have the additional attributes passed to `class_attrs`"""
 
     stages, class_name, base_class = task_setup
-
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
     task_dict = _linear_task_workflow_generator(
         stages=stages,
         class_name=class_name,
@@ -134,13 +145,17 @@ def test__linear_task_workflow_generator_returned_task_additional_attributes_thr
         assert hasattr(task, "hello")
         assert getattr(task, "hello") == "world"
 
+    assert mock_get_setting.call_count == len(stages)
 
-def test__linear_task_workflow_generator_tasks_dependency_set_correctly(task_setup):
+
+def test__linear_task_workflow_generator_tasks_dependency_set_correctly(
+    task_setup, mocker
+):
     """Test that the returned tasks have the correct dependency workflow defined
     by their `requires` function. E.g the Stage2 task should require the Stage1 task"""
 
     stages, class_name, base_class = task_setup
-
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
     task_dict = _linear_task_workflow_generator(
         stages=stages,
         class_name=class_name,
@@ -151,13 +166,16 @@ def test__linear_task_workflow_generator_tasks_dependency_set_correctly(task_set
         required_task = next(downstream_task().requires())
         assert required_task == upstream_task()
 
+    assert mock_get_setting.call_count == len(stages)
+
 
 def test__linear_task_workflow_generator_inject_stage1_dependency_raises_AssertionError(
-    task_setup,
+    task_setup, mocker
 ):
     """Test that when the injected stage1 dependency is not of type luigi.Task, AssertionError is raised
     using issubclass"""
     stages, class_name, base_class = task_setup
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
 
     class Stage1Dependency:
         pass
@@ -169,15 +187,18 @@ def test__linear_task_workflow_generator_inject_stage1_dependency_raises_Asserti
             base_class=base_class,
             inject_stage1_dependency=Stage1Dependency,
         )
+    assert (
+        mock_get_setting.call_count == 1
+    )  # Upon creating the first task, the dependency injection raises AssertionError
 
 
 def test__linear_task_workflow_generator_inject_stage1_dependency_success(
-    task_setup, stage1_dependency_task
+    task_setup, stage1_dependency_task, mocker
 ):
     """Test that the returned tasks have the correct dependency workflow defined
     by their `requires` function. E.g the Stage2 task should require the Stage1 task"""
     stages, class_name, base_class = task_setup
-
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
     task_dict = _linear_task_workflow_generator(
         stages=stages,
         class_name=class_name,
@@ -190,12 +211,13 @@ def test__linear_task_workflow_generator_inject_stage1_dependency_success(
     required_task = next(stage1_task.requires())
     # Assert it is the task we injected
     assert required_task == stage1_dependency_task()
+    assert mock_get_setting.call_count == len(stages)
 
 
-def test__linear_task_workflow_generator_one_stage_only(task_setup):
+def test__linear_task_workflow_generator_one_stage_only(task_setup, mocker):
     """Test that when given only a single task to create that it returns that task with no requires dependency"""
     stages, class_name, base_class = task_setup
-
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
     task_dict = _linear_task_workflow_generator(
         stages=[stages[0]],
         class_name=class_name,
@@ -207,14 +229,15 @@ def test__linear_task_workflow_generator_one_stage_only(task_setup):
     stage1_dict = next(iter(task_dict.values()))()
 
     assert stage1_dict.requires() == []
+    assert mock_get_setting.call_count == 1
 
 
-def test__linear_task_workflow_generator_one_stage_only_with_injected_dependenct(
-    task_setup, stage1_dependency_task
+def test__linear_task_workflow_generator_one_stage_only_with_injected_dependency(
+    task_setup, stage1_dependency_task, mocker
 ):
     """Test that when given only a single task to create that it returns that task with required stage1 dependency"""
     stages, class_name, base_class = task_setup
-
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
     task_dict = _linear_task_workflow_generator(
         stages=[stages[0]],
         class_name=class_name,
@@ -224,7 +247,33 @@ def test__linear_task_workflow_generator_one_stage_only_with_injected_dependenct
 
     assert len(task_dict.values()) == 1
 
-    stage1_dict = next(iter(task_dict.values()))()
+    stage1_task = next(iter(task_dict.values()))()
 
     # Note the next() function will fail is requires() does not return a generator
-    assert next(stage1_dict.requires()) == stage1_dependency_task()
+    assert next(stage1_task.requires()) == stage1_dependency_task()
+    assert mock_get_setting.call_count == 1
+
+
+def test__linear_task_workflow_generator_injected_dependency_with_attributes(
+    task_setup, stage1_dependency_task, mocker
+):
+    """Test that when a stage1 dependency and class attributes to attached to the injection, that
+    the returned injected class has the class attributes"""
+    stages, class_name, base_class = task_setup
+    mock_get_setting = mocker.patch("b2luigi.get_setting", return_value="/tmp/mock")
+
+    task_dict = _linear_task_workflow_generator(
+        stages=[stages[0]],
+        class_name=class_name,
+        base_class=base_class,
+        inject_stage1_dependency=stage1_dependency_task,
+        class_attrs={"inject_stage1_dependency": {"prodtype": "mock"}},
+    )
+
+    assert len(task_dict.values()) == 1
+
+    injected_task = next(next(iter(task_dict.values()))().requires())
+
+    assert hasattr(injected_task, "prodtype")
+    assert injected_task.prodtype == "mock"
+    assert mock_get_setting.call_count == 1

@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import pytest
-from src.fcc_analysis.fcc_inputfiles_mixin import FCCInputFilesMixin
+
+from flare.src.fcc_analysis.fcc_inputfiles_mixin import FCCInputFilesMixin
 
 
 @pytest.fixture
@@ -21,7 +22,8 @@ def test_copy_input_file_to_output_dir(mocker, mock_class):
     source_file_path = Path("tmp/source_file.root")
     # Mock the find_file function to return our source_file_path
     mock_find_file = mocker.patch(
-        "src.fcc_analysis.fcc_inputfiles_mixin.find_file", return_value=source_file_path
+        "flare.src.fcc_analysis.fcc_inputfiles_mixin.find_file",
+        return_value=source_file_path,
     )
     # Mock the shutil.copy function as to not actually copy anything
     mock_shutil_copy = mocker.patch("shutil.copy")
@@ -39,7 +41,7 @@ def test_copy_inputfiles_declared_in_stage_script_with_inputPaths(mocker, mock_c
     """Test that when inputPaths are included,"""
     # Mock the Stages.get_stage_script function
     mock_stage_script = mocker.patch(
-        "src.fcc_analysis.fcc_inputfiles_mixin.Stages.get_stage_script"
+        "flare.src.fcc_analysis.fcc_inputfiles_mixin.Stages.get_stage_script"
     )
 
     # Mock `Stages.get_stage_script` to return a Path object
@@ -69,7 +71,7 @@ def test_copy_inputfiles_declared_in_stage_script_with_no_inputPaths(
     """Test that when not inputPaths are included, the copy_input_files_to_output_dir is not called"""
     # Mock the Stages.get_stage_script function
     mock_stage_script = mocker.patch(
-        "src.fcc_analysis.fcc_inputfiles_mixin.Stages.get_stage_script"
+        "flare.src.fcc_analysis.fcc_inputfiles_mixin.Stages.get_stage_script"
     )
 
     # Mock `Stages.get_stage_script` to return a Path object

@@ -2,11 +2,12 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from src.fcc_analysis.fcc_analysis_baseclass import (
+
+from flare.src.fcc_analysis.fcc_analysis_baseclass import (
     FCCAnalysisBaseClass,
     FCCTemplateMethodMixin,
 )
-from src.fcc_analysis.fcc_stages import Stages
+from flare.src.fcc_analysis.fcc_stages import Stages
 
 """
 FCCTemplateMethodMixin Tests
@@ -30,7 +31,7 @@ def test_instance(mocker):
     """Fixture to create a TestStage instance with mocks."""
     instance = TestStage()
     mocker.patch(
-        "src.fcc_analysis.fcc_analysis_baseclass.find_file",
+        "flare.src.fcc_analysis.fcc_analysis_baseclass.find_file",
         side_effect=lambda *args: Path("/mocked/path") / args[-1],
     )
     return instance
@@ -55,7 +56,8 @@ def test_inputDir_path_for_is_file_False(mocker, test_instance):
     mock_file.is_file.return_value = False
 
     mock_find_file = mocker.patch(
-        "src.fcc_analysis.fcc_analysis_baseclass.find_file", return_value=mock_file
+        "flare.src.fcc_analysis.fcc_analysis_baseclass.find_file",
+        return_value=mock_file,
     )
 
     assert test_instance.inputDir_path == "/mocked/path/mock_output.root"
@@ -72,7 +74,8 @@ def test_inputDir_path_for_is_file_True(mocker, test_instance):
     mock_file.parent = Path("/mocked/path")
 
     mock_find_file = mocker.patch(
-        "src.fcc_analysis.fcc_analysis_baseclass.find_file", return_value=mock_file
+        "flare.src.fcc_analysis.fcc_analysis_baseclass.find_file",
+        return_value=mock_file,
     )
 
     assert test_instance.inputDir_path == "/mocked/path"
@@ -89,7 +92,8 @@ def test_rendered_template_path(test_instance, mocker):
     )
     # Mock the first find_file call inside rendered_template_path
     mock_find_file = mocker.patch(
-        "src.fcc_analysis.fcc_analysis_baseclass.find_file", return_value=output_path
+        "flare.src.fcc_analysis.fcc_analysis_baseclass.find_file",
+        return_value=output_path,
     )
 
     assert (
@@ -300,3 +304,47 @@ def test_FCCAnalysisBaseClass_process_success(mocker):
     mock_run_templating.assert_called_once()
     mock_run_fcc_analysis_stage.assert_called_once()
     mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+
+def test_FCCAnalysisBaseClass_pre_run_function_success(mocker):
+    """Test the pre_run function when given valid pre_run functions"""
+    # Mock the stage_dict
+    mocker.patch.object(
+        FCCAnalysisBaseClass,
+        "stage_dict",
+        new_callable=mocker.PropertyMock,
+        return_value={"pre_run": ["foo"]},
+    )
+    # Set the foo function that pre_run will run
+    FCCAnalysisBaseClass.foo = lambda self=FCCAnalysisBaseClass: "hello"
+    # Mock the print so we can check our foo function ran properly
+    mock_foo = mocker.patch.object(FCCAnalysisBaseClass, "foo")
+
+    test_instance = FCCAnalysisBaseClass()
+    test_instance.stage = Stages.stage1
+
+    test_instance.pre_run()
+
+    assert mock_foo.call_count == 1
+
+
+def test_FCCAnalysisBaseClass_on_completion_function_success(mocker):
+    """Test the pre_run function when given valid on_completion functions"""
+    # Mock the stage_dict
+    mocker.patch.object(
+        FCCAnalysisBaseClass,
+        "stage_dict",
+        new_callable=mocker.PropertyMock,
+        return_value={"on_completion": ["foo"]},
+    )
+    # Set the foo function that pre_run will run
+    FCCAnalysisBaseClass.foo = lambda self=FCCAnalysisBaseClass: "hello"
+    # Mock the print so we can check our foo function ran properly
+    mock_foo = mocker.patch.object(FCCAnalysisBaseClass, "foo")
+
+    test_instance = FCCAnalysisBaseClass()
+    test_instance.stage = Stages.stage1
+
+    test_instance.on_completion()
+
+    assert mock_foo.call_count == 1

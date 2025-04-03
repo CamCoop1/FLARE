@@ -3,7 +3,7 @@ import json
 import jsonschema
 import pytest
 
-from flare.src import find_file
+from flare.src.utils.dirs import find_file
 
 SCHEMA_PATH = find_file("flare/src/schemas/mc_production_details.json")
 

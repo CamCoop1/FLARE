@@ -3,7 +3,8 @@ from itertools import combinations
 from pathlib import Path
 
 import pytest
-from src.fcc_analysis.fcc_stages import Stages, _Stages
+
+from flare.src.fcc_analysis.fcc_stages import Stages, _Stages
 
 
 @pytest.fixture
@@ -60,6 +61,9 @@ def test_fcc_Stages__get_steering_script_names_for_all_ordered_combinations_of_s
     """Test the _get_steering_script_names function for all possible ordered combinations of stages
     i.e stage1, stage2 or stage1, stage2, final, plot etc."""
     # Loop through each permutation testing the _get_steering_script_names function
+    mock_study_dir = mocker.patch(
+        "b2luigi.get_setting", return_value=Path("mock/study_dir")
+    )
     for active_stages in ordered_permutations:
         mock_stage_scripts = [
             Path(f"{stage.name}_flavour.py") for stage in active_stages
@@ -70,6 +74,8 @@ def test_fcc_Stages__get_steering_script_names_for_all_ordered_combinations_of_s
         # The return value should be the stems, i.e stage1_flavour.py returns stage1
         assert result == [p.stem for p in mock_stage_scripts]
         mock_glob.assert_called_once_with("*.py")
+
+    assert mock_study_dir.call_count == len(ordered_permutations)
 
 
 def test_fcc_Stages__get_active_stages_for_all_ordered_combinations_of_stages(
@@ -97,6 +103,7 @@ def test_fcc_Stages_check_for_unregistered_stage_file_False_for_all_ordered_comb
 ):
     """Test the check_for_unregistered_stage_file function for all possible ordered combinations of stages
     i.e stage1, stage2 or stage1, stage2, final, plot etc."""
+
     for active_stages in ordered_permutations:
         mock_steering_scripts = [Path(f"{s.name}_flavour.py") for s in active_stages]
 
@@ -118,7 +125,6 @@ def test_fcc_Stages_check_for_unregistered_stage_file_True_for_all_ordered_combi
     mocker,
 ):
     """Test the check_for_unregistered_stage_file function for unregistered file"""
-
     # Make there be one less script than active stages
     mock_steering_scripts = [Path(f"{s.name}_flavour.py") for s in list(Stages)[:-1]]
 
@@ -138,6 +144,7 @@ def test_fcc_Stages_check_for_unregistered_stage_file_True_for_all_ordered_combi
 
 def test_fcc_get_stage_script_success(mocker):
     """Test the get_stage_script for success"""
+    mocker.patch("b2luigi.get_setting", return_value=Path("mock/study_dir"))
     stage1 = list(Stages)[0]
     mock_stage_file = f"{stage1.name}_test.py"
     mock_glob = mocker.patch.object(Path, "glob", return_value=[mock_stage_file])
@@ -157,6 +164,7 @@ def test_fcc_get_stage_script_raises_AssertionError_for_incorrect_stage_type():
 
 def test_fcc_get_stage_script_raises_FileNotFoundError_for_unfound_file(mocker):
     """Test the get_stage_script for FileNotFoundError for unfound file"""
+    mocker.patch("b2luigi.get_setting", return_value=Path("mock/study_dir"))
     stage1 = list(Stages)[0]
     # We mock the glob output to return nothing simulating the instance where
     # The glob function does not find a file
@@ -169,6 +177,7 @@ def test_fcc_get_stage_script_raises_FileNotFoundError_for_unfound_file(mocker):
 
 def test_fcc_get_stage_script_raises_RunTimeErrorfor_unfound_file(mocker):
     """Test the get_stage_script for RunTimeError for multiple found files"""
+    mocker.patch("b2luigi.get_setting", return_value=Path("mock/study_dir"))
     stage1 = list(Stages)[0]
     mock_stage_files = [f"{stage1.name}_mock.py", f"{stage1.name}_test.py"]
     mock_glob = mocker.patch.object(Path, "glob", return_value=mock_stage_files)
@@ -180,6 +189,7 @@ def test_fcc_get_stage_script_raises_RunTimeErrorfor_unfound_file(mocker):
 
 def test_fcc_get_stage_ordering_all_ordered_permutations(mocker, ordered_permutations):
     """Test that get_stage_ordering works for all possible ordered permutations"""
+    mocker.patch("b2luigi.get_setting", return_value=Path("mock/study_dir"))
     active_stages_steering_scripts = [
         [f"{stage.name}_flavour" for stage in active_stages]
         for active_stages in ordered_permutations

@@ -14,7 +14,7 @@ from flare.src.utils.yaml import (  # Make sure to import get_config from the co
 @pytest.fixture
 def mock_find_file(mocker):
     """Mock the find_file function"""
-    return mocker.patch("src.utils.yaml.find_file")
+    return mocker.patch("flare.src.utils.yaml.find_file")
 
 
 @pytest.fixture

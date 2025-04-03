@@ -1,12 +1,12 @@
 import pytest
 
-from flare.src import find_file
+from flare.src.utils.dirs import find_file
 from flare.src.utils.jinja2_utils import get_template
 
 
 def test_template_module_contains_steering_file_template():
     """Test that the template module has `steering_file.jinja2"""
-    assert find_file("src", "templates", "steering_file.jinja2").exists()
+    assert find_file("flare", "src", "templates", "steering_file.jinja2").exists()
 
 
 @pytest.mark.parametrize(
