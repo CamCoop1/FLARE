@@ -33,6 +33,11 @@ def get_config(config_name, dir="analysis/config"):
         with open(schema_path) as f:
             schema = json.load(f)
         jsonschema.validate(contents, schema)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"The dataproduction schema provided in {dir/config_name} is not a valid schema for flare."
+            " Ensure the path is set to flare/src/schemas/mc_production_details.json"
+        )
     except KeyError:
         pass
     return contents

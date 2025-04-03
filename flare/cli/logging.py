@@ -68,7 +68,7 @@ class Opts:
 opts = Opts()
 
 # Initialize logging
-MyInterfaceLogging.setup()
+MyInterfaceLogging.setup(opts)
 
 # Use the logger
 logger = MyInterfaceLogging.get_logger()

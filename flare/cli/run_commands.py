@@ -38,6 +38,10 @@ def run_analysis(args):
             "There exists unregistered stages in your analysis. Please register them following the README.md"
             " and rerun"
         )
+
+    assert (
+        Stages.get_stage_ordering()
+    ), "Not FCC Stages have been detected in your study directory"
     flare.process(
         FCCAnalysisWrapper(),
         workers=4,
