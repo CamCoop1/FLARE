@@ -9,7 +9,7 @@ from flare.src.utils.yaml import get_config
 
 
 def _get_unwanted_cli_arguments():
-    return ["command", "subcommand", "func"]
+    return ["command", "subcommand", "func", "prog"]
 
 
 def get_flare_cwd() -> Path:
@@ -128,8 +128,7 @@ def _build_for_pure_flare(args):
 
 def _build_for_regular_flare_cli(args):
     """Build the executable for the regular flare CLI"""
-    cmd_string = [args.subcommand]
-    cmd_string += [
+    additional_args = [
         " ".join(
             f"--{key.replace('_', '-')} {value}"
             for key, value in vars(args).items()
@@ -137,8 +136,8 @@ def _build_for_regular_flare_cli(args):
         )
     ]
     # Set the executable setting to be flare CLI
-    luigi.set_setting("executable", ["flare run"])
+    luigi.set_setting("executable", ["flare run", args.subcommand])
     # Add the flare CLI commandline arguments
-    luigi.set_setting("task_cmd_additional_args", cmd_string)
+    luigi.set_setting("task_cmd_additional_args", additional_args)
     # Set the add_filename_to_cmd to False so executable_wrapper.sh is formatted correctly
     luigi.set_setting("add_filename_to_cmd", False)
