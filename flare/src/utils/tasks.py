@@ -37,7 +37,7 @@ def _linear_task_workflow_generator(
     stages: list[Any],
     class_name: str,
     base_class: luigi.Task,
-    class_attrs: dict[Any, dict[str, Any]] | None = None,
+    class_attrs: dict[Any, dict[str, Any]] = {},
     inject_stage1_dependency: None | luigi.Task = None,
 ) -> dict[Any, luigi.Task]:
     """The function will take a list of stage strings, a class name and a luigi.Task base class
@@ -115,7 +115,7 @@ def _linear_task_workflow_generator(
             "stage": stage,
             "results_subdir": luigi.get_setting("results_subdir"),
         }  # Class attributes
-        if class_attrs and class_attrs.get(stage):
+        if class_attrs.get(stage, None):
             subclass_attributes.update(class_attrs[stage])
 
         # Define the class dynamically
@@ -135,14 +135,16 @@ def _linear_task_workflow_generator(
             ), "Injected dependency must be a child class of luigi.Task"
             # Check if any attributes have been passes to the class_attrs that need
             # to be added to the inject_stage1_dependency class
-            if class_attrs.get("inject_stage1_dependency"):
+            if class_attrs.get("inject_stage1_dependency", None):
                 attr_dict = class_attrs.pop("inject_stage1_dependency")
                 _assigne_inject_stage1_dependency_attrs(
                     attr_dict, inject_stage1_dependency
                 )
             # Create the dependency
-            new_class.requires = lambda self=new_class: requires_func(
-                self, inject_stage1_dependency
+            new_class.requires = (
+                lambda task=new_class, dep=inject_stage1_dependency: requires_func(
+                    task=task, dependency=dep
+                )
             )
 
         tasks.update({stage: new_class})
