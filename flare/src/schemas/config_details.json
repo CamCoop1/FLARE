@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "Description": {
+      "type": "string"
+    },
+    "Name": {
+      "type": "string"
+    },
+    "StudyDir": {
+      "type": "string",
+      "default": "analysis"
+    },
+    "Version": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "Name",
+    "Version",
+    "Description"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "properties": {
+    "fccanalysis": {
+      "type": "object",
+      "patternProperties": {
+        "^.+$": {
+          "$ref": "#/definitions/stage"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "stage": {
+      "type": "object",
+      "properties": {
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cmd": {
+          "type": "string"
+        },
+        "on_completion": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "optional": true
+        },
+        "output_file": {
+          "type": "string"
+        },
+        "pre_run": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "optional": true
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "cmd",
+        "args",
+        "output_file"
+      ]
+    }
+  }
+}

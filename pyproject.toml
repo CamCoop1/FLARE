@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "FLARE"
+name = "flare"
 version = "0.3.0"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = [
@@ -16,11 +16,24 @@ dependencies = [
     "PyYAML>=6.0"
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest-mock"
+]
+
+[project.scripts]
+flare = "flare.cli.main:main"
+
 [project.urls]
 Homepage = "https://github.com/CamCoop1/FLARE.git"
 
-[tool.setuptools]
-packages = ["src", "analysis"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["flare*"]
+
+[tool.setuptools.package-data]
+"flare" = ["**/*.yaml", "**/*.json", "**/*.jinja2"]
 
 [tool.flake8]
 max-line-length = 88

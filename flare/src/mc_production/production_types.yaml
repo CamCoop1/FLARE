@@ -1,0 +1,75 @@
+# ####################################################################
+#
+#   This yaml file is where you can add a N-stage MC production
+#   procedure. Given the analyst has configured their workflow
+#   as per the README. The workflow will then find the correct
+#   type (e.g whizard) and use the correct CLI arguments in
+#   the correct order etc.
+#
+#   For the sake of uniqueness, the use of brackets here is intended.
+#   The < and > brackets indicate a name that can be whatever the
+#   analyst wished. The ( ) brackets indicate an output name that
+#   b2luigi will handle in the workflow.
+#
+#   When adding new 2-stage workflows keep this in mind
+#
+#      () - Output files that b2luigi will generate and handle
+#      <> - free space that the analyst can use to detail a file
+#      -- - The input from a previous stage
+#      ++ - The datatype parameter given in the details.yaml
+#
+#   What this is allowing us to do is create a totally generic
+#   workflow that can handle any combination of generators so long
+#   as it can fit this template
+#
+#   Any given generator must follow this format
+#
+#    generator_name :
+#         stage1:
+#            cmd : cmd {0} {1}
+#            args :
+#               - arg1<>.root # will go in {0}
+#               - ().root     # will go in {1}
+#            output_file: output.root
+#
+#   Each stage MUST have a cmd, list of args and an outputfile. If required,
+#   you can also define pre_run and on_completion lists that have the name
+#   of a function to be run that is a
+#
+# ####################################################################
+
+"$schema": "flare/src/schemas/production_types.json"
+
+whizard :
+  stage1 :
+    cmd : whizard {0}
+    args :
+      - ++.sin
+    output_file: proc.stdhep
+  stage2:
+    cmd : DelphesSTDHEP_EDM4HEP {0} {1} {2} {3}
+    args:
+      - card_<>.tcl
+      - edm4hep_<>.tcl
+      - ().root
+      - --.stdhep
+    output_file : ++.root
+
+madgraph:
+  stage1 :
+    cmd : mg5_aMC {0}
+    args :
+      - ++_runcard.dat
+    on_completion:
+      - madgraph_move_contents_to_tmp_output
+    output_file: signal.lhe
+  stage2:
+    cmd : DelphesPythia8_EDM4HEP {0} {1} {2} {3}
+    args:
+      - card_<>.tcl
+      - edm4hep_<>.tcl
+      - pythia_card_<>.cmd
+      - ().root
+    output_file : ++.root
+    pre_run:
+      - madgraph_copy_lhe_file_to_cwd
