@@ -31,10 +31,11 @@ jobs:
             PREFIX=$(echo "$TAG_NAME" | sed -E 's/[a-z]+[0-9]+$//')
             echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
             echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
-            echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
+            echo "prefix=$PREFIX" >> "$GITHUB_OUTPUT"
             echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
             echo "Version is $NEW_VERSION"
             echo "Suffix is $SUFFIX"
+            echo "Prefix is $PREFIX"
             echo "Tag name is $TAG_NAME"
           else
             echo "No tag found"
