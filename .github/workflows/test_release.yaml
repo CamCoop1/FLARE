@@ -17,6 +17,7 @@ jobs:
     outputs:
       new_version: ${{ steps.release.outputs.new_version }}
       suffix: ${{ steps.release.outputs.suffix }}
+      prefix: ${{ steps.release.outputs.prefix }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v2
@@ -62,30 +63,26 @@ jobs:
 
       - name: Compare versions and exit if not newer
         run: |
-          NEW_VERSION=${{ needs.details.outputs.new_version }}
-          LATEST_VERSION=$latest_previous_version
+          # Define the regex to match version numbers
+          VERSION_REGEX="^([0-9]+\.[0-9]+\.[0-9]+)([a-zA-Z0-9]+)?$"
 
-          # Extract prefix and suffix from NEW_VERSION
-          if [[ "$NEW_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)([a-z]+[0-9]+)?$ ]]; then
+          # Parse the NEW_VERSION
+          if [[ "$NEW_VERSION" =~ $VERSION_REGEX ]]; then
             NEW_PREFIX="${BASH_REMATCH[1]}"
             NEW_SUFFIX="${BASH_REMATCH[2]}"
           else
-            echo "Failed to parse NEW_VERSION: $NEW_VERSION"
+            echo "Failed to parse NEW_VERSION: $NEW_VERSION. Expected format: X.Y.Z[a-zA-Z0-9]*"
             exit 1
           fi
 
-          # Extract prefix and suffix from LATEST_VERSION
-          if [[ "$LATEST_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)([a-z]+[0-9]+)?$ ]]; then
+          # Parse the LATEST_VERSION
+          if [[ "$LATEST_VERSION" =~ $VERSION_REGEX ]]; then
             LATEST_PREFIX="${BASH_REMATCH[1]}"
             LATEST_SUFFIX="${BASH_REMATCH[2]}"
           else
-            echo "Failed to parse LATEST_VERSION: $LATEST_VERSION"
+            echo "Failed to parse LATEST_VERSION: $LATEST_VERSION. Expected format: X.Y.Z[a-zA-Z0-9]*"
             exit 1
           fi
-
-          echo "Comparing:"
-          echo "  New:    $NEW_PREFIX + $NEW_SUFFIX"
-          echo "  Latest: $LATEST_PREFIX + $LATEST_SUFFIX"
 
           # Compare version prefix
           if [ "$NEW_PREFIX" != "$LATEST_PREFIX" ]; then
@@ -96,6 +93,15 @@ jobs:
               echo "New prefix $NEW_PREFIX is not greater than $LATEST_PREFIX"
               exit 1
             fi
+          fi
+
+          # Compare ranks and numbers if prefixes are the same
+          if [ "$NEW_RANK" \> "$LATEST_RANK" ]; then
+            echo "New version $NEW_VERSION is greater than $LATEST_VERSION"
+            exit 0
+          else
+            echo "New version $NEW_VERSION is not greater than $LATEST_VERSION"
+            exit 1
           fi
 
           # Same prefix → compare suffixes
