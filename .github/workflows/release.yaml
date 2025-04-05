@@ -103,8 +103,33 @@ jobs:
           name: dist
           path: dist/
 
+# If pre-release, we test on test-pypi
+  test_pypi_publish:
+    name: Upload to TestPyPI
+    if: ${{ contains(needs.details.outputs.suffix, 'a') || contains(needs.details.outputs.suffix, 'b') || contains(needs.details.outputs.suffix, 'rc') }}
+    needs: [setup_and_build, details]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        env:
+          TWINE_VERBOSE: 1
+
+# if full release, publish to pypi
   pypi_publish:
     name: Upload release to PyPI
+    if: ${{ !contains(needs.details.outputs.suffix, 'a') && !contains(needs.details.outputs.suffix, 'b') && !contains(needs.details.outputs.suffix, 'rc') }}
     needs: [setup_and_build, details]
     runs-on: ubuntu-latest
     environment:
