@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "flare"
+name = "hep-flare"
 version = "0.0.0"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = [
