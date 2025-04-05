@@ -31,7 +31,7 @@ $ cd FLARE && pip3 install  -e .
 ```
 If you are installing from PYPI then use
 ```
-$ cd FLARE && pip3 install fcc-flare
+$ cd FLARE && pip3 install hep-flare
 ```
 Now your virtual environment will be setup like so:
 
