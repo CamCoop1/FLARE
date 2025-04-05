@@ -94,7 +94,7 @@ jobs:
           poetry build
 
       - name: Verify build output
-        runs: |
+        run: |
           ls -lh ./dist/
 
       - name: Upload artifacts
