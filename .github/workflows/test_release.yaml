@@ -26,10 +26,12 @@ jobs:
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG_NAME=${GITHUB_REF#refs/tags/}
-            NEW_VERSION=$(echo $TAG_NAME | awk -F'-' '{print $1}')
-            SUFFIX=$(echo $TAG_NAME | grep -oP '[a-z]+[0-9]+' || echo "")
+            NEW_VERSION=$(echo $TAG_NAME | awk -F'-' '{print $1}')            
+            SUFFIX=$(echo "$TAG_NAME" | grep -oE '[a-z]+[0-9]+$' || echo "")
+            PREFIX=$(echo "$TAG_NAME" | sed -E 's/[a-z]+[0-9]+$//')
             echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
             echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+            echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
             echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
             echo "Version is $NEW_VERSION"
             echo "Suffix is $SUFFIX"
@@ -59,20 +61,64 @@ jobs:
 
       - name: Compare versions and exit if not newer
         run: |
-        python3 -c "
-      import os
-      import sys
-      from packaging.version import Version
+          NEW_VERSION=${{ needs.details.outputs.new_version }}
+          LATEST_VERSION=$latest_previous_version
 
-      latest = os.environ.get('latest_previous_version', '0.0.0')
-      new = '${{ needs.details.outputs.new_version }}'
+          # Extract prefix and suffix from NEW_VERSION
+          if [[ "$NEW_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)([a-z]+[0-9]+)?$ ]]; then
+            NEW_PREFIX="${BASH_REMATCH[1]}"
+            NEW_SUFFIX="${BASH_REMATCH[2]}"
+          else
+            echo "Failed to parse NEW_VERSION: $NEW_VERSION"
+            exit 1
+          fi
 
-      if Version(new) <= Version(latest):
-          print(f'New version {new} is not greater than latest version {latest} on PyPI.')
-          sys.exit(1)
-      else:
-          print(f'New version {new} is greater than latest version {latest} on PyPI.')
-      "
+          # Extract prefix and suffix from LATEST_VERSION
+          if [[ "$LATEST_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)([a-z]+[0-9]+)?$ ]]; then
+            LATEST_PREFIX="${BASH_REMATCH[1]}"
+            LATEST_SUFFIX="${BASH_REMATCH[2]}"
+          else
+            echo "Failed to parse LATEST_VERSION: $LATEST_VERSION"
+            exit 1
+          fi
+
+          echo "Comparing:"
+          echo "  New:    $NEW_PREFIX + $NEW_SUFFIX"
+          echo "  Latest: $LATEST_PREFIX + $LATEST_SUFFIX"
+
+          # Compare version prefix
+          if [ "$NEW_PREFIX" != "$LATEST_PREFIX" ]; then
+            if [ "$(printf '%s\n' "$LATEST_PREFIX" "$NEW_PREFIX" | sort -V | tail -n1)" == "$NEW_PREFIX" ]; then
+              echo "New prefix $NEW_PREFIX is greater than $LATEST_PREFIX"
+              exit 0
+            else
+              echo "New prefix $NEW_PREFIX is not greater than $LATEST_PREFIX"
+              exit 1
+            fi
+          fi
+
+          # Same prefix → compare suffixes
+          get_suffix_rank() {
+            local suffix="$1"
+            if [[ "$suffix" =~ ^a([0-9]+)$ ]]; then echo "1 ${BASH_REMATCH[1]}"; return; fi
+            if [[ "$suffix" =~ ^b([0-9]+)$ ]]; then echo "2 ${BASH_REMATCH[1]}"; return; fi
+            if [[ "$suffix" =~ ^rc([0-9]+)$ ]]; then echo "3 ${BASH_REMATCH[1]}"; return; fi
+            # No suffix = stable release
+            echo "4 0"
+          }
+
+          NEW_RANK=$(get_suffix_rank "$NEW_SUFFIX")
+          LATEST_RANK=$(get_suffix_rank "$LATEST_SUFFIX")
+
+          # Compare ranks and numbers
+          if [ "$NEW_RANK" \> "$LATEST_RANK" ]; then
+            echo "New version $NEW_VERSION is greater than $LATEST_VERSION"
+            exit 0
+          else
+            echo "New version $NEW_VERSION is not greater than $LATEST_VERSION"
+            exit 1
+          fi
+
 
   setup_and_build:
     needs: [details, check_pypi]
