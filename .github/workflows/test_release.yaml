@@ -1,9 +1,11 @@
-name: release
+name: test-release
 
 on:
   push:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+a[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+b[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+rc[0-9]+"
 
 env:
   PACKAGE_NAME: "hep-flare"
@@ -20,7 +22,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Extract tag and Details
-        id: release
+        id: test-release
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG_NAME=${GITHUB_REF#refs/tags/}
@@ -100,15 +102,12 @@ jobs:
           name: dist
           path: dist/
 
-    
-# if full release, publish to pypi
-  pypi_publish:
-    name: Upload release to PyPI
-    if: ${{ !contains(needs.details.outputs.suffix, 'a') && !contains(needs.details.outputs.suffix, 'b') && !contains(needs.details.outputs.suffix, 'rc') }}
+# If pre-release, we test on test-pypi
+  test_pypi_publish:
+    name: Upload to TestPyPI
+    if: ${{ contains(needs.details.outputs.suffix, 'a') || contains(needs.details.outputs.suffix, 'b') || contains(needs.details.outputs.suffix, 'rc') }}
     needs: [setup_and_build, details]
     runs-on: ubuntu-latest
-    environment:
-      name: release
     permissions:
       id-token: write
     steps:
@@ -118,8 +117,10 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Publish distribution to PyPI
+      - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
 
   github_release:
     name: Create GitHub Release
