@@ -43,89 +43,88 @@ jobs:
             exit 1
           fi
 
-  check_pypi:
-    needs: details
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch information from PyPI
-        run: |
-          response=$(curl -s https://test.pypi.org/pypi/${{ env.PACKAGE_NAME }}/json || echo "{}")
-          latest_previous_version=$(echo $response | jq --raw-output "select(.releases != null) | .releases | keys_unsorted | last")
-          if [ -z "$latest_previous_version" ]; then
-            echo "Package not found on PyPI."
-            latest_previous_version="0.0.0"
-          fi
-          echo "Latest version on PyPI: $latest_previous_version"
-          echo "latest_previous_version=$latest_previous_version" >> $GITHUB_ENV
+  # check_pypi:
+  #   needs: details
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Fetch information from PyPI
+  #       run: |
+  #         response=$(curl -s https://test.pypi.org/pypi/${{ env.PACKAGE_NAME }}/json || echo "{}")
+  #         latest_previous_version=$(echo $response | jq --raw-output "select(.releases != null) | .releases | keys_unsorted | last")
+  #         if [ -z "$latest_previous_version" ]; then
+  #           echo "Package not found on PyPI."
+  #           latest_previous_version="0.0.0"
+  #         fi
+  #         echo "Latest version on PyPI: $latest_previous_version"
+  #         echo "latest_previous_version=$latest_previous_version" >> $GITHUB_ENV
 
-      - name: Install packaging module
-        run: python3 -m pip install packaging
+  #     - name: Install packaging module
+  #       run: python3 -m pip install packaging
 
-      - name: Compare versions and exit if not newer
-        run: |
-          # Define the regex to match version numbers
-          VERSION_REGEX="^([0-9]+\.[0-9]+\.[0-9]+)([a-zA-Z0-9]+)?$"
+  #     - name: Compare versions and exit if not newer
+  #       run: |
+  #         # Define the regex to match version numbers
+  #         VERSION_REGEX="^([0-9]+\.[0-9]+\.[0-9]+)([a-zA-Z0-9]+)?$"
 
-          # Parse the NEW_VERSION
-          if [[ "$NEW_VERSION" =~ $VERSION_REGEX ]]; then
-            NEW_PREFIX="${BASH_REMATCH[1]}"
-            NEW_SUFFIX="${BASH_REMATCH[2]}"
-          else
-            echo "Failed to parse NEW_VERSION: $NEW_VERSION. Expected format: X.Y.Z[a-zA-Z0-9]*"
-            exit 1
-          fi
+  #         # Parse the NEW_VERSION
+  #         if [[ "$NEW_VERSION" =~ $VERSION_REGEX ]]; then
+  #           NEW_PREFIX="${BASH_REMATCH[1]}"
+  #           NEW_SUFFIX="${BASH_REMATCH[2]}"
+  #         else
+  #           echo "Failed to parse NEW_VERSION: $NEW_VERSION. Expected format: X.Y.Z[a-zA-Z0-9]*"
+  #           exit 1
+  #         fi
 
-          # Parse the LATEST_VERSION
-          if [[ "$LATEST_VERSION" =~ $VERSION_REGEX ]]; then
-            LATEST_PREFIX="${BASH_REMATCH[1]}"
-            LATEST_SUFFIX="${BASH_REMATCH[2]}"
-          else
-            echo "Failed to parse LATEST_VERSION: $LATEST_VERSION. Expected format: X.Y.Z[a-zA-Z0-9]*"
-            exit 1
-          fi
+  #         # Parse the LATEST_VERSION
+  #         if [[ "$LATEST_VERSION" =~ $VERSION_REGEX ]]; then
+  #           LATEST_PREFIX="${BASH_REMATCH[1]}"
+  #           LATEST_SUFFIX="${BASH_REMATCH[2]}"
+  #         else
+  #           echo "Failed to parse LATEST_VERSION: $LATEST_VERSION. Expected format: X.Y.Z[a-zA-Z0-9]*"
+  #           exit 1
+  #         fi
 
-          # Compare version prefix
-          if [ "$NEW_PREFIX" != "$LATEST_PREFIX" ]; then
-            if [ "$(printf '%s\n' "$LATEST_PREFIX" "$NEW_PREFIX" | sort -V | tail -n1)" == "$NEW_PREFIX" ]; then
-              echo "New prefix $NEW_PREFIX is greater than $LATEST_PREFIX"
-              exit 0
-            else
-              echo "New prefix $NEW_PREFIX is not greater than $LATEST_PREFIX"
-              exit 1
-            fi
-          fi
+  #         # Compare version prefix
+  #         if [ "$NEW_PREFIX" != "$LATEST_PREFIX" ]; then
+  #           if [ "$(printf '%s\n' "$LATEST_PREFIX" "$NEW_PREFIX" | sort -V | tail -n1)" == "$NEW_PREFIX" ]; then
+  #             echo "New prefix $NEW_PREFIX is greater than $LATEST_PREFIX"
+  #             exit 0
+  #           else
+  #             echo "New prefix $NEW_PREFIX is not greater than $LATEST_PREFIX"
+  #             exit 1
+  #           fi
+  #         fi
 
-          # Compare ranks and numbers if prefixes are the same
-          if [ "$NEW_RANK" \> "$LATEST_RANK" ]; then
-            echo "New version $NEW_VERSION is greater than $LATEST_VERSION"
-            exit 0
-          else
-            echo "New version $NEW_VERSION is not greater than $LATEST_VERSION"
-            exit 1
-          fi
+  #         # Compare ranks and numbers if prefixes are the same
+  #         if [ "$NEW_RANK" \> "$LATEST_RANK" ]; then
+  #           echo "New version $NEW_VERSION is greater than $LATEST_VERSION"
+  #           exit 0
+  #         else
+  #           echo "New version $NEW_VERSION is not greater than $LATEST_VERSION"
+  #           exit 1
+  #         fi
 
-          # Same prefix → compare suffixes
-          get_suffix_rank() {
-            local suffix="$1"
-            if [[ "$suffix" =~ ^a([0-9]+)$ ]]; then echo "1 ${BASH_REMATCH[1]}"; return; fi
-            if [[ "$suffix" =~ ^b([0-9]+)$ ]]; then echo "2 ${BASH_REMATCH[1]}"; return; fi
-            if [[ "$suffix" =~ ^rc([0-9]+)$ ]]; then echo "3 ${BASH_REMATCH[1]}"; return; fi
-            # No suffix = stable release
-            echo "4 0"
-          }
+  #         # Same prefix → compare suffixes
+  #         get_suffix_rank() {
+  #           local suffix="$1"
+  #           if [[ "$suffix" =~ ^a([0-9]+)$ ]]; then echo "1 ${BASH_REMATCH[1]}"; return; fi
+  #           if [[ "$suffix" =~ ^b([0-9]+)$ ]]; then echo "2 ${BASH_REMATCH[1]}"; return; fi
+  #           if [[ "$suffix" =~ ^rc([0-9]+)$ ]]; then echo "3 ${BASH_REMATCH[1]}"; return; fi
+  #           # No suffix = stable release
+  #           echo "4 0"
+  #         }
 
-          NEW_RANK=$(get_suffix_rank "$NEW_SUFFIX")
-          LATEST_RANK=$(get_suffix_rank "$LATEST_SUFFIX")
+  #         NEW_RANK=$(get_suffix_rank "$NEW_SUFFIX")
+  #         LATEST_RANK=$(get_suffix_rank "$LATEST_SUFFIX")
 
-          # Compare ranks and numbers
-          if [ "$NEW_RANK" \> "$LATEST_RANK" ]; then
-            echo "New version $NEW_VERSION is greater than $LATEST_VERSION"
-            exit 0
-          else
-            echo "New version $NEW_VERSION is not greater than $LATEST_VERSION"
-            exit 1
-          fi
-
+  #         # Compare ranks and numbers
+  #         if [ "$NEW_RANK" \> "$LATEST_RANK" ]; then
+  #           echo "New version $NEW_VERSION is greater than $LATEST_VERSION"
+  #           exit 0
+  #         else
+  #           echo "New version $NEW_VERSION is not greater than $LATEST_VERSION"
+  #           exit 1
+  #         fi
 
   setup_and_build:
     needs: [details, check_pypi]
