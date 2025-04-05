@@ -122,6 +122,8 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}      
+        env:
+          TWINE_VERBOSE: 1
 
   github_release:
     name: Create GitHub Release
