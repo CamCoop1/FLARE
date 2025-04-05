@@ -79,30 +79,25 @@ jobs:
 
       - name: Install Poetry
         run: |
-          set -x
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Set project version with Poetry
         run: |
-          set -x
           poetry version ${{ needs.details.outputs.new_version }}
 
       - name: Install dependencies
-        run: |
-          set -x
-          poetry install --sync --no-interaction
+        run: poetry install --sync --no-interaction
 
       - name: Build source and wheel distribution
         run: |
-          set -x
           poetry build
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: dist
-          path: ./dist/
+          path: dist/
 
   pypi_publish:
     name: Upload release to PyPI

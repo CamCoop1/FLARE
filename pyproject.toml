@@ -9,7 +9,7 @@ description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = [
     { name = "Cameron Harris", email = "cameron.harris@adelaide.edu.au" }
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.8,<3.12"
 dependencies = [
     "b2luigi>=1.1.1",
     "jsonschema>=4.17.3",
