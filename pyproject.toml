@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hep-flare"
-version = "0.0.0"
+version = "0.0.2a"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = [
     { name = "Cameron Harris", email = "cameron.harris@adelaide.edu.au" }
@@ -29,10 +29,12 @@ Homepage = "https://github.com/CamCoop1/FLARE.git"
 
 [tool.poetry]
 name = "hep-flare"
-version = "0.0.0"
+version = "0.0.2a"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = ["Cameron Harris <cameron.harris@adelaide.edu.au>"]
 readme = "README.md"
+license = "MIT"
+keywords = ["hep", "physics", "flare", "luigi"]
 packages = [
     { include = "flare" }
 ]
