@@ -27,6 +27,16 @@ flare = "flare.cli.main:main"
 [project.urls]
 Homepage = "https://github.com/CamCoop1/FLARE.git"
 
+[tool.poetry]
+name = "hep-flare"
+version = "0.0.0"
+description = "Framework for streamlining the FCC framework powered by b2luigi"
+authors = ["Cameron Harris <cameron.harris@adelaide.edu.au>"]
+readme = "README.md"
+packages = [
+    { include = "flare" }
+]
+
 
 [tool.setuptools.packages.find]
 where = ["."]
