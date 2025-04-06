@@ -103,27 +103,27 @@ jobs:
           name: dist
           path: dist/
 
-  pypi_publish:
-    name: Upload release to PyPI
-    needs: [setup_and_build, details]
-    runs-on: ubuntu-latest
-    environment:
-      name: release
-    permissions:
-      id-token: write
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
+  # pypi_publish:
+  #   name: Upload release to PyPI
+  #   needs: [setup_and_build, details]
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: release
+  #   permissions:
+  #     id-token: write
+  #   steps:
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: dist
+  #         path: dist/
 
-      - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}      
-        env:
-          TWINE_VERBOSE: 1
+  #     - name: Publish distribution to PyPI
+  #       uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         password: ${{ secrets.PYPI_API_TOKEN }}
+  #       env:
+  #         TWINE_VERBOSE: 1
 
   github_release:
     name: Create GitHub Release
