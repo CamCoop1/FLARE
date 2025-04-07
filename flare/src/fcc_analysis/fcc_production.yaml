@@ -1,4 +1,4 @@
-"$schema": "flare/src/schemas/production_types.json"
+"$model" : FCCProductionModel
 
 fccanalysis :
   stage1 :
