@@ -1,0 +1,37 @@
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel
+
+
+class ForbidExtraBaseModel(BaseModel):
+    """Define a BaseModel that forbids extra to reject
+    unexpected fields"""
+
+    class Config:
+        extra = "forbid"
+
+
+class Stage(ForbidExtraBaseModel):
+    """
+    The base yaml that every stage must follow
+    """
+
+    cmd: str
+    args: List[str]
+    output_file: str
+    on_completion: Optional[List[str]] = None
+    pre_run: Optional[List[str]] = None
+
+
+class ProductionTypeBaseModel(ForbidExtraBaseModel):
+    """
+    The ProductionTypeBaseModel that is used to define any
+    production type
+
+    We use this to define the fact a ProductionType should is expected
+    to be a dictionary with the key being the production type and the
+    value being in the format from the Stage model
+    """
+
+    # Allows arbitrary keys, each mapping to a Stage
+    __root__: Dict[str, Stage]
