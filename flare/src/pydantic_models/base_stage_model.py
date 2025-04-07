@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ForbidExtraBaseModel(BaseModel):
@@ -19,8 +19,8 @@ class Stage(ForbidExtraBaseModel):
     cmd: str
     args: List[str]
     output_file: str
-    on_completion: Optional[List[str]] = None
-    pre_run: Optional[List[str]] = None
+    on_completion: Optional[List[str]] = Field(default_factory=list)
+    pre_run: Optional[List[str]] = Field(default_factory=list)
 
 
 class ProductionTypeBaseModel(ForbidExtraBaseModel):
