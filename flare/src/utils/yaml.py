@@ -27,15 +27,19 @@ def get_config(config_name, dir="analysis/config"):
     with open(YAMLFile) as f:
         contents = yaml.safe_load(f)
 
-    if contents.get("$model", None):
-        validation_model = contents.pop("$model")
-        try:
-            model = models[validation_model]
-            validated_model = model(**contents)
-        except KeyError:
-            raise KeyError(
-                f"The model {validation_model} does not exist. The validation models are as show: "
-                ", ".join(models.keys())
-            )
+    # If no model is provided return early with the contents
+    if not contents.get("$model", None):
+        return contents
+
+    # Otherwise use models to validate the input data
+    validation_model = contents.pop("$model")
+    try:
+        model = models[validation_model]
+        validated_model = model(**contents)
+    except KeyError:
+        raise KeyError(
+            f"The model {validation_model} does not exist. The validation models are as show: "
+            ", ".join(models.keys())
+        )
 
     return validated_model.dict()
