@@ -2,7 +2,7 @@ from typing import List, Literal
 
 from pydantic import Field
 
-from flare.src.pydantic_models.base_stage_model import ForbidExtraBaseModel
+from flare.src.pydantic_models.utils import ForbidExtraBaseModel
 
 
 class UserMCProdConfigModel(ForbidExtraBaseModel):

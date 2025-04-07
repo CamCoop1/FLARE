@@ -1,4 +1,4 @@
-from flare.src.pydantic_models.base_stage_model import (
+from flare.src.pydantic_models.utils import (
     ForbidExtraBaseModel,
     ProductionTypeBaseModel,
 )

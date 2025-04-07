@@ -11,7 +11,7 @@ class ForbidExtraBaseModel(BaseModel):
         extra = "forbid"
 
 
-class Stage(ForbidExtraBaseModel):
+class StageModel(ForbidExtraBaseModel):
     """
     The base yaml that every stage must follow
     """
@@ -34,4 +34,4 @@ class ProductionTypeBaseModel(ForbidExtraBaseModel):
     """
 
     # Allows arbitrary keys, each mapping to a Stage
-    __root__: Dict[str, Stage]
+    __root__: Dict[str, StageModel]
