@@ -20,7 +20,7 @@ def get_flare_cwd() -> Path:
     return Path(os.environ["FLARE_CWD"])
 
 
-def load_config(config_path=None, expect_dataprod=True):
+def load_config(config_path=None, user_yaml=False):
     """Load configuration from config.yaml (or a discovered yaml file) if it exists."""
     # Get the cwd of the flare user
     cwd = get_flare_cwd()
@@ -45,7 +45,7 @@ def load_config(config_path=None, expect_dataprod=True):
     # Check the config_path exists
     if config_path.exists():
         # Load the config
-        return get_config(config_path.name, dir=config_path.parent)
+        return get_config(config_path.name, dir=config_path.parent, user_yaml=user_yaml)
 
     return {}
 
@@ -89,7 +89,8 @@ def load_settings_into_manager(args):
     # Add the dataprod config to the settings, we load the config using load_config
     # if the dataprod_dir does not have a yaml file Assertion errors are raised
     luigi.set_setting(
-        "dataprod_config", load_config(dataprod_dir) if args.mcprod else {}
+        "dataprod_config",
+        load_config(dataprod_dir, user_yaml=True) if args.mcprod else {},
     )
     # Set the mcprod
     luigi.set_setting("mcprod", args.mcprod)
@@ -99,6 +100,7 @@ def load_settings_into_manager(args):
     for name, value in config.items():
         name = name.lower()  # All settings are lower case
         if not luigi.get_setting(name, default=False):
+            logger.info(f"{name}: value")
             luigi.set_setting(name, value)
 
 
