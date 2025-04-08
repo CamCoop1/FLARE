@@ -32,8 +32,6 @@ class MCProductionBaseTask(
 
     prodtype = luigi.EnumParameter(enum=get_mc_production_types())
     datatype = luigi.Parameter()
-    card_name = luigi.Parameter()
-    edm4hep_name = luigi.Parameter()
 
     stage: str
     results_subdir: str
@@ -162,9 +160,9 @@ class MCProductionBaseTask(
             case _:
                 # More than one, we assume we are looping over a parameter of this class
                 if "card" in arg:
-                    path = [p for p in file_path if p == self.card_name][0]
+                    path = [p for p in file_path if self.card_name in p][0]
                 elif "ed4hep" in arg:
-                    path = [p for p in file_path if p == self.edm4hep_name][0]
+                    path = [p for p in file_path if self.edm4hep_name in p][0]
                 else:
                     raise FileNotFoundError(
                         f"The file associated with {arg} is unknown to flare."
@@ -333,6 +331,12 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None) -> dict:
         stages=_get_mc_prod_stages(),
         class_name="MCProduction",
         base_class=MCProductionBaseTask,
+        class_attrs={
+            "stage2": {
+                "card_name": luigi.Parameter(),
+                "edm4hep_name": luigi.Parameter(),
+            }
+        },
         inject_stage1_dependency=inject_stage1_dependency,
     )
 
