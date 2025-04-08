@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 from functools import lru_cache
+from itertools import product
 from pathlib import Path
 
 import b2luigi as luigi
@@ -31,8 +32,13 @@ class MCProductionBaseTask(
 
     prodtype = luigi.EnumParameter(enum=get_mc_production_types())
     datatype = luigi.Parameter()
+
     stage: str
     results_subdir: str
+
+    @property
+    def input_file_path(self):
+        return Path(next(iter(self.get_all_input_file_names())))
 
     @property
     def _unparsed_output_file_name(self):
@@ -67,18 +73,32 @@ class MCProductionBaseTask(
         ).parent.with_suffix(".tmp")
 
     @property
+    def b2luigi_parameter_output_file_name(self):
+        params = [self.datatype, self.card_name, self.edm4hep_name]
+        filtered_params = [p for p in params if p != "default"]
+        return "_".join(filtered_params)
+
+    @property
     def output_file_name(self):
         """
-        The output file may be dependent on a datatype parameter so must determine if the output
+        The output file may be dependent on a datatype, card_name or edm4hep_name parameters so must determine if the output
         file name needs to be parsed and transformed or if we can return the unparsed output file name
         """
-        if (
-            BracketMappings.determine_bracket_mapping(self._unparsed_output_file_name)
-            == BracketMappings.datatype_parameter
+        match BracketMappings.determine_bracket_mapping(
+            self._unparsed_output_file_name
         ):
-            suffix = get_suffix_from_arg(self._unparsed_output_file_name)
-            return f"{self.datatype}{suffix}"
-        return self._unparsed_output_file_name
+            case BracketMappings.datatype_parameter:
+                suffix = get_suffix_from_arg(self._unparsed_output_file_name)
+                return f"{self.datatype}{suffix}"
+
+            case BracketMappings.b2luigi_detemined_parameter:
+                suffix = get_suffix_from_arg(
+                    self._unparsed_output_file_name
+                )  # eg .root
+                prefix = self.b2luigi_parameter_output_file_name
+                return f"{prefix}{suffix}"
+            case _:
+                return self._unparsed_output_file_name
 
     def copy_input_file_to_output_dir(self, path):
         """
@@ -105,6 +125,7 @@ class MCProductionBaseTask(
         return next(iter(self.get_input_file_names().values()))[0]
 
     def bm_datatype_parameter(self, arg) -> Path:
+        arg = arg.replace(BracketMappings.datatype_parameter, self.datatype)
         return self._find_file_path_given_arg_and_bracketmapping(
             arg=arg, bracket_mapping=BracketMappings.datatype_parameter
         )
@@ -118,27 +139,37 @@ class MCProductionBaseTask(
         self, arg: str, bracket_mapping: BracketMappings
     ) -> Path:
         file_paths = [f for f in self.get_file_paths()]
-        # Must replace the datatype_parameter mapping to the datatype attribute
-        parsed_arg = (
-            arg.replace(bracket_mapping, self.datatype)
-            if bracket_mapping == BracketMappings.datatype_parameter
-            else arg
-        )
         # Find the associated file using the check_if_path_matches_mapping function
-        try:
-            file_path = [
-                str(f)
-                for f in file_paths
-                if check_if_path_matches_mapping(parsed_arg, f, bracket_mapping)
-            ][0]
-        except IndexError:
-            raise FileNotFoundError(
-                f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
-                " The framework will exit, ensure this file is present and try again."
-            )
-        # We copy this file to the tmp output dir so we have a history of what input files were used
-        self.copy_input_file_to_output_dir(file_path)
-        return file_path
+        file_path = [
+            str(f)
+            for f in file_paths
+            if check_if_path_matches_mapping(arg, f, bracket_mapping)
+        ]
+
+        match len(file_path):
+            case 0:
+                raise IndexError(
+                    f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
+                    " The framework will exit, ensure this file is present and try again."
+                )
+            case 1:
+                # We copy this file to the tmp output dir so we have a history of what input files were used
+                path = file_path[0]
+                self.copy_input_file_to_output_dir(path)
+                return path
+            case _:
+                # More than one, we assume we are looping over a parameter of this class
+                if "card" in arg:
+                    path = [p for p in file_path if self.card_name in p][0]
+                elif "ed4hep" in arg:
+                    path = [p for p in file_path if self.edm4hep_name in p][0]
+                else:
+                    raise FileNotFoundError(
+                        f"The file associated with {arg} is unknown to flare."
+                    )
+
+                self.copy_input_file_to_output_dir(path)
+                return path
 
     def process(self):
         """
@@ -242,13 +273,21 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             yield self.add_to_output(path.name)
 
     def requires(self):
-        for datatype in luigi.get_setting("dataprod_config")["datatype"]:
+        dataprod_config = luigi.get_setting("dataprod_config")
+        for datatype, card, edm4hep in product(
+            dataprod_config["datatype"],
+            dataprod_config["card"],
+            dataprod_config["edm4hep"],
+        ):
             yield get_last_stage_task()(
-                prodtype=get_mc_production_types()[self.prodtype], datatype=datatype
+                prodtype=get_mc_production_types()[self.prodtype],
+                datatype=datatype,
+                card_name=card,
+                edm4hep_name=edm4hep,
             )
 
 
-def _get_mc_prod_stages() -> dict[str, dict]:
+def _get_mc_prod_stages() -> dict:
     """
     Returns
     --------
@@ -260,7 +299,7 @@ def _get_mc_prod_stages() -> dict[str, dict]:
 
 
 @lru_cache(typed=True)
-def get_mc_prod_stages_dict(inject_stage1_dependency=None):
+def get_mc_prod_stages_dict(inject_stage1_dependency=None) -> dict:
     """
     Get the ordered dictionary of MCProduction tasks.
 
@@ -292,6 +331,12 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None):
         stages=_get_mc_prod_stages(),
         class_name="MCProduction",
         base_class=MCProductionBaseTask,
+        class_attrs={
+            "stage2": {
+                "card_name": luigi.Parameter(),
+                "edm4hep_name": luigi.Parameter(),
+            }
+        },
         inject_stage1_dependency=inject_stage1_dependency,
     )
 

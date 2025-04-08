@@ -24,7 +24,7 @@ def run_mcproduction(args):
     _check_mc_prod_valid(config["prodtype"])
     flare.process(
         MCProductionWrapper(prodtype=config["prodtype"]),
-        workers=4,
+        workers=20,
         batch=True,
         ignore_additional_command_line_args=True,
         flare_args=args,
@@ -44,7 +44,7 @@ def run_analysis(args):
     ), "Not FCC Stages have been detected in your study directory"
     flare.process(
         FCCAnalysisWrapper(),
-        workers=4,
+        workers=20,
         batch=True,
         ignore_additional_command_line_args=True,
         flare_args=args,

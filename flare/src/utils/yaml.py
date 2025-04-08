@@ -8,7 +8,7 @@ from flare.src.utils.dirs import find_file
 
 
 @lru_cache(typed=True)
-def get_config(config_name, dir="analysis/config") -> dict:
+def get_config(config_name, dir="analysis/config", user_yaml=False) -> dict:
     """
     Load config YAML file.
 
@@ -27,11 +27,22 @@ def get_config(config_name, dir="analysis/config") -> dict:
         contents = yaml.safe_load(f)
 
     # If no model is provided return early with the contents
-    if not contents.get("$model", None):
-        return contents
+    validation_model = contents.pop("$model", None)
+    if not validation_model:
+        if user_yaml:
+            raise ValueError(
+                f"Your configuration yaml located at {dir}/{config_name} does not have a validation Model attached."
+                f""" Ensure your config yaml has the following defined:
 
-    # Otherwise use models to validate the input data
-    validation_model = contents.pop("$model")
+                \033[92m'$model' : UserMCProdConfigModel\033[0m
+                ^^^^^^^ Add this ^^^^^^^^^
+
+Once you have added this, please re-run flare.
+                """
+            )
+        else:
+            return contents
+
     try:
         model = models[validation_model]
         validated_model = model(**contents)
