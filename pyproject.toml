@@ -4,16 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hep-flare"
-version = "0.0.0"
+version = "0.0.2"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = [
     { name = "Cameron Harris", email = "cameron.harris@adelaide.edu.au" }
 ]
-requires-python = ">=3.8,<3.12"
+requires-python = ">=3.9,<3.12"
 dependencies = [
     "b2luigi>=1.1.1",
-    "jsonschema>=4.17.3",
-    "PyYAML>=6.0"
+    "PyYAML>=6.0",
+    "pydantic (<2)"
 ]
 
 [project.optional-dependencies]
@@ -29,7 +29,7 @@ Homepage = "https://github.com/CamCoop1/FLARE.git"
 
 [tool.poetry]
 name = "hep-flare"
-version = "0.0.0"
+version = "0.0.2"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = ["Cameron Harris <cameron.harris@adelaide.edu.au>"]
 readme = "README.md"

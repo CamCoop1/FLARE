@@ -1,10 +1,9 @@
-import json
 from pathlib import Path
 from unittest.mock import mock_open
 
-import jsonschema
 import pytest
 import yaml
+from pydantic import BaseModel
 
 from flare.src.utils.yaml import (  # Make sure to import get_config from the correct location
     get_config,
@@ -18,24 +17,62 @@ def mock_find_file(mocker):
 
 
 @pytest.fixture
-def setup_parameters():
+def mock_model():
+    """Mock Pydantic BaseModel"""
+
+    class MockModel(BaseModel):
+        name: str
+
+    return MockModel
+
+
+@pytest.fixture
+def setup_parameters(mock_model):
     """Setup parameters for mock testing"""
     default_dir_parameter = "tmp"
     # Mock yaml path
     yaml_path = Path(f"{default_dir_parameter}/config.yaml")
-    # Mock schema path
-    schema_path = Path(f"{default_dir_parameter}/schema.json")
-    return default_dir_parameter, yaml_path, schema_path
+    # Mock models dict
+    models = {mock_model.__name__: mock_model}
+    return default_dir_parameter, yaml_path, models
 
 
-def test_get_config_success(mock_find_file, setup_parameters, mocker):
-    """Test when valid config and schema, returned value is as expected"""
-    default_dir_parameter, yaml_path, schema_path = setup_parameters
-    # Prepare mock responses for find_file
-    mock_find_file.side_effect = [
-        yaml_path,  # For YAML file
-        schema_path,  # For schema file
+def test_get_config_for_valid_model(mock_find_file, setup_parameters, mocker):
+    """Test given a valid model and input data, the returned value is a dictionary"""
+    _, yaml_path, models = setup_parameters
+
+    model_name = next(iter(models.keys()))
+    # Mock the find_file call to return the yaml path
+    mock_find_file.return_value = yaml_path
+
+    # Mock the models dictionary
+    mocker.patch.dict("flare.src.utils.yaml.models", models)
+    # Mock YAML file content
+    mock_open_func = mocker.patch("builtins.open", mock_open())
+
+    # Set up mock responses for open (first for YAML, then for JSON)
+    mock_open_func.side_effect = [
+        mock_open(
+            read_data=yaml.dump({"name": "value", "$model": model_name})
+        ).return_value
     ]
+    get_config.cache_clear()
+    result = get_config(yaml_path.stem)
+
+    mock_find_file.assert_called_once()
+    mock_open_func.assert_called_once()  # Only called once to open YAML file
+    assert isinstance(result, dict)
+    assert result == {"name": "value"}
+
+
+def test_get_config_for_invalid_model_raises_KeyError(
+    mock_find_file, setup_parameters, mocker
+):
+    """Test given an invalid model, a KeyError is raised"""
+    _, yaml_path, _ = setup_parameters
+
+    # Mock the find_file call to return the yaml path
+    mock_find_file.return_value = yaml_path
 
     # Mock YAML file content
     mock_open_func = mocker.patch("builtins.open", mock_open())
@@ -43,72 +80,20 @@ def test_get_config_success(mock_find_file, setup_parameters, mocker):
     # Set up mock responses for open (first for YAML, then for JSON)
     mock_open_func.side_effect = [
         mock_open(
-            read_data=yaml.dump({"$schema": str(schema_path), "key": "value"})
-        ).return_value,
-        mock_open(
-            read_data=json.dumps(
-                {
-                    "type": "object",
-                    "properties": {"key": {"type": "string"}},
-                    "required": ["key"],
-                }
-            )
-        ).return_value,
+            read_data=yaml.dump({"name": "value", "$model": "invalid"})
+        ).return_value
     ]
 
-    # Call the function
-    result = get_config(yaml_path.stem, dir=default_dir_parameter)
+    with pytest.raises(KeyError):
+        get_config.cache_clear()
+        _ = get_config(yaml_path.stem)
 
-    # Validate the result
-    assert result == {"key": "value"}  # Ensure the returned value is as expected
-    assert mock_open_func.call_count == 2  # check the open function was called twice
-    mock_find_file.assert_any_call(
-        default_dir_parameter, Path(yaml_path.stem).with_suffix(".yaml")
-    )  # Ensure find_file was called with correct yaml path
-    mock_find_file.assert_any_call(
-        str(schema_path)
-    )  # Ensure find_file was called with correct schema path
-    mock_open_func.assert_any_call(yaml_path)  # Ensure open was called on the YAML file
-    mock_open_func.assert_any_call(
-        schema_path
-    )  # Ensure open was called on the schema file
+    mock_find_file.assert_called_once()
+    mock_open_func.assert_called_once()  # Only called once to open YAML file
 
 
-def test_get_config_schema_validation_fail(mock_find_file, setup_parameters, mocker):
-    """Test when invalid config and schema, jsonschema.ValidationError is raised"""
-    _, yaml_path, schema_path = setup_parameters
-    # Prepare mock responses for find_file
-    mock_find_file.side_effect = [
-        yaml_path,  # For YAML file
-        schema_path,  # For schema file
-    ]
-
-    # Mock YAML file content
-    mock_open_func = mocker.patch("builtins.open", mock_open())
-
-    # Set up mock responses for open (first for YAML, then for JSON)
-    mock_open_func.side_effect = [
-        mock_open(
-            read_data=yaml.dump({"$schema": str(schema_path), "invalid": "value"})
-        ).return_value,
-        mock_open(
-            read_data=json.dumps(
-                {
-                    "type": "object",
-                    "properties": {"key": {"type": "string"}},
-                    "required": ["key"],
-                }
-            )
-        ).return_value,
-    ]
-
-    # Ensure jsonschema validation fails
-    with pytest.raises(jsonschema.ValidationError):
-        get_config(yaml_path.stem)
-
-
-def test_get_config_no_schema(mock_find_file, setup_parameters, mocker):
-    """Test when valid config and no schema, returned value is as expected"""
+def test_get_config_no_model(mock_find_file, setup_parameters, mocker):
+    """Test when valid config and no model, returned value is as expected"""
     _, yaml_path, _ = setup_parameters
     # Prepare mock responses for find_file
     mock_find_file.side_effect = [yaml_path]  # For YAML file
@@ -121,6 +106,7 @@ def test_get_config_no_schema(mock_find_file, setup_parameters, mocker):
         mock_open(read_data=yaml.dump({"key": "value"})).return_value
     ]
 
+    get_config.cache_clear()
     result = get_config(yaml_path.stem)
 
     assert result == {"key": "value"}
@@ -128,5 +114,5 @@ def test_get_config_no_schema(mock_find_file, setup_parameters, mocker):
         "analysis/config", Path(yaml_path.stem).with_suffix(".yaml")
     )
     # Ensure no schema is checked
-    assert mock_find_file.call_count == 1  # Only called once for the YAML file
-    assert mock_open_func.call_count == 1  # Only called once to open YAML file
+    mock_find_file.assert_called_once()  # Only called once for the YAML file
+    mock_open_func.assert_called_once()  # Only called once to open YAML file

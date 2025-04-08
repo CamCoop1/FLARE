@@ -1,15 +1,14 @@
-import json
 from functools import lru_cache
 from pathlib import Path
 
-import jsonschema
 import yaml
 
+from flare.src.pydantic_models import models
 from flare.src.utils.dirs import find_file
 
 
 @lru_cache(typed=True)
-def get_config(config_name, dir="analysis/config"):
+def get_config(config_name, dir="analysis/config") -> dict:
     """
     Load config YAML file.
 
@@ -23,21 +22,23 @@ def get_config(config_name, dir="analysis/config"):
     Returns:
         contents (dict): Contents of config YAML file.
     """
-
     YAMLFile = find_file(dir, Path(config_name).with_suffix(".yaml"))
     with open(YAMLFile) as f:
         contents = yaml.safe_load(f)
 
+    # If no model is provided return early with the contents
+    if not contents.get("$model", None):
+        return contents
+
+    # Otherwise use models to validate the input data
+    validation_model = contents.pop("$model")
     try:
-        schema_path = find_file(contents.pop("$schema"))
-        with open(schema_path) as f:
-            schema = json.load(f)
-        jsonschema.validate(contents, schema)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            f"The dataproduction schema provided in {dir/config_name} is not a valid schema for flare."
-            " Ensure the path is set to flare/src/schemas/mc_production_details.json"
-        )
+        model = models[validation_model]
+        validated_model = model(**contents)
     except KeyError:
-        pass
-    return contents
+        raise KeyError(
+            f"The model {validation_model} does not exist. The validation models are as show: "
+            ", ".join(models.keys())
+        )
+
+    return validated_model.dict()
