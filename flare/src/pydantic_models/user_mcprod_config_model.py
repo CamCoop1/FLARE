@@ -14,13 +14,15 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     """
 
     datatype: List[str | dict]
-    prodtype: Literal["madgraph", "whizard", "pythia8"] = Field(default="default")
+    global_prodtype: Literal["madgraph", "whizard", "pythia8"] = Field(
+        default="default"
+    )
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])
 
     @root_validator
     def check_prodtype_and_datatype(cls, values):
-        prodtype = values.get("prodtype")
+        prodtype = values.get("global_prodtype")
         datatype = values.get("datatype")
 
         if prodtype == "default":

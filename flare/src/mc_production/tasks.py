@@ -279,7 +279,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
         dataprod_config = luigi.get_setting("dataprod_config")
         # If the prodtype is default i.e wasn't defined globally
         # we must call the default_prodtype requires function
-        default_prodtype = dataprod_config["prodtype"] == "default"
+        default_prodtype = dataprod_config["global_prodtype"] == "default"
 
         if default_prodtype:
             datatypes_dict = flatten_to_dict(dataprod_config["datatype"])
@@ -290,7 +290,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
                 dataprod_config["card"],
                 dataprod_config["edm4hep"],
             ):
-                prodtype = datatypes_dict[datatype]["prodtype"]
+                prodtype = datatypes_dict[datatype]["global_prodtype"]
 
                 yield get_last_stage_task(prodtype)(
                     prodtype=get_mc_production_types()[prodtype],
@@ -321,7 +321,9 @@ def _get_mc_prod_stages(prodtype=None) -> dict:
     `prod_dict` : dict[str, dict]
         Returned dictionary is that specific to the production type as per src/mc_production/production_types.yaml'
     """
-    requested_prodtype = prodtype or luigi.get_setting("dataprod_config")["prodtype"]
+    requested_prodtype = (
+        prodtype or luigi.get_setting("dataprod_config")["global_prodtype"]
+    )
     try:
         return get_config("production_types.yaml", "flare/src/mc_production")[
             requested_prodtype
