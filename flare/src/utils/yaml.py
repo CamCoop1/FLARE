@@ -8,7 +8,7 @@ from flare.src.utils.dirs import find_file
 
 
 @lru_cache(typed=True)
-def get_config(config_name, dir="analysis/config"):
+def get_config(config_name, dir="analysis/config") -> dict:
     """
     Load config YAML file.
 
@@ -22,7 +22,6 @@ def get_config(config_name, dir="analysis/config"):
     Returns:
         contents (dict): Contents of config YAML file.
     """
-
     YAMLFile = find_file(dir, Path(config_name).with_suffix(".yaml"))
     with open(YAMLFile) as f:
         contents = yaml.safe_load(f)
