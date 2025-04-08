@@ -1,6 +1,6 @@
 from typing import List, Literal
 
-from pydantic import Field
+from pydantic import Field, root_validator
 
 from flare.src.pydantic_models.utils import ForbidExtraBaseModel
 
@@ -13,7 +13,41 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     structure
     """
 
-    datatype: List[str]
-    prodtype: Literal["madgraph", "whizard", "pythia8"]
+    datatype: List[str | dict]
+    prodtype: Literal["madgraph", "whizard", "pythia8"] = Field(default="default")
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])
+
+    @root_validator
+    def check_prodtype_and_datatype(cls, values):
+        prodtype = values.get("prodtype")
+        datatype = values.get("datatype")
+
+        if prodtype == "default":
+            if not isinstance(datatype, list):
+                raise ValueError("datatype must be a list")
+            for item in datatype:
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        "When prodtype is 'default', each datatype must be a dictionary e.g {'my_data' : {'prodtype': 'whizard'}}"
+                    )
+                if len(item) != 1:
+                    raise ValueError(
+                        "Each datatype dictionary must have exactly one key e.g {'my_data' : {'prodtype': 'whizard'}}"
+                    )
+                for val in item.values():
+                    if not isinstance(val, dict):
+                        raise ValueError(
+                            "The value of each datatype entry must be a dictionary e.g {'my_data' : {'prodtype': 'whizard'}}"
+                        )
+                    inner_prodtype = val.get("prodtype", None)
+                    if not inner_prodtype:
+                        raise ValueError(
+                            "There is no prodtype in the datatype dictionary e.g {'my_data' : {'prodtype': 'whizard'}} "
+                        )
+                    prodtypes = ("madgraph", "whizard", "pythia8")
+                    if inner_prodtype not in prodtypes:
+                        raise ValueError(
+                            f"Invalid prodtype '{inner_prodtype}' in datatype entry. Valid types are {', '.join(prodtypes)}"
+                        )
+        return values
