@@ -74,13 +74,8 @@ madgraph:
     pre_run:
       - madgraph_copy_lhe_file_to_cwd
 
-whizard_pythia8 :
-  stage1 :
-    cmd : whizard {0}
-    args :
-      - ++.sin
-    output_file: proc.stdhep
-  stage2:
+pythia8 :
+  stage1:
     cmd : DelphesPythia8_EDM4HEP {0} {1} {2} {3}
     args:
       - card_<>.tcl

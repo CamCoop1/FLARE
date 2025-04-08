@@ -327,12 +327,13 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None) -> dict:
     )
     ```
     """
+    last_stage = next(reversed(_get_mc_prod_stages()))
     return _linear_task_workflow_generator(
         stages=_get_mc_prod_stages(),
         class_name="MCProduction",
         base_class=MCProductionBaseTask,
         class_attrs={
-            "stage2": {
+            last_stage: {
                 "card_name": luigi.Parameter(),
                 "edm4hep_name": luigi.Parameter(),
             }
