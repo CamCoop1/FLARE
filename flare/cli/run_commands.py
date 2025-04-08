@@ -11,7 +11,7 @@ def run_mcproduction(args):
     config = luigi.get_setting("dataprod_config")
 
     flare.process(
-        MCProductionWrapper(prodtype=config["prodtype"]),
+        MCProductionWrapper(prodtype=config["global_prodtype"]),
         workers=20,
         batch=True,
         ignore_additional_command_line_args=True,

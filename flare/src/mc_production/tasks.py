@@ -290,7 +290,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
                 dataprod_config["card"],
                 dataprod_config["edm4hep"],
             ):
-                prodtype = datatypes_dict[datatype]["global_prodtype"]
+                prodtype = datatypes_dict[datatype]["prodtype"]
 
                 yield get_last_stage_task(prodtype)(
                     prodtype=get_mc_production_types()[prodtype],
