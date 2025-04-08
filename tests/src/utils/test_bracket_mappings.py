@@ -23,6 +23,7 @@ def BracketMappingCMDMixing_Instance():
         ["input", "--"],
         ["datatype_parameter", "++"],
         ["free_name", "<>"],
+        ["b2luigi_detemined_parameter", "$$"],
     ),
 )
 def test_BracketMappings_attributes(name, value):
@@ -31,7 +32,7 @@ def test_BracketMappings_attributes(name, value):
     assert getattr(BracketMappings, name) == value
 
 
-@pytest.mark.parametrize("value", ("()", "--", "++", "<>"))
+@pytest.mark.parametrize("value", ("()", "--", "++", "<>", "$$"))
 def test_BracketMappings_determine_bracket_mapping(value):
     """Test determine_bracket_mapping function with dummy path"""
     dummy_path = f"/hello/world/foo/bar/{value}.py"
@@ -44,7 +45,7 @@ def test_strip():
     assert _strip(dummy_path, BracketMappings.free_name) == stripped_dummy_path
 
 
-@pytest.mark.parametrize("value", ("()", "--", "++", "<>"))
+@pytest.mark.parametrize("value", ("()", "--", "++", "<>", "$$"))
 def test_check_if_path_matches_mapping_success(value):
     """Test that given a bracket mapping and argument, a file is found and the function
     returns True"""
@@ -75,29 +76,25 @@ def test_get_suffix_from_arg():
 
 
 @pytest.mark.parametrize(
-    "method_name, is_property, dummy_arg",
+    "method_name, dummy_arg",
     [
-        ("get_file_paths", False, None),
-        ("bm_output", False, None),
-        ("bm_input", False, None),
-        ("bm_datatype_parameter", False, "dummy_arg"),
-        ("bm_free_name", False, "dummy_arg"),
+        ("get_file_paths", None),
+        ("bm_output", None),
+        ("bm_input", None),
+        ("bm_datatype_parameter", "dummy_arg"),
+        ("bm_free_name", "dummy_arg"),
+        ("bm_b2luigi_determined_parameter", "dummy_arg"),
     ],
 )
-def test_not_implemented_methods(
-    bracketmapping_init, method_name, is_property, dummy_arg
-):
+def test_not_implemented_methods(bracketmapping_init, method_name, dummy_arg):
     """Test that methods and properties raise NotImplementedError."""
 
     with pytest.raises(NotImplementedError):
-        if is_property:
-            _ = getattr(bracketmapping_init, method_name)  # Access property
+        method = getattr(bracketmapping_init, method_name)  # Get method
+        if dummy_arg is not None:
+            method(dummy_arg)  # Call method with an argument
         else:
-            method = getattr(bracketmapping_init, method_name)  # Get method
-            if dummy_arg is not None:
-                method(dummy_arg)  # Call method with an argument
-            else:
-                method()  # Call method without arguments
+            method()  # Call method without arguments
 
 
 def test_collect_cmd_inputs_method_calls_success(mocker):
@@ -106,7 +103,7 @@ def test_collect_cmd_inputs_method_calls_success(mocker):
     mock_instance = BracketMappingCMDBuilderMixin()
 
     # Mock the unparsed_args property to return a list with matching arguments
-    mock_instance.unparsed_args = ["()", "--", "++", "<>"]
+    mock_instance.unparsed_args = ["()", "--", "++", "<>", "$$"]
 
     # Mock the methods bm_output, bm_input
     mocker.patch.object(mock_instance, "bm_output", return_value=Path("/mock/output"))
@@ -116,6 +113,12 @@ def test_collect_cmd_inputs_method_calls_success(mocker):
     )
     mocker.patch.object(
         mock_instance, "bm_free_name", return_value=Path("/mock/free_name")
+    )
+
+    mocker.patch.object(
+        mock_instance,
+        "bm_b2luigi_determined_parameter",
+        return_value=Path("/mock/b2luigi_parameter"),
     )
 
     # Call the method
@@ -133,6 +136,7 @@ def test_collect_cmd_inputs_method_calls_success(mocker):
         "/mock/input",
         "/mock/datatype",
         "/mock/free_name",
+        "/mock/b2luigi_parameter",
     ]
 
 
