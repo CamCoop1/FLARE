@@ -35,6 +35,7 @@ class BracketMappings:
     input = "--"
     datatype_parameter = "++"
     free_name = "<>"
+    b2luigi_detemined_parameter = "$$"
 
     @staticmethod
     def determine_bracket_mapping(arg: str) -> str | None:
@@ -107,6 +108,9 @@ class BracketMappingCMDBuilderMixin:
     def bm_free_name(self, arg: str) -> Path:
         raise NotImplementedError
 
+    def bm_b2luigi_determined_parameter(self, arg: str) -> Path:
+        raise NotImplementedError
+
     def collect_cmd_inputs(self) -> list:
         """
         Here should be the code required to get the ordered
@@ -136,6 +140,10 @@ class BracketMappingCMDBuilderMixin:
                 case BracketMappings.free_name:
                     # Find the associated file using the check_if_path_maetches_mapping function
                     path = self.bm_free_name(arg=arg)
+                    cmd_inputs.append(str(path))
+
+                case BracketMappings.b2luigi_detemined_parameter:
+                    path = self.bm_b2luigi_determined_parameter(arg=arg)
                     cmd_inputs.append(str(path))
 
                 case _:

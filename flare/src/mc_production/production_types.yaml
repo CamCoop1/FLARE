@@ -53,7 +53,7 @@ whizard :
       - edm4hep_<>.tcl
       - ().root
       - --.stdhep
-    output_file : ++.root
+    output_file : $$.root
 
 madgraph:
   stage1 :
@@ -70,6 +70,6 @@ madgraph:
       - edm4hep_<>.tcl
       - pythia_card_<>.cmd
       - ().root
-    output_file : ++.root
+    output_file : $$.root
     pre_run:
       - madgraph_copy_lhe_file_to_cwd
