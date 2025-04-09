@@ -3,27 +3,15 @@ import b2luigi as luigi
 import flare
 from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.fcc_analysis.tasks import FCCAnalysisWrapper
-from flare.src.mc_production.mc_production_types import get_mc_production_types
 from flare.src.mc_production.tasks import MCProductionWrapper
-
-
-def _check_mc_prod_valid(prodtype: str):
-    """Check that the production type given in the mc_production yaml
-    if valid"""
-    try:
-        _ = get_mc_production_types()[prodtype]
-    except KeyError:
-        raise KeyError(
-            f'MC production type {prodtype} is not valid. Valid prod types are {" ".join(get_mc_production_types().values())}'
-        )
 
 
 def run_mcproduction(args):
     """Run the MC Production workflow"""
     config = luigi.get_setting("dataprod_config")
-    _check_mc_prod_valid(config["prodtype"])
+
     flare.process(
-        MCProductionWrapper(prodtype=config["prodtype"]),
+        MCProductionWrapper(prodtype=config["global_prodtype"]),
         workers=20,
         batch=True,
         ignore_additional_command_line_args=True,

@@ -7,6 +7,7 @@ from itertools import product
 from pathlib import Path
 
 import b2luigi as luigi
+from b2luigi.core.utils import flatten_to_dict
 
 from flare.src.mc_production.generator_specific_methods import MadgraphMethods
 from flare.src.mc_production.mc_production_types import get_mc_production_types
@@ -160,9 +161,11 @@ class MCProductionBaseTask(
             case _:
                 # More than one, we assume we are looping over a parameter of this class
                 if "card" in arg:
-                    path = [p for p in file_path if self.card_name in p][0]
+                    path = [p for p in file_path if self.card_name == Path(p).stem][0]
                 elif "ed4hep" in arg:
-                    path = [p for p in file_path if self.edm4hep_name in p][0]
+                    path = [p for p in file_path if self.edm4hep_name == Path(p).stem][
+                        0
+                    ]
                 else:
                     raise FileNotFoundError(
                         f"The file associated with {arg} is unknown to flare."
@@ -274,32 +277,63 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
 
     def requires(self):
         dataprod_config = luigi.get_setting("dataprod_config")
-        for datatype, card, edm4hep in product(
-            dataprod_config["datatype"],
-            dataprod_config["card"],
-            dataprod_config["edm4hep"],
-        ):
-            yield get_last_stage_task()(
-                prodtype=get_mc_production_types()[self.prodtype],
-                datatype=datatype,
-                card_name=card,
-                edm4hep_name=edm4hep,
-            )
+        # If the prodtype is default i.e wasn't defined globally
+        # we must call the default_prodtype requires function
+        default_prodtype = dataprod_config["global_prodtype"] == "default"
+
+        if default_prodtype:
+            datatypes_dict = flatten_to_dict(dataprod_config["datatype"])
+            datatypes = list(datatypes_dict.keys())
+
+            for datatype, card, edm4hep in product(
+                datatypes,
+                dataprod_config["card"],
+                dataprod_config["edm4hep"],
+            ):
+                prodtype = datatypes_dict[datatype]["prodtype"]
+
+                yield get_last_stage_task(prodtype)(
+                    prodtype=get_mc_production_types()[prodtype],
+                    datatype=datatype,
+                    card_name=card,
+                    edm4hep_name=edm4hep,
+                )
+
+        else:
+            for datatype, card, edm4hep in product(
+                dataprod_config["datatype"],
+                dataprod_config["card"],
+                dataprod_config["edm4hep"],
+            ):
+
+                yield get_last_stage_task()(
+                    prodtype=get_mc_production_types()[self.prodtype],
+                    datatype=datatype,
+                    card_name=card,
+                    edm4hep_name=edm4hep,
+                )
 
 
-def _get_mc_prod_stages() -> dict:
+def _get_mc_prod_stages(prodtype=None) -> dict:
     """
     Returns
     --------
     `prod_dict` : dict[str, dict]
         Returned dictionary is that specific to the production type as per src/mc_production/production_types.yaml'
     """
-    prodtype = luigi.get_setting("dataprod_config")["prodtype"]
-    return get_config("production_types.yaml", "flare/src/mc_production")[prodtype]
+    requested_prodtype = (
+        prodtype or luigi.get_setting("dataprod_config")["global_prodtype"]
+    )
+    try:
+        return get_config("production_types.yaml", "flare/src/mc_production")[
+            requested_prodtype
+        ]
+    except KeyError:
+        raise KeyError(requested_prodtype)
 
 
 @lru_cache(typed=True)
-def get_mc_prod_stages_dict(inject_stage1_dependency=None) -> dict:
+def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dict:
     """
     Get the ordered dictionary of MCProduction tasks.
 
@@ -327,10 +361,10 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None) -> dict:
     )
     ```
     """
-    last_stage = next(reversed(_get_mc_prod_stages()))
+    last_stage = next(reversed(_get_mc_prod_stages(prodtype=prodtype)))
     return _linear_task_workflow_generator(
-        stages=_get_mc_prod_stages(),
-        class_name="MCProduction",
+        stages=_get_mc_prod_stages(prodtype=prodtype),
+        class_name=("MCProduction" + prodtype.capitalize() if prodtype else ""),
         base_class=MCProductionBaseTask,
         class_attrs={
             last_stage: {
@@ -342,8 +376,8 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None) -> dict:
     )
 
 
-def get_last_stage_task():
+def get_last_stage_task(prodtype=None):
     """
     Returns the last luigi Task inside `get_mc_prod_stages_dict`
     """
-    return next(reversed(get_mc_prod_stages_dict().values()))
+    return next(reversed(get_mc_prod_stages_dict(prodtype=prodtype).values()))
