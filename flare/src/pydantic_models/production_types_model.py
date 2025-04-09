@@ -14,7 +14,8 @@ class FCCProductionModel(ForbidExtraBaseModel):
 
 class MCProductionModel(ForbidExtraBaseModel):
     """
-    The pydantic model for MC Production
+    The pydantic model for MC Production. This model is
+    the central place where all MC production types are listed
     """
 
     whizard: ProductionTypeBaseModel

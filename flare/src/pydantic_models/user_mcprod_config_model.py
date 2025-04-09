@@ -2,7 +2,13 @@ from typing import List, Literal
 
 from pydantic import Field, root_validator
 
+from flare.src.pydantic_models.production_types_model import MCProductionModel
 from flare.src.pydantic_models.utils import ForbidExtraBaseModel
+
+# We define here the valid prodtypes, keeping the valid types central to
+# the MCProductionModel pydantic model. There is no point importing the production_types.yaml
+# As this is dependent on the MCProductionModel anyway. And so we keep it centralised there
+VALID_PRODTYPES = tuple(MCProductionModel.__fields__.keys())
 
 
 class UserMCProdConfigModel(ForbidExtraBaseModel):
@@ -14,9 +20,7 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     """
 
     datatype: List[str | dict]
-    global_prodtype: Literal["madgraph", "whizard", "pythia8"] = Field(
-        default="default"
-    )
+    global_prodtype: Literal[VALID_PRODTYPES] = Field(default="default")
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])
 
@@ -55,9 +59,9 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
                     raise ValueError(
                         "There is no prodtype in the datatype dictionary e.g {'my_data' : {'prodtype': 'whizard'}} "
                     )
-                prodtypes = ("madgraph", "whizard", "pythia8")
-                if inner_prodtype not in prodtypes:
+
+                if inner_prodtype not in VALID_PRODTYPES:
                     raise ValueError(
-                        f"Invalid prodtype '{inner_prodtype}' in datatype entry. Valid types are {', '.join(prodtypes)}"
+                        f"Invalid prodtype '{inner_prodtype}' in datatype entry. Valid types are {', '.join(VALID_PRODTYPES)}"
                     )
         return values
