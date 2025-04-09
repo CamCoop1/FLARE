@@ -166,6 +166,8 @@ class MCProductionBaseTask(
                     path = [p for p in file_path if self.edm4hep_name == Path(p).stem][
                         0
                     ]
+                elif self.datatype in arg:
+                    path = [p for p in file_path if self.datatype == Path(p).stem][0]
                 else:
                     raise FileNotFoundError(
                         f"The file associated with {arg} is unknown to flare. The found paths are {file_path}."
