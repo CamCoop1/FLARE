@@ -168,7 +168,8 @@ class MCProductionBaseTask(
                     ]
                 else:
                     raise FileNotFoundError(
-                        f"The file associated with {arg} is unknown to flare."
+                        f"The file associated with {arg} is unknown to flare. The found paths are {file_path}."
+                        f" This may occur if there are multiple files being picked up by flare for {arg}"
                     )
 
                 self.copy_input_file_to_output_dir(path)
