@@ -14,6 +14,6 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     """
 
     datatype: List[str]
-    prodtype: Literal["madgraph", "whizard"]
+    prodtype: Literal["madgraph", "whizard", "pythia8"]
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])

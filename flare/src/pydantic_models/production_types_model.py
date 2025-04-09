@@ -19,3 +19,4 @@ class MCProductionModel(ForbidExtraBaseModel):
 
     whizard: ProductionTypeBaseModel
     madgraph: ProductionTypeBaseModel
+    pythia8: ProductionTypeBaseModel

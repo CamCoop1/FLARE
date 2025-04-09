@@ -73,3 +73,13 @@ madgraph:
     output_file : $$.root
     pre_run:
       - madgraph_copy_lhe_file_to_cwd
+
+pythia8 :
+  stage1:
+    cmd : DelphesPythia8_EDM4HEP {0} {1} {2} {3}
+    args:
+      - card_<>.tcl
+      - edm4hep_<>.tcl
+      - pythia_card_<>.cmd
+      - ().root
+    output_file : $$.root
