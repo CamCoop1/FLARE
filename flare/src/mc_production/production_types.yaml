@@ -80,6 +80,6 @@ pythia8 :
     args:
       - card_<>.tcl
       - edm4hep_<>.tcl
-      - pythia_card_++.cmd
+      - ++.cmd
       - ().root
     output_file : $$.root
