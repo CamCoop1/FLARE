@@ -1,5 +1,4 @@
 import argparse
-from pathlib import Path
 
 from flare.cli.run_commands import run_analysis, run_mcproduction
 
@@ -22,8 +21,7 @@ COMMON_ARGUMENTS = [
     (
         "--output-dir",
         {
-            "help": "The location where the output file will be produced, by default will be the current working directory",
-            "default": Path().cwd(),
+            "help": "The location where the output file will be produced, by default will be the current working directory"
         },
     ),
     ("--config-yaml", {"help": "Path to a YAML config file"}),
