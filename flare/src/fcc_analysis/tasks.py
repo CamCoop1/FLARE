@@ -58,7 +58,9 @@ def get_fcc_stages_dict() -> dict:
         class_attrs=(
             {
                 "inject_stage1_dependency": {
-                    "prodtype": luigi.get_setting("dataprod_config").get("prodtype")
+                    "prodtype": luigi.get_setting("dataprod_config").get(
+                        "global_prodtype"
+                    )
                 }
             }
             if luigi.get_setting("dataprod_config")

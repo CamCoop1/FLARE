@@ -166,9 +166,12 @@ class MCProductionBaseTask(
                     path = [p for p in file_path if self.edm4hep_name == Path(p).stem][
                         0
                     ]
+                elif self.datatype in arg:
+                    path = [p for p in file_path if self.datatype == Path(p).stem][0]
                 else:
                     raise FileNotFoundError(
-                        f"The file associated with {arg} is unknown to flare."
+                        f"The file associated with {arg} is unknown to flare. The found paths are {file_path}."
+                        f" This may occur if there are multiple files being picked up by flare for {arg}"
                     )
 
                 self.copy_input_file_to_output_dir(path)
@@ -362,9 +365,11 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
     ```
     """
     last_stage = next(reversed(_get_mc_prod_stages(prodtype=prodtype)))
+    class_name = "MCProduction"
+    class_name += prodtype.capitalize() if prodtype else ""
     return _linear_task_workflow_generator(
         stages=_get_mc_prod_stages(prodtype=prodtype),
-        class_name=("MCProduction" + prodtype.capitalize() if prodtype else ""),
+        class_name=class_name,
         base_class=MCProductionBaseTask,
         class_attrs={
             last_stage: {
