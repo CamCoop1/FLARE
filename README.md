@@ -43,7 +43,7 @@ To begin, you can place all of your analysis scripting and tooling in your curre
 
 2. You must not define an `inputDir` or `outputDir` variable in your analysis scripts for any stage. These are reserved for b2luigi to determine during runtime. The only exception is the very first stage or your analysis requires an `inputDir` to define where to look for the MC. The framework checks during runtime if you have accidentally added one of these variables to your scripts and lets you know what you need to change to fix it. Apart from this, you the analyst can define your analysis scripts are you usually would, including adding additional `includePaths` and so forth.
 
-If you wish to use the batch system capabilities of flare, you will need to create a YAML file. In this yaml file you must define the `batch_system` variable here. The `batch_system` variable tells b2luigi which batch system it should attempt to submit to. You must set the `batch_system` value inside YAML to one of the following, depending on your required batch system:
+If you wish to use the batch system capabilities of flare, you will need to create a YAML file. In this yaml file you must define the `batch_system` variable here. The `batch_system` variable tells b2luigi which batch system it should attempt to submit to. You must set the `batch_system` value inside the YAML to one of the following, depending on your required batch system:
 
 - lsf
 - htcondor
@@ -57,7 +57,7 @@ Note, if `local` is set then b2luigi will not submit to the batch system instead
 batch_system : slurm
 ```
 
-For more details on the available batch systems see [b2luigi Batch System Specific Settings](https://b2luigi.belle2.org/usage/batch.html?highlight=batch#batch-system-specific-settings). Note some batch systems require/allow for you to pass batch-specific arguments which can also be defined in this YAML file. For example:
+For more details on the available batch systems see [b2luigi Batch System Specific Settings](https://b2luigi.belle2.org/usage/batch.html?highlight=batch#batch-system-specific-settings). Note some batch systems require/allow for you to pass batch-specific arguments which can also be defined in this YAML file.
 
 ## Running Your Analysis
 
@@ -81,7 +81,12 @@ options:
   --mcprod              If set, also run mcproduction as part of the analysis
 ```
 
-What will be returned is all the command line arguments you can pass to flare. Importantly, you can pass the path to your config YAML to the `--config-yaml` argument. To run your analysis workflow you can use the following command in your terminal
+What will be returned is all the command line arguments you can pass to flare. Importantly, you can pass the path to your config YAML to the `--config-yaml` argument which will set the batch system variable. If no argument is
+passed to `--config-yaml` flare will attempt to find a YAML file in your current working directory to use as. If no YAML is found and no additional arguments are parsed to the CLI, then default values set.
+
+**NOTE**: No default `batch_system` is set, meaning you must set it in your config YAML
+
+To run your analysis workflow you can use the following command in your terminal
 
 ``` console
 (venv)$ ls
@@ -101,6 +106,7 @@ For those who read previously the CLI help documentation will know the you can s
 ```
 (venv)$ flare run analysis --config-yaml config.yaml --name MyAnalysis --version higgs mass --study-dir studies/higgs_mass
 ```
+If an argument for `--output-dir` is not given, then the current working directory is used. If you wish to centralise all your outputs you can either always call flare from the same working directory, or more simply, just set the `outputdir` variable inside the config YAML file.
 
 If all of this is combersome and repeated you can define these variables in your config.yaml instead!
 
@@ -114,9 +120,14 @@ studydir: studies/higgs_mass
 # b2luigi settings
 batch_system: slurm
 ```
-Now we can simply run the following for our analysis
+Now we can simply run the following for our analysis (assuming the config YAML is in the current working directory)
 ```
-(venv)$ flare run analysis --config-yaml config.yaml
+(venv)$ flare run analysis
+```
+If your config YAML is not in your current working directory, say you have a central config that you wish to always use that is a parent directory, set the `--config-yaml` argument to the path of the config
+
+```
+(venv)$ flare run analysis --config-yaml ../central_config/config.yaml
 ```
 
 Lastly, you can use a combination of command line arguments and arguments in your yaml file. How this works is, flare will **ALWAYS** take the command line argument as priority, if no command line argument is passed for a given variable, it will default to the YAML file. If no value is found there, a default set of values are set by flare (this will surely cause a fright when your outputs aren't where you thought!)
@@ -124,7 +135,7 @@ Lastly, you can use a combination of command line arguments and arguments in you
 For example, lets say i wanted to change the version name for one test but didn't want to change the YAML file you could run this command:
 
 ```
-(venv)$ flare run analysis --config-yaml config.yaml --version="higgs mass test"
+(venv)$ flare run analysis --version="higgs mass test"
 ```
 This will set the version to that passed on the command line, ignoring that defined in the YAML file.
 
