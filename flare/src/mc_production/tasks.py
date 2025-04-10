@@ -263,6 +263,14 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     prodtype = luigi.Parameter()
 
     @property
+    def slurm_settings(self):
+        settings = luigi.get_setting("slurm_settings", {})
+        env_script = luigi.get_setting("dataprod_config")["global_env_script_path"]
+        if env_script:
+            settings["export"] = "ALL"
+        return settings
+
+    @property
     def results_subdir(self):
         return luigi.get_setting("results_subdir")
 
