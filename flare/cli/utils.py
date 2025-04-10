@@ -20,10 +20,9 @@ def get_flare_cwd() -> Path:
     return Path(os.environ["FLARE_CWD"])
 
 
-def load_config(config_path=None, user_yaml=False):
+def load_config(cwd: Path, config_path=None, user_yaml=False):
     """Load configuration from config.yaml (or a discovered yaml file) if it exists."""
-    # Get the cwd of the flare user
-    cwd = get_flare_cwd()
+
     # Set the config yaml path
     config_path = cwd / (f"{config_path}" if config_path else "config.yaml")
     # Have a check such that if the config path given does not end in '.yaml'
@@ -52,20 +51,27 @@ def load_config(config_path=None, user_yaml=False):
 
 def load_settings_into_manager(args):
     """Load parsed args into settings manager"""
-    config = load_config(args.config_yaml)
-    cwd = get_flare_cwd()
     logger.info("Loading Settings into FLARE")
+
+    cwd = Path(args.cwd)
+    luigi.set_setting("working_dir", cwd)
+    logger.info(f"Current Working Directory: {cwd}")
+    config = load_config(cwd=cwd, config_path=args.config_yaml)
+
     # Add name to the settings
     luigi.set_setting(key="name", value=args.name or config.get("name", "default_name"))
     logger.info(f"Name: {luigi.get_setting('name')}")
+
     # Add version to the settings
     luigi.set_setting("version", args.version or config.get("version", "1.0"))
     logger.info(f"Version: {luigi.get_setting('version')}")
+
     # Add the description to the settings
     luigi.set_setting(
         "description", args.description or config.get("description", "No description")
     )
     logger.info(f"description: {luigi.get_setting('description')}")
+
     # At the study directory to the settings
     luigi.set_setting(
         "studydir",
@@ -76,31 +82,38 @@ def load_settings_into_manager(args):
         ),
     )
     logger.info(f"Study Directory: {luigi.get_setting('studydir')}")
+
     # At the results_subdir used in the OutputMixin to the settings
     luigi.set_setting(
         "results_subdir",
         Path(luigi.get_setting("name")) / luigi.get_setting("version"),
     )
-    results_dir = cwd / "data" / luigi.get_setting("results_subdir")
+    luigi.set_setting(
+        "outputdir", Path((args.output_dir or config.get("outputdir", cwd)))
+    )
+    results_dir = (
+        luigi.get_setting("outputdir") / "data" / luigi.get_setting("results_subdir")
+    )
     logger.info(f"Results Directory: {results_dir}")
+
     # Add the dataprod_dir to the settings
     luigi.set_setting("dataprod_dir", luigi.get_setting("studydir") / "mc_production")
     dataprod_dir = luigi.get_setting("dataprod_dir")
+
     # Add the dataprod config to the settings, we load the config using load_config
     # if the dataprod_dir does not have a yaml file Assertion errors are raised
     luigi.set_setting(
         "dataprod_config",
-        load_config(dataprod_dir, user_yaml=True) if args.mcprod else {},
+        load_config(cwd, dataprod_dir, user_yaml=True) if args.mcprod else {},
     )
+
     # Set the mcprod
     luigi.set_setting("mcprod", args.mcprod)
-    logger.debug(luigi.get_setting("dataprod_config"))
-
     # Any remaining configuration is added to the settings manager here i.e setting the batch_system
     for name, value in config.items():
         name = name.lower()  # All settings are lower case
         if not luigi.get_setting(name, default=False):
-            logger.info(f"{name}: value")
+            logger.info(f"{name}: {value}")
             luigi.set_setting(name, value)
 
 

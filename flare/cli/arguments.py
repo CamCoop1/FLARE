@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 from flare.cli.run_commands import run_analysis, run_mcproduction
 
@@ -25,6 +26,7 @@ COMMON_ARGUMENTS = [
         },
     ),
     ("--config-yaml", {"help": "Path to a YAML config file"}),
+    ("--cwd", {"help": argparse.SUPPRESS, "default": Path().cwd()}),
 ]
 
 
