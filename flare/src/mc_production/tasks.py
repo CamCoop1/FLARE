@@ -39,7 +39,11 @@ class MCProductionBaseTask(
 
     @property
     def env_script(self):
-        return luigi.get_setting("dataprod_config")["global_env_script_path"]
+        dataprod_dir = luigi.get_setting("dataprod_dir")
+        return (
+            dataprod_dir
+            / luigi.get_setting("dataprod_config")["global_env_script_path"]
+        )
 
     @property
     def slurm_settings(self):
