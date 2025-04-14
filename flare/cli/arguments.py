@@ -22,11 +22,11 @@ COMMON_ARGUMENTS = [
     (
         "--output-dir",
         {
-            "help": "The location where the output file will be produced, by default will be the current working directory",
-            "default": Path().cwd(),
+            "help": "The location where the output file will be produced, by default will be the current working directory"
         },
     ),
     ("--config-yaml", {"help": "Path to a YAML config file"}),
+    ("--cwd", {"help": argparse.SUPPRESS, "default": Path().cwd()}),
 ]
 
 

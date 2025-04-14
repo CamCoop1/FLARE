@@ -16,6 +16,7 @@ def run_mcproduction(args):
         batch=True,
         ignore_additional_command_line_args=True,
         flare_args=args,
+        from_cli_input=True,
     )
 
 
@@ -36,4 +37,5 @@ def run_analysis(args):
         batch=True,
         ignore_additional_command_line_args=True,
         flare_args=args,
+        from_cli_input=True,
     )

@@ -38,6 +38,21 @@ class MCProductionBaseTask(
     results_subdir: str
 
     @property
+    def env_script(self):
+        dataprod_dir = luigi.get_setting("dataprod_dir")
+        return (
+            dataprod_dir
+            / luigi.get_setting("dataprod_config")["global_env_script_path"]
+        )
+
+    @property
+    def slurm_settings(self):
+        settings = luigi.get_setting("slurm_settings", {})
+        if self.env_script:
+            settings["export"] = "NONE"
+        return settings
+
+    @property
     def input_file_path(self):
         return Path(next(iter(self.get_all_input_file_names())))
 
@@ -250,6 +265,14 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     """
 
     prodtype = luigi.Parameter()
+
+    @property
+    def slurm_settings(self):
+        settings = luigi.get_setting("slurm_settings", {})
+        env_script = luigi.get_setting("dataprod_config")["global_env_script_path"]
+        if env_script:
+            settings["export"] = "ALL"
+        return settings
 
     @property
     def results_subdir(self):

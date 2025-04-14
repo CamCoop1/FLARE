@@ -4,8 +4,9 @@
 """
 Utility functions relating to directories.
 """
-
 from pathlib import Path
+
+from b2luigi import get_setting
 
 from flare.src.definitions import BASE_DIRECTORY
 
@@ -20,7 +21,7 @@ def find_file(*path, string=False):
 
 
 def find_external_file(*path, string=False):
-    from flare.cli.utils import get_flare_cwd
+    cwd = get_setting("working_dir")
 
-    path = Path(get_flare_cwd(), *path)
+    path = Path(cwd, *path)
     return str(path) if string else path

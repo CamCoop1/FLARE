@@ -2,6 +2,7 @@ from typing import List, Literal
 
 from pydantic import Field, root_validator
 
+from flare.cli.logging import logger
 from flare.src.pydantic_models.production_types_model import MCProductionModel
 from flare.src.pydantic_models.utils import ForbidExtraBaseModel
 
@@ -21,6 +22,7 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
 
     datatype: List[str | dict]
     global_prodtype: Literal[VALID_PRODTYPES] = Field(default="default")
+    global_env_script_path: str = Field(default="")
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])
 
@@ -64,4 +66,14 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
                     raise ValueError(
                         f"Invalid prodtype '{inner_prodtype}' in datatype entry. Valid types are {', '.join(VALID_PRODTYPES)}"
                     )
+
+            global_env_script_path = values.get("global_env_script_path")
+
+            if global_env_script_path:
+                logger.info(
+                    "\033[31mIMPORTANT\033[0m: you have set a global environment script path to be setup on the submitted batch job.\n"
+                    "If you are using a virtual environment (you should be!!!) you must also activate your virtual environment like so:\n\n"
+                    "    source fcc/tool/distro/setup.sh\n"
+                    "    source path/to/my/.venv/bin/activate"
+                )
         return values
