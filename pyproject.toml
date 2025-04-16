@@ -11,7 +11,7 @@ authors = [
 ]
 requires-python = ">=3.9,<3.12"
 dependencies = [
-    "b2luigi>=1.1.1",
+    "b2luigi>=1.2.0",
     "PyYAML>=6.0",
     "pydantic (<2)"
 ]
