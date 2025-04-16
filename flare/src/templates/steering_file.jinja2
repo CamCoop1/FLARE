@@ -2,4 +2,7 @@
 {% if inputDir %}
 inputDir = "{{ inputDir }}"
 {% endif %}
+{% if plot_stage%}
+customLabel ="FLARE Plotting"
+{% endif %}
 {{ python_code }}
