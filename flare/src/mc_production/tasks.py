@@ -284,6 +284,10 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     def input_paths(self):
         return [f[0] for f in self.get_input_file_names().values()]
 
+    @property
+    def inject_stage1_dependency_task(self) -> None:
+        return None
+
     # @luigi.on_temporary_files
     def process(self):
         # Copy the file and its metadata (hence copy2) to the output directory
@@ -313,7 +317,10 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             ):
                 prodtype = datatypes_dict[datatype]["prodtype"]
 
-                yield get_last_stage_task(prodtype)(
+                yield get_last_stage_task(
+                    inject_stage1_dependency=self.inject_stage1_dependency_task,
+                    prodtype=prodtype,
+                )(
                     prodtype=get_mc_production_types()[prodtype],
                     datatype=datatype,
                     card_name=card,
@@ -327,7 +334,9 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
                 dataprod_config["edm4hep"],
             ):
 
-                yield get_last_stage_task()(
+                yield get_last_stage_task(
+                    inject_stage1_dependency=self.inject_stage1_dependency_task
+                )(
                     prodtype=get_mc_production_types()[self.prodtype],
                     datatype=datatype,
                     card_name=card,
@@ -399,8 +408,14 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
     )
 
 
-def get_last_stage_task(prodtype=None):
+def get_last_stage_task(inject_stage1_dependency=None, prodtype=None):
     """
     Returns the last luigi Task inside `get_mc_prod_stages_dict`
     """
-    return next(reversed(get_mc_prod_stages_dict(prodtype=prodtype).values()))
+    return next(
+        reversed(
+            get_mc_prod_stages_dict(
+                inject_stage1_dependency=inject_stage1_dependency, prodtype=prodtype
+            ).values()
+        )
+    )
