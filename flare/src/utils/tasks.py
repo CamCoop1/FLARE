@@ -14,23 +14,17 @@ class OutputMixin:
     Mix-in class to set the ``result_dir`` and ``log_dir`` of a task to the task name.
     """
 
-    results_subdir = None
+    @property
+    def results_subdir(self):
+        return luigi.get_setting("results_subdir")
 
     @property
     def log_dir(self):
-        if self.results_subdir is not None:
-            return find_external_file(
-                "log", self.results_subdir, self.__class__.__name__
-            )
-        return find_external_file("log", self.__class__.__name__)
+        return find_external_file("log", self.results_subdir, self.__class__.__name__)
 
     @property
     def result_dir(self):
-        if self.results_subdir is not None:
-            return find_external_file(
-                "data", self.results_subdir, self.__class__.__name__
-            )
-        return find_external_file("data", self.__class__.__name__)
+        return find_external_file("data", self.results_subdir, self.__class__.__name__)
 
 
 def _linear_task_workflow_generator(

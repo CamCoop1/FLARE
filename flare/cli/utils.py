@@ -116,6 +116,12 @@ def load_settings_into_manager(args):
             logger.info(f"{name}: {value}")
             luigi.set_setting(name, value)
 
+    if not luigi.get_setting("batch_system", False):
+        logger.warning(
+            "No batch_system setting was found inside the config YAML. Defaulting to 'local'. This will mean no batch jobs are submitted, instead your workflow is ran on the current node."
+        )
+        luigi.set_setting("batch_system", "local")
+
 
 def build_executable_and_save_to_settings_manager(args):
     """Build the executable to be passed to b2luigi"""
