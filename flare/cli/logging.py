@@ -48,7 +48,7 @@ class MyInterfaceLogging:
         console_handler.setLevel(log_level)
 
         # Define log format
-        formatter = logging.Formatter("~FLARE~ [%(levelname)s]: %(message)s")
+        formatter = logging.Formatter("~FLARE %(levelname)s~ %(message)s")
         console_handler.setFormatter(formatter)
 
         # Attach handler to logger

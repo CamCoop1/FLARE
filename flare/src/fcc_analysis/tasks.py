@@ -117,6 +117,8 @@ class FCCAnalysisWrapper(OutputMixin, luigi.WrapperTask):
     using the analysis/config/details.yaml
     """
 
+    batch = False
+
     @property
     def results_subdir(self):
         return luigi.get_setting("results_subdir")

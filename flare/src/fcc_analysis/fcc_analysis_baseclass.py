@@ -101,12 +101,20 @@ class FCCTemplateMethodMixin:
             "inputDir" not in python_code
         ), f"Please do not define your own input directory in your {self.stage} script. Remove this and rerun"
 
+        if self.stage == Stages.plot:
+            lines = python_code.split("\n")
+            output_code_list = [line for line in lines if "customLabel" not in line]
+            output_code = "\n".join(output_code_list)
+        else:
+            output_code = python_code
+
         # Otherwise we must add the inputDir from the required function to the python script
         rendered_tex = self.template.render(
             outputdir_string=outputdir_element,
             outputDir=self.output_dir,
             inputDir=self.inputDir_path,
-            python_code=python_code,
+            python_code=output_code,
+            plot_stage=(self.stage == Stages.plot),
         )
 
         with self.rendered_template_path.open("w") as f:

@@ -1,7 +1,6 @@
 import logging
 import shutil
 import subprocess
-import sys
 from functools import lru_cache
 from itertools import product
 from pathlib import Path
@@ -39,11 +38,14 @@ class MCProductionBaseTask(
 
     @property
     def env_script(self):
+        global_env_script_path = luigi.get_setting("dataprod_config")[
+            "global_env_script_path"
+        ]
+        if not global_env_script_path:
+            return
+
         dataprod_dir = luigi.get_setting("dataprod_dir")
-        return (
-            dataprod_dir
-            / luigi.get_setting("dataprod_config")["global_env_script_path"]
-        )
+        return dataprod_dir / global_env_script_path
 
     @property
     def slurm_settings(self):
@@ -282,14 +284,13 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     def input_paths(self):
         return [f[0] for f in self.get_input_file_names().values()]
 
-    @luigi.on_temporary_files
+    @property
+    def inject_stage1_dependency_task(self) -> None:
+        return None
+
+    # @luigi.on_temporary_files
     def process(self):
         # Copy the file and its metadata (hence copy2) to the output directory
-        sys.stderr.write(f"results_subdir of class: {self.results_subdir}\n")
-        sys.stderr.write(
-            f"results_subdir as per settings: {luigi.get_setting('results_subdir')}"
-        )
-        sys.stderr.flush()
         for input_file in self.input_paths:
             source = Path(input_file)
             target = self.get_output_file_name(source.name)
@@ -305,9 +306,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
         dataprod_config = luigi.get_setting("dataprod_config")
         # If the prodtype is default i.e wasn't defined globally
         # we must call the default_prodtype requires function
-        default_prodtype = dataprod_config["global_prodtype"] == "default"
-
-        if default_prodtype:
+        if self.prodtype == "default":
             datatypes_dict = flatten_to_dict(dataprod_config["datatype"])
             datatypes = list(datatypes_dict.keys())
 
@@ -318,7 +317,10 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
             ):
                 prodtype = datatypes_dict[datatype]["prodtype"]
 
-                yield get_last_stage_task(prodtype)(
+                yield get_last_stage_task(
+                    inject_stage1_dependency=self.inject_stage1_dependency_task,
+                    prodtype=prodtype,
+                )(
                     prodtype=get_mc_production_types()[prodtype],
                     datatype=datatype,
                     card_name=card,
@@ -332,7 +334,9 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
                 dataprod_config["edm4hep"],
             ):
 
-                yield get_last_stage_task()(
+                yield get_last_stage_task(
+                    inject_stage1_dependency=self.inject_stage1_dependency_task
+                )(
                     prodtype=get_mc_production_types()[self.prodtype],
                     datatype=datatype,
                     card_name=card,
@@ -396,16 +400,22 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
         base_class=MCProductionBaseTask,
         class_attrs={
             last_stage: {
-                "card_name": luigi.Parameter(),
-                "edm4hep_name": luigi.Parameter(),
+                "card_name": luigi.Parameter(default="default"),
+                "edm4hep_name": luigi.Parameter(default="default"),
             }
         },
         inject_stage1_dependency=inject_stage1_dependency,
     )
 
 
-def get_last_stage_task(prodtype=None):
+def get_last_stage_task(inject_stage1_dependency=None, prodtype=None):
     """
     Returns the last luigi Task inside `get_mc_prod_stages_dict`
     """
-    return next(reversed(get_mc_prod_stages_dict(prodtype=prodtype).values()))
+    return next(
+        reversed(
+            get_mc_prod_stages_dict(
+                inject_stage1_dependency=inject_stage1_dependency, prodtype=prodtype
+            ).values()
+        )
+    )

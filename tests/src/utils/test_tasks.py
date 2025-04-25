@@ -3,7 +3,6 @@ from itertools import pairwise
 import b2luigi as luigi
 import pytest
 
-from flare.src.utils.dirs import find_external_file
 from flare.src.utils.tasks import OutputMixin, _linear_task_workflow_generator
 
 
@@ -24,51 +23,6 @@ def stage1_dependency_task():
         pass
 
     return MockStage1Dependency
-
-
-def test_OutputMixin_no_results_subdir():
-    """Check OutputMixin returns correct log_dir and result_dir
-    when no results_subdir is passed to the class"""
-    mock_instance = OutputMixin()
-    luigi.set_setting("working_dir", "/mock/path")
-    assert mock_instance.log_dir == find_external_file(
-        "log", mock_instance.__class__.__name__
-    )
-    assert mock_instance.result_dir == find_external_file(
-        "data", mock_instance.__class__.__name__
-    )
-
-
-def test_OutputMixin_results_subdir():
-    """Check OutputMixin returns correct log_dir and result_dir
-    when results_subdir is passed to the class"""
-    mock_instance = OutputMixin()
-    luigi.set_setting("working_dir", "/mock/path")
-    mock_instance.results_subdir = "test"
-
-    assert mock_instance.log_dir == find_external_file(
-        "log", "test", mock_instance.__class__.__name__
-    )
-    assert mock_instance.result_dir == find_external_file(
-        "data", "test", mock_instance.__class__.__name__
-    )
-
-
-def test_OutputMixin_inheritance():
-    """Check OutputMixin returns correct log_dir and result_dir
-    when inherited by a child class"""
-    luigi.set_setting("working_dir", "/mock/path")
-
-    class MockClass(OutputMixin):
-        pass
-
-    mock_instance = MockClass()
-    assert mock_instance.log_dir == find_external_file(
-        "log", mock_instance.__class__.__name__
-    )
-    assert mock_instance.result_dir == find_external_file(
-        "data", mock_instance.__class__.__name__
-    )
 
 
 def test__linear_task_workflow_generator_assertion_for_incorrect_base_class(task_setup):
