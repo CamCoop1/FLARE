@@ -29,7 +29,7 @@ class FCCTemplateMethodMixin:
         """
         raise NotImplementedError
 
-    def get_input_file_names(self) -> dict:
+    def get_all_input_file_names(self) -> dict:
         """
         This is a method defined by b2luigi.Task or b2luigi.DispatchableTask
         """

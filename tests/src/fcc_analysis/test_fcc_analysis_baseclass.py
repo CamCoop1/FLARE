@@ -25,6 +25,9 @@ class TestStage(FCCTemplateMethodMixin):
     def get_input_file_names(self):
         return {"test": ["test_input_file.root"]}
 
+    def get_all_input_file_names(self):
+        return ["test_input_file.root"]
+
 
 @pytest.fixture
 def test_instance(mocker):
@@ -43,7 +46,7 @@ def test_abstract_methods():
     with pytest.raises(NotImplementedError):
         _ = instance.output_dir
     with pytest.raises(NotImplementedError):
-        _ = instance.get_input_file_names()
+        _ = instance.get_all_input_file_names()
 
 
 def test_inputDir_path_for_is_file_False(mocker, test_instance):
