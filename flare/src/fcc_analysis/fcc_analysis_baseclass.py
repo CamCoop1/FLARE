@@ -29,7 +29,7 @@ class FCCTemplateMethodMixin:
         """
         raise NotImplementedError
 
-    def get_input_file_names(self) -> dict:
+    def get_all_input_file_names(self) -> dict:
         """
         This is a method defined by b2luigi.Task or b2luigi.DispatchableTask
         """
@@ -47,8 +47,8 @@ class FCCTemplateMethodMixin:
         """
         Using b2luigi's get_input_file_names get the input directory containing the data for this stage
         """
-        file_path_list = next(iter(self.get_input_file_names().values()))
-        file_path = find_file(file_path_list[0])
+        file_path = list(self.get_all_input_file_names())[0]
+        file_path = find_file(file_path)
 
         if file_path.is_file():
             return str(file_path.parent)
@@ -205,7 +205,6 @@ class FCCAnalysisBaseClass(
         # Run any required on_completion methods for this specific stage for this specific prodtype
         self.on_completion()
 
-    @luigi.on_temporary_files
     def process(self):
         """
         Process the FCC stage

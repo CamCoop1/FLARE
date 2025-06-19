@@ -140,7 +140,8 @@ class MCProductionBaseTask(
         return self.tmp_output_parent_dir / self.output_file_name
 
     def bm_input(self) -> Path:
-        return next(iter(self.get_input_file_names().values()))[0]
+
+        return list(self.get_all_input_file_names())[0]
 
     def bm_datatype_parameter(self, arg) -> Path:
         arg = arg.replace(BracketMappings.datatype_parameter, self.datatype)
@@ -282,13 +283,12 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
 
     @property
     def input_paths(self):
-        return [f[0] for f in self.get_input_file_names().values()]
+        return list(self.get_all_input_file_names())
 
     @property
     def inject_stage1_dependency_task(self) -> None:
         return None
 
-    # @luigi.on_temporary_files
     def process(self):
         # Copy the file and its metadata (hence copy2) to the output directory
         for input_file in self.input_paths:
