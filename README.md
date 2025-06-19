@@ -1,4 +1,6 @@
-![CI](https://github.com/amanmdesai/FCC_Software_Framework/actions/workflows/ci.yaml/badge.svg)
+[![CI](https://github.com/CamCoop1/FLARE/actions/workflows/ci.yaml/badge.svg)](https://github.com/CamCoop1/FLARE/actions/workflows/ci.yaml)
+[![DOI](https://zenodo.org/badge/953801229.svg)](https://doi.org/10.5281/zenodo.15694628)
+
 
 # FLARE: FCCee b2Luigi Automated Reconstruction and Event processing
 
