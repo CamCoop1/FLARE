@@ -1,30 +1,39 @@
 import pytest
 
-import flare.src.utils.logo as logo
+import flare.src.utils.logo as logo_module
 
 
 @pytest.fixture
-def fcc_b2luigi_logo():
+def print_flare_logo():
+    # No longer print the animation
+    #    loading_animation()
     return r"""
- ---------------------------------------------------------------------------------------------------------------------------
-    FFFFFFFF    CCCCCC     CCCCCC       ++       BBBBB       22 2   LLL       UUU    UUU   IIIIIIII    GGGGGG    IIIIIIII
-    FF         CC         CC            ++       B    BB    2  2    LLL       UUU    UUU      II      GG            II
-    FFFFFF     CC         CC       +++++++++++   BBBBB        2     LLL       UUU    UUU      II      GG   GGGG     II
-    FF         CC         CC            ++       B    BB     2      LLL       UUU    UUU      II      GG     GG     II
-    FF          CCCCCC     CCCCCC       ++       BBBBB      222222  LLLLLLLL   UUUUUUUU    IIIIIIII    GGGGGG    IIIIIIII
- ---------------------------------------------------------------------------------------------------------------------------
+
+
+
+ .----------------.  .----------------.  .----------------.  .----------------.  .----------------.
+| .--------------. || .--------------. || .--------------. || .--------------. || .--------------. |
+| |  _________   | || |   _____      | || |      __      | || |  _______     | || |  _________   | |
+| | |_   ___  |  | || |  |_   _|     | || |     /  \     | || | |_   __ \    | || | |_   ___  |  | |
+| |   | |_  \_|  | || |    | |       | || |    / /\ \    | || |   | |__) |   | || |   | |_  \_|  | |
+| |   |  _|      | || |    | |   _   | || |   / ____ \   | || |   |  __ /    | || |   |  _|  _   | |
+| |  _| |_       | || |   _| |__/ |  | || | _/ /    \ \_ | || |  _| |  \ \_  | || |  _| |___/ |  | |
+| | |_____|      | || |  |________|  | || ||____|  |____|| || | |____| |___| | || | |_________|  | |
+| |              | || |              | || |              | || |              | || |              | |
+| '--------------' || '--------------' || '--------------' || '--------------' || '--------------' |
+ '----------------'  '----------------'  '----------------'  '----------------'  '----------------'
+
+                            Github: [ https://github.com/CamCoop1/FLARE ]
+                            arXiv : [ https://arxiv.org/abs/2506.16094 ]
+
 """
 
 
-def test_logo_module_has_loading_animation():
-    assert hasattr(logo, "loading_animation")
+def test_logo_module_has_print_flare_logo():
+    assert hasattr(logo_module, "print_flare_logo")
 
 
-def test_logo_module_has_print_b2luigi_logo():
-    assert hasattr(logo, "print_b2luigi_logo")
-
-
-def test_print_b2luigi_logo_prints_correct_logo(capsys, fcc_b2luigi_logo):
-    logo.print_b2luigi_logo()
+def test_print_flare_logo_prints_correct_logo(capsys, print_flare_logo):
+    logo_module.print_flare_logo()
     captured = capsys.readouterr()
-    assert fcc_b2luigi_logo.strip() in captured.out.strip()
+    assert print_flare_logo.strip() in captured.out.strip()
