@@ -4,7 +4,7 @@ from flare.cli.utils import (
     build_executable_and_save_to_settings_manager,
     load_settings_into_manager,
 )
-from flare.src.utils.logo import print_b2luigi_logo
+from flare.src.utils.logo import print_flare_logo
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
     if hasattr(args, "func"):
         # Call the b2luigi logo and run the function
         logger.debug(f"Calling {args.func}")
-        print_b2luigi_logo()
+        print_flare_logo()
         args.func(args)
 
 
