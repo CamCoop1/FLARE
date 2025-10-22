@@ -2,7 +2,7 @@ from typing import List, Literal
 
 from pydantic import Field, root_validator
 
-from flare.cli.logging import logger
+from flare.cli.flare_logging import logger
 from flare.src.pydantic_models.production_types_model import MCProductionModel
 from flare.src.pydantic_models.utils import ForbidExtraBaseModel
 

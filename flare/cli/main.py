@@ -1,5 +1,5 @@
 from flare.cli.arguments import _get_args_cli
-from flare.cli.logging import logger
+from flare.cli.flare_logging import logger
 from flare.cli.utils import (
     build_executable_and_save_to_settings_manager,
     load_settings_into_manager,
