@@ -97,3 +97,5 @@ target/
 *.log
 
 poetry.lock
+
+publish_version.sh

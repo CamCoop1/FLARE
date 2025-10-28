@@ -26,6 +26,9 @@ class OutputMixin:
     def result_dir(self):
         return find_external_file("data", self.results_subdir, self.__class__.__name__)
 
+    def remove_output(self):
+        self._remove_output()
+
 
 def _linear_task_workflow_generator(
     stages: list[Any],

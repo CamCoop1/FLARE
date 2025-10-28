@@ -4,7 +4,7 @@ from pathlib import Path
 import b2luigi as luigi
 
 from flare.cli.arguments import ParserNames
-from flare.cli.logging import logger
+from flare.cli.flare_logging import logger
 from flare.src.utils.yaml import get_config
 
 
