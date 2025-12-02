@@ -1,31 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "hep-flare"
-version = "0.1.9"
-description = "Framework for streamlining the FCC framework powered by b2luigi"
-authors = [
-    { name = "Cameron Harris", email = "cameron.harris@adelaide.edu.au" }
-]
-requires-python = ">=3.9,<3.12"
-dependencies = [
-    "b2luigi>=1.2.0",
-    "PyYAML>=6.0",
-    "pydantic (<2)"
-]
-
-[project.optional-dependencies]
-test = [
-    "pytest-mock"
-]
-
-[project.scripts]
-flare = "flare.cli.main:main"
-
-[project.urls]
-Homepage = "https://github.com/CamCoop1/FLARE.git"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "hep-flare"
@@ -33,17 +8,25 @@ version = "0.1.10"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = ["Cameron Harris <cameron.harris@adelaide.edu.au>"]
 readme = "README.md"
-packages = [
-    { include = "flare" }
+packages = [{ include = "flare" }]
+python = ">=3.9,<3.12"
+include = [
+    "flare/**/*.yaml",
+    "flare/**/*.json",
+    "flare/**/*.jinja2",
 ]
 
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+b2luigi = ">=1.2.0"
+PyYAML = ">=6.0"
+pydantic = "<2"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["flare*"]
+[tool.poetry.urls]
+Homepage = "https://github.com/CamCoop1/FLARE"
 
-[tool.setuptools.package-data]
-"flare" = ["**/*.yaml", "**/*.json", "**/*.jinja2"]
+[tool.poetry.scripts]
+flare = "flare.cli.main:main"
 
 [tool.flake8]
 max-line-length = 88
