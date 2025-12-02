@@ -4,12 +4,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "hep-flare"
-version = "0.1.10"
+version = "0.1.11"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = ["Cameron Harris <cameron.harris@adelaide.edu.au>"]
 readme = "README.md"
 packages = [{ include = "flare" }]
-python = ">=3.9,<3.12"
 include = [
     "flare/**/*.yaml",
     "flare/**/*.json",
