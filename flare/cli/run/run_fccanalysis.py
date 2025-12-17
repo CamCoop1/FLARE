@@ -1,23 +1,19 @@
-import b2luigi as luigi
-
 import flare
+from flare.cli.run.utils import COMMON_ARGUMENTS
 from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.fcc_analysis.tasks import FCCAnalysisWrapper
-from flare.src.mc_production.tasks import MCProductionWrapper
 
 
-def run_mcproduction(args):
-    """Run the MC Production workflow"""
-    config = luigi.get_setting("dataprod_config")
+def setup_parser(parser):
+    for arg, options in COMMON_ARGUMENTS:
+        parser.add_argument(arg, **options)
 
-    flare.process(
-        MCProductionWrapper(prodtype=config["global_prodtype"]),
-        workers=20,
-        batch=True,
-        ignore_additional_command_line_args=True,
-        flare_args=args,
-        from_cli_input=True,
+    parser.add_argument(
+        "--mcprod",
+        action="store_true",
+        help="If set, also run mcproduction as part of the analysis",
     )
+    parser.set_defaults(func=run_analysis)
 
 
 def run_analysis(args):
@@ -39,3 +35,13 @@ def run_analysis(args):
         flare_args=args,
         from_cli_input=True,
     )
+
+
+# Registration happens here
+from flare.cli.run.registry import run_subparsers  # noqa
+
+parser = run_subparsers.add_parser(
+    "analysis",
+    help="Run FCC analysis",
+)
+setup_parser(parser)
