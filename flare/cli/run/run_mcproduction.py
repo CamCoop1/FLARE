@@ -23,7 +23,6 @@ def setup_parser(parser):
 def run_mcproduction(args):
     """Run the MC Production workflow"""
     config = luigi.get_setting("dataprod_config")
-    print(config)
 
     flare.process(
         MCProductionWrapper(prodtype=config["global_prodtype"]),
