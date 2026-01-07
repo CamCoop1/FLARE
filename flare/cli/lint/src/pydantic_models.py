@@ -19,10 +19,6 @@ class FlaggableVariable(ForbidExtraBaseModel):
     value: str
     lineno: int
 
-    @classmethod
-    def register(cls, value: str, lineno: int):
-        return cls(value=value, lineno=lineno)
-
 
 class IdentifiedPathEntry(ForbidExtraBaseModel):
     """
@@ -45,25 +41,6 @@ class IdentifiedPathEntry(ForbidExtraBaseModel):
     noqa: bool
     lineno: int
     end_lineno: int
-
-    @classmethod
-    def register(
-        cls,
-        path: str,
-        is_fstring: bool,
-        references: List[str],
-        noqa: bool,
-        lineno: int,
-        end_lineno: int,
-    ):
-        return cls(
-            path=path,
-            is_fstring=is_fstring,
-            references=references,
-            noqa=noqa,
-            lineno=lineno,
-            end_lineno=end_lineno,
-        )
 
 
 class AnalyzerModel(ForbidExtraBaseModel):
@@ -156,7 +133,7 @@ class AnalyzerModel(ForbidExtraBaseModel):
         """
         if not hasattr(cls, "builder_dict"):
             cls.builder_dict = cls._default_dict()
-        cls.builder_dict["flaggable_variables"][name] = FlaggableVariable.register(
+        cls.builder_dict["flaggable_variables"][name] = FlaggableVariable(
             value=value, lineno=lineno
         )
         return cls
@@ -177,15 +154,13 @@ class AnalyzerModel(ForbidExtraBaseModel):
         """
         if not hasattr(cls, "builder_dict"):
             cls.builder_dict = cls._default_dict()
-        cls.builder_dict["identified_path_variables"][name] = (
-            IdentifiedPathEntry.register(
-                path=path,
-                is_fstring=is_fstring,
-                references=references,
-                noqa=noqa,
-                lineno=lineno,
-                end_lineno=end_lineno,
-            )
+        cls.builder_dict["identified_path_variables"][name] = IdentifiedPathEntry(
+            path=path,
+            is_fstring=is_fstring,
+            references=references,
+            noqa=noqa,
+            lineno=lineno,
+            end_lineno=end_lineno,
         )
         return cls
 
