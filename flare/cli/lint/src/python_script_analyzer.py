@@ -2,11 +2,10 @@ import ast
 from typing import Dict, Protocol
 
 from flare.cli.lint.src.pydantic_models import AnalyzerModel
-from flare.cli.lint.utils import get_docstring_ranges, looks_like_path
+from flare.cli.lint.src.utils import get_docstring_ranges, looks_like_path
 
 
 class Registry(Protocol):
-
     @property
     def VALID_VARIABLE_KEYS(self) -> set: ...
 
@@ -36,7 +35,6 @@ class Registry(Protocol):
 
 
 class Visitor(ast.NodeVisitor):
-
     def __init__(
         self, *args, lines: list, docstring_ranges: list, registry: Registry, **kwargs
     ):
