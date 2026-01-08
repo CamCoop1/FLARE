@@ -169,7 +169,7 @@ class AnalyzerModel(ForbidExtraBaseModel):
         """
         Return the dictionary of registrered identified_path_variables
         """
-        return cls.builder_dict()["identified_path_variables"]
+        return cls.builder_dict["identified_path_variables"]
 
     @classmethod
     def validate_registered_data(cls):
