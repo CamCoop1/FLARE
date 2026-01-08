@@ -18,7 +18,7 @@ jobs:
                   python-version: "3.10"
 
             - name: Install regular + test dependencies
-              run: pip install pytest-mock
+              run: pip install . pytest-mock
 
             - name: Run tests
               run: python3 -m pytest -W ignore::DeprecationWarning
