@@ -53,6 +53,7 @@ class Visitor(ast.NodeVisitor):
         return False
 
     def has_noqa(self, node) -> bool:
+        """Check if the user has commented noqa on a line"""
         for lineno in range(node.lineno - 1, getattr(node, "end_lineno", node.lineno)):
             if any(x in self.lines[lineno] for x in ["noqa", "#"]):
                 return True
