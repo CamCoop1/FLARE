@@ -96,7 +96,7 @@ target/
 *.out
 *.err
 *.log
-
+*.zed
 poetry.lock
 
 publish_version.sh
