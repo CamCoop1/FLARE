@@ -10,6 +10,7 @@ class ErrorLevel(Enum):
 
     INFO = auto()
     ERROR = auto()
+    PEDANTIC = auto()
     PANIC = auto()
 
 
@@ -24,8 +25,17 @@ class ErrorExceptions(Enum):
 class Error:
     """This dataclass holds the information for a Flare Error"""
 
+    # Description of what the error is
     description: str
+    # The severity level of the error
     level: ErrorLevel
+    # Suggestions for why the error occurred
     suggestion: str
+
+    # The function which checks if an error should be called
+    # Takes the AnalyzerModel and returns a bool or a dict object
+    # to be handled by the diagnostic tool
     checker_func: Callable[[AnalyzerModel], bool | dict]
+    # If an exception is passed to the diagnostic tools then
+    # we skip errors which include these exceptions
     exceptions: list[ErrorExceptions] = field(default_factory=list)

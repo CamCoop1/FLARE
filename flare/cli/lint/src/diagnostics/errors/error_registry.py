@@ -17,6 +17,7 @@ class FlareErrors(Enum):
 
     @property
     def specific_error_exceptions(self):
+        """Returns the error exceptions of a specific error when called"""
         return self.value.exceptions
 
     FLARE001 = Error(
@@ -24,6 +25,7 @@ class FlareErrors(Enum):
         level=ErrorLevel.INFO,
         suggestion="Ensure you have defined an inputDir for this class",
         checker_func=lambda model: "inputDir" not in model.flaggable_variables.keys(),
+        # Note we are excluding this error when the diagnostic tool is passed ErrorExceptions.INPUTDIR_NOT_REQUIRED
         exceptions=[ErrorExceptions.INPUTDIR_NOT_REQUIRED],
     )
     FLARE002 = Error(
@@ -51,9 +53,9 @@ class FlareErrors(Enum):
     )
     FLARE004 = Error(
         description="Noqa found during search",
-        level=ErrorLevel.INFO,
+        level=ErrorLevel.PEDANTIC,
         checker_func=lambda model: {
             m.name: m for m in model.identified_path_variables.values() if m.noqa
         },
-        suggestion="Path skipped due to #noqa instance",
+        suggestion="Path skipped due to #noqa instance, logged for book keeping",
     )

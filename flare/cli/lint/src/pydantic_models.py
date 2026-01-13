@@ -198,7 +198,7 @@ class Autofix(ForbidExtraBaseModel):
     """
 
     description: str
-    replacement: str
+    replacement: Optional[str] = None
 
 
 class Diagnostic(ForbidExtraBaseModel):
@@ -215,36 +215,3 @@ class Diagnostic(ForbidExtraBaseModel):
     suppressed: bool = False
     context: Optional[Dict] = {}
     autofix: Optional[Autofix] = None
-
-
-if __name__ == "__main__":
-    analyzer_model = (
-        AnalyzerModel.register_flaggable_variable(
-            "inputDir", value="hello/world", lineno=24
-        )
-        .register_identified_path_variables(
-            name="inputdir",
-            path="hello/world",
-            is_fstring=False,
-            references=[],
-            noqa=True,
-            lineno=30,
-            end_lineno=30,
-        )
-        .register_identified_path_variables(
-            name="this_path",
-            path="f'{inputdir}/hello/world'",
-            is_fstring=True,
-            references=["inputdir"],
-            noqa=False,
-            lineno=30,
-            end_lineno=30,
-        )
-    )
-    analyzer = analyzer_model.validate_registered_data()
-    from flare.cli.lint.src.diagnostics.flare_fcc_diagnostics import (
-        generate_flare_diagnostics,
-    )
-
-    for x in generate_flare_diagnostics(analyzer, filename="hello/world.py"):
-        print(x)

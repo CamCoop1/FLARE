@@ -1,6 +1,9 @@
-from flare.cli.lint.src.diagnostics.errors.definitions import ErrorExceptions
+from flare.cli.lint.src.diagnostics.errors.definitions import (
+    ErrorExceptions,
+    ErrorLevel,
+)
 from flare.cli.lint.src.diagnostics.errors.error_registry import FlareErrors
-from flare.cli.lint.src.pydantic_models import AnalyzerModel, Diagnostic
+from flare.cli.lint.src.pydantic_models import AnalyzerModel, Autofix, Diagnostic
 
 
 def emit_error_to_diagnostic(
@@ -8,11 +11,18 @@ def emit_error_to_diagnostic(
     level: str,
     message: str,
     filename: str,
+    suggestion: str,
     *,
+    suppressed=False,
     lineno=1,
     end_lineno=1,
     context=None,
+    replacement=None,
 ):
+    """
+    Function servers to separate the emittion of an error from just calling Diagnostic. In case the in the future
+    additional things must be done when omitting the error, we can place them here.
+    """
     return Diagnostic(
         code=code,
         level=level,
@@ -21,12 +31,20 @@ def emit_error_to_diagnostic(
         lineno=lineno,
         end_lineno=end_lineno,
         context=context or {},
+        suppressed=suppressed,
+        autofix=Autofix(description=suggestion, replacement=replacement),
     )
 
 
 def generate_flare_diagnostics(
-    analysis: AnalyzerModel, filename: str, exceptions: list[ErrorExceptions] = []
+    analysis: AnalyzerModel,
+    filename: str,
+    exceptions: list[ErrorExceptions] = [],
+    error_level: ErrorLevel = ErrorLevel.ERROR,
 ):
+    """Generate FLARE diagnostics from the AnalyzerModel. We do this by looping through the FlareErrors
+    and emitting errors only when we are returned a truthy value i.e a bool or a dict from the checker_func of
+    our error"""
     diags = []
 
     for error in FlareErrors:
@@ -38,6 +56,7 @@ def generate_flare_diagnostics(
         if not result:
             continue
 
+        # Match on the type of result, if its a bool or dict changes how we want to handle it
         match result:
             case bool():
                 diags.append(
@@ -46,9 +65,15 @@ def generate_flare_diagnostics(
                         level=error_value.level.name,
                         message=error_value.description,
                         filename=filename,
+                        # Because the ErrorLevel enum uses auto() it has automatic numbering.
+                        # Say INFO = 0 and ERROR = 1, if we pass to this function
+                        # error_level=ErrorLevel.INFO then we suppress all errors which are higher
+                        suppressed=(error_level.value < error_value.level.value),
+                        suggestion=error_value.suggestion,
                     )
                 )
             case dict():
+                # For each IdentifiedPathEntry(ForbidExtraBaseModel collected, raise an error
                 for model in result.values():
                     diags.append(
                         emit_error_to_diagnostic(
@@ -59,7 +84,28 @@ def generate_flare_diagnostics(
                             lineno=model.lineno,
                             end_lineno=model.end_lineno,
                             context={model.name: model.path},
+                            suppressed=(error_level.value < error_value.level.value),
+                            suggestion=error_value.suggestion,
                         )
                     )
 
     return diags
+
+
+def print_diagnostics(diagnostics: list[Diagnostic]):
+    """Print our diagnostics for the user to read."""
+    INDENT_VALUE = " " * 6
+    for d in diagnostics:
+        if d.suppressed:
+            continue
+
+        print(f">> {d.file}:{d.lineno}-{d.end_lineno}: [{d.level}] {d.code}")
+        print(INDENT_VALUE, f"{d.message}")
+        if d.context:
+            for variable, path in d.context.items():
+                print(INDENT_VALUE, f"→ Variable: {variable}, Value: {path}")
+        if d.autofix:
+            print(INDENT_VALUE, f"→ Autofix suggestion: {d.autofix.description}")
+            if d.autofix.replacement:
+                print(INDENT_VALUE, f"→ Replacement: {d.autofix.replacement}")
+        print("")
