@@ -16,6 +16,7 @@ class FlaggableVariable(ForbidExtraBaseModel):
     numbers. This model will validate the associated data.
     """
 
+    name: str
     value: str
     lineno: int
 
@@ -35,6 +36,7 @@ class IdentifiedPathEntry(ForbidExtraBaseModel):
             usually its the same as lineno
     """
 
+    name: str
     path: str
     is_fstring: bool
     references: List[str]
@@ -134,7 +136,7 @@ class AnalyzerModel(ForbidExtraBaseModel):
         if not hasattr(cls, "builder_dict"):
             cls.builder_dict = cls._default_dict()
         cls.builder_dict["flaggable_variables"][name] = FlaggableVariable(
-            value=value, lineno=lineno
+            name=name, value=value, lineno=lineno
         )
         return cls
 
@@ -155,6 +157,7 @@ class AnalyzerModel(ForbidExtraBaseModel):
         if not hasattr(cls, "builder_dict"):
             cls.builder_dict = cls._default_dict()
         cls.builder_dict["identified_path_variables"][name] = IdentifiedPathEntry(
+            name=name,
             path=path,
             is_fstring=is_fstring,
             references=references,
@@ -182,6 +185,10 @@ class AnalyzerModel(ForbidExtraBaseModel):
             )
         return cls(**cls.builder_dict)
 
+    @classmethod
+    def get_all_fields(cls):
+        return cls.__fields__
+
 
 class Autofix(ForbidExtraBaseModel):
     """
@@ -200,7 +207,7 @@ class Diagnostic(ForbidExtraBaseModel):
     """
 
     code: str
-    severity: str
+    level: str
     message: str
     file: str
     lineno: int
@@ -211,15 +218,33 @@ class Diagnostic(ForbidExtraBaseModel):
 
 
 if __name__ == "__main__":
-    analyzer_model = AnalyzerModel.register_flaggable_variable(
-        "inputDir", value="hello/world", lineno=24
-    ).register_identified_path_variables(
-        name="inputdir",
-        path="hello/world",
-        is_fstring=False,
-        references=[],
-        noqa=True,
-        lineno=30,
-        end_lineno=30,
+    analyzer_model = (
+        AnalyzerModel.register_flaggable_variable(
+            "inputDir", value="hello/world", lineno=24
+        )
+        .register_identified_path_variables(
+            name="inputdir",
+            path="hello/world",
+            is_fstring=False,
+            references=[],
+            noqa=True,
+            lineno=30,
+            end_lineno=30,
+        )
+        .register_identified_path_variables(
+            name="this_path",
+            path="f'{inputdir}/hello/world'",
+            is_fstring=True,
+            references=["inputdir"],
+            noqa=False,
+            lineno=30,
+            end_lineno=30,
+        )
     )
-    print(analyzer_model.validate_registered_data().dict())
+    analyzer = analyzer_model.validate_registered_data()
+    from flare.cli.lint.src.diagnostics.flare_fcc_diagnostics import (
+        generate_flare_diagnostics,
+    )
+
+    for x in generate_flare_diagnostics(analyzer, filename="hello/world.py"):
+        print(x)

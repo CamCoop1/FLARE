@@ -1,42 +1,17 @@
 import ast
-from typing import Dict, Protocol
 
 from flare.cli.lint.src.pydantic_models import AnalyzerModel
 from flare.cli.lint.src.utils import get_docstring_ranges, looks_like_path
 
 
-class Registry(Protocol):
-    @property
-    def VALID_VARIABLE_KEYS(self) -> set: ...
-
-    @classmethod
-    def initialize_register_mode(cls): ...
-
-    @classmethod
-    def register_flaggable_variable(cls, name: str, value: str, lineno: int): ...
-
-    @classmethod
-    def register_identified_path_variables(
-        cls,
-        name: str,
-        path: str,
-        is_fstring: bool,
-        references: list,
-        noqa: bool,
-        lineno: int,
-        end_lineno: int,
-    ): ...
-
-    @classmethod
-    def registered_identified_path_variables(cls) -> dict: ...
-
-    @classmethod
-    def validate_registered_data(cls): ...
-
-
 class Visitor(ast.NodeVisitor):
     def __init__(
-        self, *args, lines: list, docstring_ranges: list, registry: Registry, **kwargs
+        self,
+        *args,
+        lines: list,
+        docstring_ranges: list,
+        registry: type[AnalyzerModel],
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
@@ -129,7 +104,7 @@ class Visitor(ast.NodeVisitor):
         return {"is_path": False, "raw": None, "is_fstring": False, "refs": []}
 
 
-def analyze_python_script(path: str) -> Dict:
+def analyze_python_script(path: str) -> AnalyzerModel:
     with open(path) as f:
         source = f.read()
     # Built list of lines for script
@@ -151,4 +126,4 @@ def analyze_python_script(path: str) -> Dict:
 if __name__ == "__main__":
     script = "/remote/nas00-1/users/charris/phd/fcc/FLARE-examples/analysis/studies/higgs_mass_example/stage1_flavor.py"
     analysis = analyze_python_script(script)
-    print(analysis.flaggable_variables)
+    print(analysis)
