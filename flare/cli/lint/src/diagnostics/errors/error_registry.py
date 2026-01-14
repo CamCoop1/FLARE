@@ -23,7 +23,10 @@ class FlareErrors(Enum):
     FLARE001 = Error(
         description="No inputDir defined in analysis script",
         level=ErrorLevel.INFO,
-        suggestion="Ensure you have defined an inputDir for this script",
+        suggestion=(
+            "The first stage of your FCCAnalysis workflow needs a defined inputDir when not"
+            " running the MCProduction workflow.Ensure you have defined an inputDir for this script"
+        ),
         checker_func=lambda model: "inputDir" not in model.flaggable_variables.keys(),
         # Note we are excluding this error when the diagnostic tool is passed ErrorExceptions.INPUTDIR_NOT_REQUIRED
         exceptions=[ErrorExceptions.INPUTDIR_NOT_REQUIRED],

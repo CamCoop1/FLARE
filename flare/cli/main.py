@@ -13,6 +13,7 @@ def main():
     # import the get_parser function here to ensure all subcommands are properly registered
     from flare.cli.cli_registry import _GROUP_HOOKS, get_parser
 
+    print_flare_logo()
     # Get the global parser
     parser = get_parser()
     # Split the parsed arguments into known and unknown
@@ -26,7 +27,7 @@ def main():
     if hooks and hooks.post_parse:
         hooks.post_parse(known)
     # Executate attached function
-    print_flare_logo()
+
     known.func(known)
 
 

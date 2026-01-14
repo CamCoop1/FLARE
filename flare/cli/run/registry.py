@@ -8,6 +8,8 @@ def _run_hooks(args):
     build_for_regular_flare_cli(args)
     load_settings_into_manager(args)
     if run_fcc_linting(args):
+        # If run_fcc_linting returns a truthy object then there are diagnostics
+        # which are not suppressed and so we much exit
         exit(1)
 
 

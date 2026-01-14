@@ -41,7 +41,6 @@ def process(*args, flare_args, from_cli_input=False, **kwargs):
 
     if not kwargs.get("workers", None):
         kwargs["workers"] = 20
-
     _process(*args, **kwargs)
 
 

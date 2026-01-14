@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+from enum import Enum
 from pathlib import Path
 
 import b2luigi as luigi
@@ -189,7 +190,7 @@ def build_for_regular_flare_cli(args):
     """Build the executable for the regular flare CLI"""
     additional_args = [
         " ".join(
-            f"--{key.replace('_', '-')} {value}"
+            f"--{key.replace('_', '-')} {value if not isinstance(value, Enum) else value.name}"
             for key, value in vars(args).items()
             if value and key not in _get_unwanted_cli_arguments()
         )

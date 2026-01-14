@@ -25,7 +25,7 @@ def setup_parser(parser):
         "--error-level",
         choices=[e for e in ErrorLevel],
         type=lambda name: ErrorLevel[name],
-        default=ErrorLevel.ERROR,
+        default=ErrorLevel.ERROR.name,
         help="Error level of the diagnostics tool",
     )
     parser.set_defaults(func=run_fcc_linting)
@@ -45,7 +45,6 @@ def run_fcc_linting(args) -> list:
     paths = [
         str(Stages.get_stage_script(stage)) for stage in Stages.get_stage_ordering()
     ]
-    print(flare.get_setting("mcprod"))
     first_stage_error_exceptions = [
         (
             [

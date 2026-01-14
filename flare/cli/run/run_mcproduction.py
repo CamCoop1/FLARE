@@ -22,7 +22,7 @@ def setup_parser(parser):
         "--error-level",
         choices=[e for e in ErrorLevel],
         type=lambda name: ErrorLevel[name],
-        default=ErrorLevel.ERROR,
+        default=ErrorLevel.ERROR.name,
         help="Error level of the diagnostics tool",
     )
 

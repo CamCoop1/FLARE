@@ -79,34 +79,43 @@ class FCCTemplateMethodMixin:
         # Load the python script as text
         with stage_script_path.open("r") as f:
             python_code = f.read()
+
+        # Get the lines of code
+        python_code_lines = python_code.splitlines()
         # Check for plot stage as its outputdir is defined differently (for no good reason?)
 
         outputdir_element = "outputDir" if self.stage != Stages.plot else "outdir"
-
+        print("lines of code before: ", len(python_code_lines))
         # Check no outputDir is defined by the user
-        assert (
-            outputdir_element not in python_code
-        ), f"Please do not define your own output directory in your {self.stage} script. Remove this and rerun"
+        if outputdir_element in python_code:
+            python_code_lines = [
+                p for p in python_code_lines if not p.startswith(outputdir_element)
+            ]
+        print("lines of code after: ", len(python_code_lines))
 
         # If this stage has the default requires, then just copy the script and return early
         if not [s for s in self.requires()]:
             # Check no inputDir is defined by the user
-            assert (
-                "inputDir" in python_code
-            ), f"Please define your own input directory in your {self.stage} script as the input data is required to stage the workflow"
+            if "inputDir" in python_code:
+                python_code_lines = [
+                    p for p in python_code_lines if not p.startswith("inputDir")
+                ]
+
             shutil.copy2(stage_script_path, self.rendered_template_path)
             return
         # Check no inputDir is defined by the user
-        assert (
-            "inputDir" not in python_code
-        ), f"Please do not define your own input directory in your {self.stage} script. Remove this and rerun"
+        if "inputDir" in python_code:
+            python_code_lines = [
+                p for p in python_code_lines if not p.startswith("inputDir")
+            ]
 
         if self.stage == Stages.plot:
-            lines = python_code.split("\n")
-            output_code_list = [line for line in lines if "customLabel" not in line]
+            output_code_list = [
+                line for line in python_code_lines if "customLabel" not in line
+            ]
             output_code = "\n".join(output_code_list)
         else:
-            output_code = python_code
+            output_code = "\n".join(python_code_lines)
 
         # Otherwise we must add the inputDir from the required function to the python script
         rendered_tex = self.template.render(
