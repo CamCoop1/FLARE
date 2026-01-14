@@ -1,4 +1,5 @@
 import flare
+from flare.cli.lint.src.diagnostics.errors.definitions import ErrorLevel
 from flare.cli.run.utils import COMMON_ARGUMENTS
 from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.fcc_analysis.tasks import FCCAnalysisWrapper
@@ -13,6 +14,13 @@ def setup_parser(parser):
         action="store_true",
         help="If set, also run mcproduction as part of the analysis",
     )
+    parser.add_argument(
+        "--error-level",
+        choices=[e for e in ErrorLevel],
+        type=lambda name: ErrorLevel[name],
+        default=ErrorLevel.ERROR,
+        help="Error level of the diagnostics tool",
+    )
     parser.set_defaults(func=run_analysis)
 
 
@@ -26,7 +34,7 @@ def run_analysis(args):
 
     assert (
         Stages.get_stage_ordering()
-    ), "Not FCC Stages have been detected in your study directory"
+    ), "No FCC Stages have been detected in your study directory"
     flare.process(
         FCCAnalysisWrapper(),
         workers=20,

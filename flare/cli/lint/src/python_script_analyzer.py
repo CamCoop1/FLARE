@@ -125,5 +125,6 @@ def analyze_python_script(path: str) -> AnalyzerModel:
 
 if __name__ == "__main__":
     script = "/remote/nas00-1/users/charris/phd/fcc/FLARE-examples/analysis/studies/higgs_mass_example/stage1_flavor.py"
-    analysis = analyze_python_script(script)
-    print(analysis)
+    analysis_stage1 = analyze_python_script(script)
+    script2 = "/remote/nas00-1/users/charris/phd/fcc/FLARE-examples/analysis/studies/higgs_mass_example/stage2_histmaker_flavor.py"
+    analysis_stage2 = analyze_python_script(script2)

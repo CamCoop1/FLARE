@@ -3,6 +3,7 @@ from argparse import SUPPRESS
 import b2luigi as luigi
 
 import flare
+from flare.cli.lint.src.diagnostics.errors.definitions import ErrorLevel
 from flare.cli.run.utils import COMMON_ARGUMENTS
 from flare.src.mc_production.tasks import MCProductionWrapper
 
@@ -17,6 +18,14 @@ def setup_parser(parser):
         default=True,
         help=SUPPRESS,  # Hide from the help menu
     )
+    parser.add_argument(
+        "--error-level",
+        choices=[e for e in ErrorLevel],
+        type=lambda name: ErrorLevel[name],
+        default=ErrorLevel.ERROR,
+        help="Error level of the diagnostics tool",
+    )
+
     parser.set_defaults(func=run_mcproduction)
 
 

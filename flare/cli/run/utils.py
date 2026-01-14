@@ -83,33 +83,51 @@ def load_settings_into_manager(args):
     """Load parsed args into settings manager"""
     logger.info("Loading Settings into FLARE")
 
-    cwd = Path(args.cwd)
+    cwd = Path.cwd()
     luigi.set_setting("working_dir", cwd)
     logger.info(f"Current Working Directory: {cwd}")
-    config = load_config(cwd=cwd, pydantic_model=None, config_path=args.config_yaml)
+
+    # Match on config_yaml in args
+    config_path = Path.cwd()
+    if hasattr(args, "config_yaml"):
+        if args.config_yaml:
+            config_path = args.config_yaml
+    config = load_config(cwd=cwd, pydantic_model=None, config_path=config_path)
 
     # Add name to the settings
-    luigi.set_setting(key="name", value=args.name or config.get("name", "default_name"))
+    name = config.get("name", "default_name")
+    if hasattr(args, "name"):
+        if args.name:
+            name = args.name
+    luigi.set_setting(key="name", value=name)
     logger.info(f"Name: {luigi.get_setting('name')}")
 
     # Add version to the settings
-    luigi.set_setting("version", args.version or config.get("version", "1.0"))
+    version = config.get("version", "1.0")
+    if hasattr(args, "version"):
+        if args.version:
+            version = args.version
+    luigi.set_setting("version", version)
     logger.info(f"Version: {luigi.get_setting('version')}")
 
     # Add the description to the settings
-    luigi.set_setting(
-        "description", args.description or config.get("description", "No description")
-    )
+    description = config.get("description", "No description")
+    if hasattr(args, "description"):
+        if args.description:
+            description = args.description
+
+    luigi.set_setting("description", description)
     logger.info(f"description: {luigi.get_setting('description')}")
 
     # At the study directory to the settings
+    study_dir = ""
+    if hasattr(args, "study_dir"):
+        if args.study_dir:
+            study_dir = args.study_dir
+
     luigi.set_setting(
         "studydir",
-        (
-            (cwd / args.study_dir)
-            if args.study_dir
-            else (cwd / config.get("studydir", cwd))
-        ),
+        ((cwd / study_dir) if study_dir else (cwd / config.get("studydir", cwd))),
     )
     logger.info(f"Study Directory: {luigi.get_setting('studydir')}")
 
@@ -118,9 +136,12 @@ def load_settings_into_manager(args):
         "results_subdir",
         Path(luigi.get_setting("name")) / luigi.get_setting("version"),
     )
-    luigi.set_setting(
-        "outputdir", Path((args.output_dir or config.get("outputdir", cwd)))
-    )
+    output_dir = Path.cwd()
+    if hasattr(args, "output_dir"):
+        if args.output_dir:
+            output_dir = args.output_dir
+
+    luigi.set_setting("outputdir", Path((output_dir or config.get("outputdir", cwd))))
     results_dir = (
         luigi.get_setting("outputdir") / "data" / luigi.get_setting("results_subdir")
     )
@@ -132,19 +153,24 @@ def load_settings_into_manager(args):
 
     # Add the dataprod config to the settings, we load the config using load_config
     # if the dataprod_dir does not have a yaml file Assertion errors are raised
+    mcprod = False
+    if hasattr(args, "mcprod"):
+        if args.mcprod:
+            mcprod = args.mcprod
+
     luigi.set_setting(
         "dataprod_config",
         (
             load_config(
                 cwd, models["UserMCProdConfigModel"], dataprod_dir, user_yaml=True
             )
-            if args.mcprod
+            if mcprod
             else {}
         ),
     )
 
     # Set the mcprod
-    luigi.set_setting("mcprod", args.mcprod)
+    luigi.set_setting("mcprod", mcprod)
     # Any remaining configuration is added to the settings manager here i.e setting the batch_system
     for name, value in config.items():
         name = name.lower()  # All settings are lower case

@@ -19,8 +19,8 @@ class TestStage(FCCTemplateMethodMixin):
     stage = MagicMock(name="mock_stage")  # Mock stage
 
     @property
-    def output_dir(self):
-        return "test_output_dir"
+    def outputDir(self):
+        return "test_outputDir"
 
     def get_input_file_names(self):
         return {"test": ["test_input_file.root"]}
@@ -44,13 +44,13 @@ def test_abstract_methods():
     """Ensure abstract methods raise NotImplementedError."""
     instance = FCCTemplateMethodMixin()
     with pytest.raises(NotImplementedError):
-        _ = instance.output_dir
+        _ = instance.outputDir
     with pytest.raises(NotImplementedError):
         _ = instance.get_all_input_file_names()
 
 
-def test_inputDir_path_for_is_file_False(mocker, test_instance):
-    """Test inputDir_path when the file exists and is not a file i.e a directory"""
+def test_inputDir_for_is_file_False(mocker, test_instance):
+    """Test inputDir when the file exists and is not a file i.e a directory"""
     # Create a mock Path object that is returned by find_file
     mock_file = mocker.MagicMock(spec=Path)
     # Mock the str() to return the expected output
@@ -63,12 +63,12 @@ def test_inputDir_path_for_is_file_False(mocker, test_instance):
         return_value=mock_file,
     )
 
-    assert test_instance.inputDir_path == "/mocked/path/mock_output.root"
+    assert test_instance.inputDir == "/mocked/path/mock_output.root"
     assert mock_find_file.called_once_with(mock_file)
 
 
-def test_inputDir_path_for_is_file_True(mocker, test_instance):
-    """Test inputDir_path when the file exists and is a file"""
+def test_inputDir_for_is_file_True(mocker, test_instance):
+    """Test inputDir when the file exists and is a file"""
     # Create a mock Path object that is returned by find_file
     mock_file = mocker.MagicMock(spec=Path)
     # Set the is_file to True
@@ -81,7 +81,7 @@ def test_inputDir_path_for_is_file_True(mocker, test_instance):
         return_value=mock_file,
     )
 
-    assert test_instance.inputDir_path == "/mocked/path"
+    assert test_instance.inputDir == "/mocked/path"
     assert mock_find_file.called_once_with(mock_file)
 
 
@@ -91,7 +91,7 @@ def test_rendered_template_path(test_instance, mocker):
     test_instance.stage.name = "test_stage"
     # Create the dummy output path
     output_path = Path(
-        f"{test_instance.output_dir}/steering_{test_instance.stage.name}.py"
+        f"{test_instance.outputDir}/steering_{test_instance.stage.name}.py"
     )
     # Mock the first find_file call inside rendered_template_path
     mock_find_file = mocker.patch(
@@ -222,8 +222,8 @@ FCCAnalysisBaseClass Tests
 """
 
 
-def test_FCCAnalysisBaseClass_output_dir_name_success(mocker):
-    """Test the output_dir_name property to ensure it returns the correct value"""
+def test_FCCAnalysisBaseClass_outputDir_name_success(mocker):
+    """Test the outputDir_name property to ensure it returns the correct value"""
     mocker.patch.object(
         FCCAnalysisBaseClass,
         "stage_dict",
@@ -232,7 +232,7 @@ def test_FCCAnalysisBaseClass_output_dir_name_success(mocker):
     )
     test_instance = FCCAnalysisBaseClass()
 
-    assert test_instance.output_dir_name == "mocked"
+    assert test_instance.outputDir_name == "mocked"
 
 
 def test_FCCAnalysisBaseClass_unparsed_args_success(mocker):
@@ -248,7 +248,7 @@ def test_FCCAnalysisBaseClass_unparsed_args_success(mocker):
     assert test_instance.unparsed_args == "mocked"
 
 
-def test_FCCAnalysisBaseClass_output_dir(mocker):
+def test_FCCAnalysisBaseClass_outputDir(mocker):
     """Test the _unparsed_output_file_name property to ensure it returns the correct value"""
     mocked_path = Path("mocked/path")
     mocker.patch.object(
@@ -257,8 +257,8 @@ def test_FCCAnalysisBaseClass_output_dir(mocker):
     test_instance = FCCAnalysisBaseClass()
     test_instance.stage = Stages.stage1
 
-    # The returned output_dir is an absolute path
-    assert str(mocked_path) in str(test_instance.output_dir)
+    # The returned outputDir is an absolute path
+    assert str(mocked_path) in str(test_instance.outputDir)
 
 
 def test_FCCAnalysisBaseClass_bm_free_name_returns_rendered_template_path():
@@ -284,7 +284,7 @@ def test_FCCAnalysisBaseClass_run_fcc_analysis_stage(mocker):
 
     mock_pre_run.assert_called_once()
     mock_subprocess.assert_called_once_with(
-        test_instance.prod_cmd, cwd=test_instance.output_dir, shell=True
+        test_instance.prod_cmd, cwd=test_instance.outputDir, shell=True
     )
     mock_on_completion.assert_called_once()
 

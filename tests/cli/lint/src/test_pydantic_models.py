@@ -98,7 +98,7 @@ def test_AnalyzerModel_for_registered_identified_path_variables_call(
     analyzer = AnalyzerModel.initialize_register_mode()
     analyzer.register_identified_path_variables(**valid_identified_path_variable_object)
     # Remove the 'name' variable as this is used as a key in the database dictionary
-    name = valid_identified_path_variable_object.pop("name")
+    name = valid_identified_path_variable_object["name"]
     # We dict() call the returned value from our database as it is a Pydantic Model
     assert (
         analyzer.registered_identified_path_variables()[name].dict()

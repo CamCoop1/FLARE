@@ -1,3 +1,5 @@
+import shutil
+
 from flare.cli.lint.src.diagnostics.errors.definitions import (
     ErrorExceptions,
     ErrorLevel,
@@ -94,18 +96,35 @@ def generate_flare_diagnostics(
 
 def print_diagnostics(diagnostics: list[Diagnostic]):
     """Print our diagnostics for the user to read."""
+    _diagnostics_banner()
     INDENT_VALUE = " " * 6
     for d in diagnostics:
         if d.suppressed:
             continue
 
-        print(f">> {d.file}:{d.lineno}-{d.end_lineno}: [{d.level}] {d.code}")
-        print(INDENT_VALUE, f"{d.message}")
+        print(f">> [{d.code}:{d.level}] {d.file}:{d.lineno}-{d.end_lineno}")
+        print(INDENT_VALUE, f"→ {d.message}")
         if d.context:
             for variable, path in d.context.items():
                 print(INDENT_VALUE, f"→ Variable: {variable}, Value: {path}")
         if d.autofix:
-            print(INDENT_VALUE, f"→ Autofix suggestion: {d.autofix.description}")
+            print(INDENT_VALUE, f"→ Auto suggestion: {d.autofix.description}")
             if d.autofix.replacement:
                 print(INDENT_VALUE, f"→ Replacement: {d.autofix.replacement}")
         print("")
+
+
+def print_no_diagnostics_to_show():
+    _diagnostics_banner(title="No Flare Linter Diagnostic Errors :)")
+
+
+def _diagnostics_banner(title="Flare Linter Diagnostics"):
+    width = shutil.get_terminal_size(fallback=(80, 20)).columns
+
+    text = f" {title} "
+    pad = max(0, width - len(text))
+    left = pad // 2
+    right = pad - left
+
+    line = "=" * left + text + "=" * right
+    print(line)

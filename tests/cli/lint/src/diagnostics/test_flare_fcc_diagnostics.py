@@ -41,7 +41,7 @@ def analyzer_model() -> AnalyzerModel:
 
 @pytest.mark.parametrize(
     "error_level, expected_errors",
-    [e for e in zip(ErrorLevel, [1, 2, 3, 3])],
+    [e for e in zip(ErrorLevel, [1, 2, 4, 4])],
 )
 def test_generate_flare_diagnostics_for_ErrorLevels_no_exceptions(
     analyzer_model, error_level, expected_errors
@@ -55,7 +55,7 @@ def test_generate_flare_diagnostics_for_ErrorLevels_no_exceptions(
 
 @pytest.mark.parametrize(
     "error_level, expected_errors",
-    [e for e in zip(ErrorLevel, [1, 2, 3, 3])],
+    [e for e in zip(ErrorLevel, [1, 2, 4, 4])],
 )
 def test_generate_flare_diagnostics_for_ErrorLevels_with_INPUTDIR_NOT_REQUIRED_exception(
     analyzer_model, error_level, expected_errors

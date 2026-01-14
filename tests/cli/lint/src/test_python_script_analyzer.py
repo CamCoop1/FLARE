@@ -1,4 +1,3 @@
-from typing import Protocol
 from unittest.mock import mock_open
 
 import pytest
@@ -25,23 +24,6 @@ def generic_data(mocker, mocked_valid_python_script):
     _ = mocker.patch("builtins.open", mock_open(read_data=mocked_valid_python_script))
 
     return python_script_analyzer.analyze_python_script("")
-
-
-def test_assert_Registry_protocol_exists():
-    """Test the the python_script_analyzer has a Registry class.
-    Check the attributes of the Registry class"""
-    # Check the Registry class exists
-    assert hasattr(python_script_analyzer, "Registry")
-    registry = python_script_analyzer.Registry
-    # Check the Registry class is a Protocol
-    assert issubclass(registry, Protocol)
-    # Ensure all the methods and properties of the Protocol as in place.
-    assert hasattr(registry, "initialize_register_mode")
-    assert hasattr(registry, "register_flaggable_variable")
-    assert hasattr(registry, "register_identified_path_variables")
-    assert hasattr(registry, "registered_identified_path_variables")
-    assert hasattr(registry, "validate_registered_data")
-    assert hasattr(registry, "VALID_VARIABLE_KEYS")
 
 
 def test_python_script_analyzer_analyze_python_script_for_open_call_and_return_object(

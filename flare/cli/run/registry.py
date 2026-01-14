@@ -1,14 +1,14 @@
 from flare.cli.auto_importer import auto_import_package
 from flare.cli.cli_registry import GroupHooks, register_group
+from flare.cli.lint.run_lint_fcc_scripts import run_fcc_linting
 from flare.cli.run.utils import build_for_regular_flare_cli, load_settings_into_manager
-
-# from flare.cli.lint.utils import run_linter PLACE HOLDER
 
 
 def _run_hooks(args):
     build_for_regular_flare_cli(args)
     load_settings_into_manager(args)
-    # run_linter
+    if run_fcc_linting(args):
+        exit(1)
 
 
 # Create "run" group

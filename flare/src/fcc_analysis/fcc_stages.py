@@ -63,7 +63,6 @@ class _Stages(Enum):
         assert isinstance(
             stage, cls
         ), f"get_stage_script expects a stage of type {cls.__name__}, got {type(stage).__name__} instead."
-
         stage_steering_file = list(
             luigi.get_setting("studydir").glob(f"{stage.name}*.py")
         )

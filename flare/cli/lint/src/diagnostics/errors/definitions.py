@@ -19,6 +19,7 @@ class ErrorExceptions(Enum):
     expected or not needed we can tell Flare to ignore it"""
 
     INPUTDIR_NOT_REQUIRED = auto()
+    OUTPUTDIR_NOT_REQUIRED = auto()
 
 
 @dataclass
