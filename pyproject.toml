@@ -16,7 +16,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-b2luigi = ">=1.2.0"
+b2luigi = ">=1.2.6"
 PyYAML = ">=6.0"
 pydantic = "<2"
 
