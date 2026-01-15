@@ -83,10 +83,7 @@ class AnalyzerModel(ForbidExtraBaseModel):
     )
 
     # allowed keys (not model fields)
-    VALID_VARIABLE_KEYS: ClassVar[Set[str]] = {
-        "inputDir",
-        "outputDir",
-    }
+    VALID_VARIABLE_KEYS: ClassVar[Set[str]] = {"inputDir", "outputDir", "outdir"}
 
     @root_validator
     def check_allowed_dict_keys(cls, values):
