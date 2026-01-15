@@ -1,24 +1,24 @@
 name: CI
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+    pull_request:
+        types: [opened, synchronize, reopened]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+    test:
+        runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.10"
 
-    - name: Install regular + test dependencies
-      run: pip install .[test]
+            - name: Install regular + test dependencies
+              run: pip install . pytest-mock
 
-    - name: Run tests
-      run: python3 -m pytest -W ignore::DeprecationWarning
+            - name: Run tests
+              run: python3 -m pytest -W ignore::DeprecationWarning

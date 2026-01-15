@@ -9,21 +9,20 @@ logger = logging.getLogger("luigi-interface")
 
 
 class FCCInputFilesMixin:
-
     stage: Stages
 
     @property
-    def output_dir(self):
+    def outputDir(self):
         raise NotImplementedError
 
-    def copy_input_file_to_output_dir(self, source):
+    def copy_input_file_to_outputDir(self, source):
         """
         This function serves to copy a file from analysis/mc_productionx/ to
         the tmp output dir for historical book keeping
         """
         source = find_file(source)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        destination = self.output_dir / source.name
+        self.outputDir.mkdir(parents=True, exist_ok=True)
+        destination = self.outputDir / source.name
         shutil.copy(source, destination)
 
     def copy_inputfiles_declared_in_stage_script(self):
@@ -50,4 +49,4 @@ class FCCInputFilesMixin:
                 for path in paths_list:
                     stages_directory = Stages.get_stage_script(self.stage).parent
                     file_src = f"{stages_directory}/{path}"
-                    self.copy_input_file_to_output_dir(file_src)
+                    self.copy_input_file_to_outputDir(file_src)

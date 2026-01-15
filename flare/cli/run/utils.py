@@ -1,11 +1,32 @@
+import argparse
 import os
+import sys
+from enum import Enum
 from pathlib import Path
 
 import b2luigi as luigi
 
-from flare.cli.arguments import ParserNames
 from flare.cli.flare_logging import logger
+from flare.src.pydantic_models import models
 from flare.src.utils.yaml import get_config
+
+COMMON_ARGUMENTS = [
+    ("--name", {"help": "Name of the study"}),
+    ("--version", {"help": "Version of the study"}),
+    ("--description", {"help": "Description of the study"}),
+    (
+        "--study-dir",
+        {"help": "Study directory path where the files for production are located"},
+    ),
+    (
+        "--output-dir",
+        {
+            "help": "The location where the output file will be produced, by default will be the current working directory"
+        },
+    ),
+    ("--config-yaml", {"help": "Path to a YAML config file"}),
+    ("--cwd", {"help": argparse.SUPPRESS, "default": Path().cwd()}),
+]
 
 
 def _get_unwanted_cli_arguments():
@@ -20,7 +41,12 @@ def get_flare_cwd() -> Path:
     return Path(os.environ["FLARE_CWD"])
 
 
-def load_config(cwd: Path, config_path=None, user_yaml=False):
+def load_config(
+    cwd: Path,
+    pydantic_model=None,
+    config_path=None,
+    user_yaml=False,
+):
     """Load configuration from config.yaml (or a discovered yaml file) if it exists."""
 
     # Set the config yaml path
@@ -44,8 +70,13 @@ def load_config(cwd: Path, config_path=None, user_yaml=False):
     # Check the config_path exists
     if config_path.exists():
         # Load the config
-        return get_config(config_path.name, dir=config_path.parent, user_yaml=user_yaml)
-
+        unparsed_data = get_config(
+            config_path.name, dir=config_path.parent, user_yaml=user_yaml
+        )
+        parsed_data = (
+            pydantic_model(**unparsed_data) if pydantic_model else unparsed_data
+        )
+        return parsed_data
     return {}
 
 
@@ -53,33 +84,51 @@ def load_settings_into_manager(args):
     """Load parsed args into settings manager"""
     logger.info("Loading Settings into FLARE")
 
-    cwd = Path(args.cwd)
+    cwd = Path.cwd()
     luigi.set_setting("working_dir", cwd)
     logger.info(f"Current Working Directory: {cwd}")
-    config = load_config(cwd=cwd, config_path=args.config_yaml)
+
+    # Match on config_yaml in args
+    config_path = Path.cwd()
+    if hasattr(args, "config_yaml"):
+        if args.config_yaml:
+            config_path = args.config_yaml
+    config = load_config(cwd=cwd, pydantic_model=None, config_path=config_path)
 
     # Add name to the settings
-    luigi.set_setting(key="name", value=args.name or config.get("name", "default_name"))
+    name = config.get("name", "default_name")
+    if hasattr(args, "name"):
+        if args.name:
+            name = args.name
+    luigi.set_setting(key="name", value=name)
     logger.info(f"Name: {luigi.get_setting('name')}")
 
     # Add version to the settings
-    luigi.set_setting("version", args.version or config.get("version", "1.0"))
+    version = config.get("version", "1.0")
+    if hasattr(args, "version"):
+        if args.version:
+            version = args.version
+    luigi.set_setting("version", version)
     logger.info(f"Version: {luigi.get_setting('version')}")
 
     # Add the description to the settings
-    luigi.set_setting(
-        "description", args.description or config.get("description", "No description")
-    )
+    description = config.get("description", "No description")
+    if hasattr(args, "description"):
+        if args.description:
+            description = args.description
+
+    luigi.set_setting("description", description)
     logger.info(f"description: {luigi.get_setting('description')}")
 
     # At the study directory to the settings
+    study_dir = ""
+    if hasattr(args, "study_dir"):
+        if args.study_dir:
+            study_dir = args.study_dir
+
     luigi.set_setting(
         "studydir",
-        (
-            (cwd / args.study_dir)
-            if args.study_dir
-            else (cwd / config.get("studydir", cwd))
-        ),
+        ((cwd / study_dir) if study_dir else (cwd / config.get("studydir", cwd))),
     )
     logger.info(f"Study Directory: {luigi.get_setting('studydir')}")
 
@@ -88,9 +137,12 @@ def load_settings_into_manager(args):
         "results_subdir",
         Path(luigi.get_setting("name")) / luigi.get_setting("version"),
     )
-    luigi.set_setting(
-        "outputdir", Path((args.output_dir or config.get("outputdir", cwd)))
-    )
+    output_dir = Path.cwd()
+    if hasattr(args, "output_dir"):
+        if args.output_dir:
+            output_dir = args.output_dir
+
+    luigi.set_setting("outputdir", Path((output_dir or config.get("outputdir", cwd))))
     results_dir = (
         luigi.get_setting("outputdir") / "data" / luigi.get_setting("results_subdir")
     )
@@ -102,13 +154,24 @@ def load_settings_into_manager(args):
 
     # Add the dataprod config to the settings, we load the config using load_config
     # if the dataprod_dir does not have a yaml file Assertion errors are raised
+    mcprod = False
+    if hasattr(args, "mcprod"):
+        if args.mcprod:
+            mcprod = args.mcprod
+
     luigi.set_setting(
         "dataprod_config",
-        load_config(cwd, dataprod_dir, user_yaml=True) if args.mcprod else {},
+        (
+            load_config(
+                cwd, models["UserMCProdConfigModel"], dataprod_dir, user_yaml=True
+            )
+            if mcprod
+            else {}
+        ),
     )
 
     # Set the mcprod
-    luigi.set_setting("mcprod", args.mcprod)
+    luigi.set_setting("mcprod", mcprod)
     # Any remaining configuration is added to the settings manager here i.e setting the batch_system
     for name, value in config.items():
         name = name.lower()  # All settings are lower case
@@ -123,41 +186,17 @@ def load_settings_into_manager(args):
         luigi.set_setting("batch_system", "local")
 
 
-def build_executable_and_save_to_settings_manager(args):
-    """Build the executable to be passed to b2luigi"""
-    match args.prog:
-        case ParserNames.flare:
-            _build_for_regular_flare_cli(args)
-        case ParserNames.pure_flare:
-            _build_for_pure_flare(args)
-        case _:
-            raise ValueError(f"This parser is not registered: {args.prog}")
-
-
-def _build_for_pure_flare(args):
-    """Build the executable for the pure CLI"""
-    cmd_string = [
-        " ".join(
-            f"--{key.replace('_', '-')} {value}"
-            for key, value in vars(args).items()
-            if value and key not in _get_unwanted_cli_arguments()
-        )
-    ]
-    # Add the flare CLI commandline arguments
-    luigi.set_setting("task_cmd_additional_args", cmd_string)
-
-
-def _build_for_regular_flare_cli(args):
+def build_for_regular_flare_cli(args):
     """Build the executable for the regular flare CLI"""
     additional_args = [
         " ".join(
-            f"--{key.replace('_', '-')} {value}"
+            f"--{key.replace('_', '-')} {value if not isinstance(value, Enum) else value.name}"
             for key, value in vars(args).items()
             if value and key not in _get_unwanted_cli_arguments()
         )
     ]
     # Set the executable setting to be flare CLI
-    luigi.set_setting("executable", ["flare run", args.subcommand])
+    luigi.set_setting("executable", sys.orig_argv)
     # Add the flare CLI commandline arguments
     luigi.set_setting("task_cmd_additional_args", additional_args)
     # Set the add_filename_to_cmd to False so executable_wrapper.sh is formatted correctly

@@ -1,3 +1,4 @@
+import shutil
 import sys
 import time
 
@@ -35,8 +36,17 @@ def print_flare_logo():
                             Github: [ https://github.com/CamCoop1/FLARE ]
                             arXiv : [ https://arxiv.org/abs/2506.16094 ]
 
-"""
-    print(logo)
+""".strip(
+        "\n"
+    )
+    lines = logo.splitlines()
+    term_width = shutil.get_terminal_size(fallback=(80, 20)).columns
+    art_width = max(len(line) for line in lines)
+
+    pad = max(0, (term_width - art_width) // 2)
+
+    for line in lines:
+        print(" " * pad + line)
     print("Hello .. Launching into b2Luigi-powered awesomeness! 🌟💻")
 
 

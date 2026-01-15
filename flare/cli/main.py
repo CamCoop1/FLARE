@@ -1,27 +1,34 @@
-from flare.cli.arguments import _get_args_cli
-from flare.cli.flare_logging import logger
-from flare.cli.utils import (
-    build_executable_and_save_to_settings_manager,
-    load_settings_into_manager,
-)
+from flare.cli.auto_importer import auto_import_registry
 from flare.src.utils.logo import print_flare_logo
+
+auto_import_registry("flare.cli.run")
+auto_import_registry("flare.cli.lint")
 
 
 def main():
-    # Get the commandline arguments
-    args = _get_args_cli()
-    # Build the executable and save to settings manager
-    logger.debug("Building executable from main function")
-    build_executable_and_save_to_settings_manager(args)
-    # Load the arguments into the luigi settings manager
-    logger.debug("Loading settings from main function")
-    load_settings_into_manager(args)
-    # Check the subparser has a func attribute
-    if hasattr(args, "func"):
-        # Call the b2luigi logo and run the function
-        logger.debug(f"Calling {args.func}")
-        print_flare_logo()
-        args.func(args)
+    """
+    Main entry point for the FLARE CLI, here we will determine what the user is
+    wanting to do during this execution.
+    """
+    # import the get_parser function here to ensure all subcommands are properly registered
+    from flare.cli.cli_registry import _GROUP_HOOKS, get_parser
+
+    print_flare_logo()
+    # Get the global parser
+    parser = get_parser()
+    # Split the parsed arguments into known and unknown
+    known, remaining = parser.parse_known_args()
+    # Get the hooks for the group chosen i.e "run"
+    hooks = _GROUP_HOOKS.get(known.group)
+    # Run any pre_parse hooks
+    if hooks and hooks.pre_parse:
+        hooks.pre_parse(known, remaining)
+    # Run any post_parse hooks
+    if hooks and hooks.post_parse:
+        hooks.post_parse(known)
+    # Executate attached function
+
+    known.func(known)
 
 
 if __name__ == "__main__":
