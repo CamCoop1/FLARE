@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, root_validator, validator
 
 from flare.src.pydantic_models.utils import StageModel
 
 
 class AddStageModel(StageModel):
     required_by: List[str] = Field(default_factory=list)
-    requires: List[str] = Field(default_factory=list)
+    requires: str = Field(default_factory=str)
 
     @root_validator
     def check_at_least_one(cls, values):
@@ -29,6 +29,12 @@ class UserConfigModel(BaseModel):
 
     class Config:
         extra = "allow"
+
+    @validator("add_stage", pre=True, always=True)
+    def lowercase_keys(cls, v):
+        if isinstance(v, dict):
+            return {k.lower(): v for k, v in v.items()}
+        return v
 
     @property
     def extra_config_settings(self):
