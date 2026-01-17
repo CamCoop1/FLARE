@@ -1,29 +1,36 @@
-"$model" : FCCProductionModel
+"$model": FCCProductionModel
 
-fccanalysis :
-  stage1 :
-    cmd : fccanalysis run {0}
-    args :
-      - stage1_<>.py
-    output_file: stage1_rootfiles
-    pre_run :
-      - copy_inputfiles_declared_in_stage_script
-  stage2 :
-    cmd : fccanalysis run {0}
-    args :
-      - stage2_<>.py
-    output_file: stage2_rootfiles
-    pre_run :
-      - copy_inputfiles_declared_in_stage_script
-  final :
-    cmd : fccanalysis final {0}
-    args :
-      - final_<>.py
-    output_file: final_rootfiles
-    pre_run :
-      - copy_inputfiles_declared_in_stage_script
-  plot :
-    cmd : fccanalysis plots {0}
-    args :
-      - plots_<>.py
-    output_file: plots
+fccanalysis:
+    stage1:
+        cmd: fccanalysis run {0}
+        args:
+            - stage1_<>.py
+        output_file: stage1_rootfiles
+        pre_run:
+            - copy_inputfiles_declared_in_stage_script
+    stage2:
+        cmd: fccanalysis run {0}
+        args:
+            - stage2_<>.py
+        output_file: stage2_rootfiles
+        pre_run:
+            - copy_inputfiles_declared_in_stage_script
+    stage3:
+        cmd: fccanalysis run {0}
+        args:
+            - stage2_<>.py
+        output_file: stage2_rootfiles
+        pre_run:
+            - copy_inputfiles_declared_in_stage_script
+    final:
+        cmd: fccanalysis final {0}
+        args:
+            - final_<>.py
+        output_file: final_rootfiles
+        pre_run:
+            - copy_inputfiles_declared_in_stage_script
+    plot:
+        cmd: fccanalysis plots {0}
+        args:
+            - plots_<>.py
+        output_file: plots
