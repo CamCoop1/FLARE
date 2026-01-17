@@ -1,6 +1,6 @@
 import logging
 from itertools import pairwise
-from typing import Any
+from typing import Any, Type
 
 import b2luigi as luigi
 
@@ -33,7 +33,7 @@ class OutputMixin:
 def _linear_task_workflow_generator(
     stages: list[Any],
     class_name: str,
-    base_class: luigi.Task,
+    base_class: Type[luigi.Task],
     class_attrs: dict[Any, dict[str, Any]] = {},
     inject_stage1_dependency: None | luigi.Task = None,
 ) -> dict[Any, luigi.Task]:
