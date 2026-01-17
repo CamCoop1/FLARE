@@ -93,26 +93,30 @@ def load_settings_into_manager(args):
     if hasattr(args, "config_yaml"):
         if args.config_yaml:
             config_path = args.config_yaml
-    config = load_config(cwd=cwd, pydantic_model=None, config_path=config_path)
-
-    # Add name to the settings
-    name = config.get("name", "default_name")
+    config = load_config(
+        cwd=cwd, pydantic_model=models["UserConfigModel"], config_path=config_path
+    )
+    # Add Default/config.yaml name to the settings
+    name = config.name
+    # If user has passed name to CLI we update here
     if hasattr(args, "name"):
         if args.name:
             name = args.name
     luigi.set_setting(key="name", value=name)
     logger.info(f"Name: {luigi.get_setting('name')}")
 
-    # Add version to the settings
-    version = config.get("version", "1.0")
+    # Add Default/config.yaml version to the settings
+    version = config.version
+    # If user has passed version to CLI we update here
     if hasattr(args, "version"):
         if args.version:
             version = args.version
     luigi.set_setting("version", version)
     logger.info(f"Version: {luigi.get_setting('version')}")
 
-    # Add the description to the settings
-    description = config.get("description", "No description")
+    # Add Default/config.yaml description to the settings
+    description = config.description
+    # If user has passed description to CLI we update here
     if hasattr(args, "description"):
         if args.description:
             description = args.description
@@ -120,15 +124,16 @@ def load_settings_into_manager(args):
     luigi.set_setting("description", description)
     logger.info(f"description: {luigi.get_setting('description')}")
 
-    # At the study directory to the settings
+    # Set Default for the study directory to the settings
     study_dir = ""
+    # Check if user pass study_dir to CLI
     if hasattr(args, "study_dir"):
         if args.study_dir:
             study_dir = args.study_dir
 
     luigi.set_setting(
         "studydir",
-        ((cwd / study_dir) if study_dir else (cwd / config.get("studydir", cwd))),
+        ((cwd / study_dir) if study_dir else (cwd / config.studydir)),
     )
     logger.info(f"Study Directory: {luigi.get_setting('studydir')}")
 
@@ -142,7 +147,7 @@ def load_settings_into_manager(args):
         if args.output_dir:
             output_dir = args.output_dir
 
-    luigi.set_setting("outputdir", Path((output_dir or config.get("outputdir", cwd))))
+    luigi.set_setting("outputdir", Path((output_dir or config.outputdir)))
     results_dir = (
         luigi.get_setting("outputdir") / "data" / luigi.get_setting("results_subdir")
     )
@@ -172,8 +177,10 @@ def load_settings_into_manager(args):
 
     # Set the mcprod
     luigi.set_setting("mcprod", mcprod)
+    # Set the add_stages variable for later use
+    luigi.set_setting("user_add_stage", config.add_stage)
     # Any remaining configuration is added to the settings manager here i.e setting the batch_system
-    for name, value in config.items():
+    for name, value in config.extra_config_settings.items():
         name = name.lower()  # All settings are lower case
         if not luigi.get_setting(name, default=False):
             logger.info(f"{name}: {value}")
