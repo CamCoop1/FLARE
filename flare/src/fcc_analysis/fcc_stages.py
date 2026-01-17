@@ -32,12 +32,12 @@ class _Stages(Enum):
     @classmethod
     def _get_steering_script_names(cls):
         """Gets the list of steering script names from the `stages_directory`."""
-        return ["stage1", "stage2", "final", "plot"]
-        # return [
-        #     x.stem
-        #     for x in luigi.get_setting("studydir").glob("*.py")
-        #     if any(s.name in x.stem for s in cls)
-        # ]
+        # return ["stage1", "stage2", "final", "plot"]
+        return [
+            x.stem
+            for x in luigi.get_setting("studydir").glob("*.py")
+            if any(s.name in x.stem for s in cls)
+        ]
 
     @classmethod
     def _get_active_stages(cls):
