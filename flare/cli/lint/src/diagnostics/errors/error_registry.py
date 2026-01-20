@@ -92,3 +92,9 @@ class FlareErrors(Enum):
         checker_func=lambda model: "outdir" in model.flaggable_variables.keys(),
         suggestion="FLARE has identified that you have declared an outputDir. FLARE will overwrite this during runtime.",
     )
+    FLARE200 = Error(
+        description="Python script is empty. Cannot proceed with an empty python script",
+        level=ErrorLevel.ERROR,
+        checker_func=lambda model: model.script_is_empty,
+        suggestion="You must populate your python script with code",
+    )

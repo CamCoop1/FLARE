@@ -11,7 +11,6 @@ from flare.cli.lint.src.diagnostics.flare_fcc_diagnostics import (
     print_no_diagnostics_to_show,
 )
 from flare.cli.lint.src.python_script_analyzer import analyze_python_script
-from flare.src.fcc_analysis.fcc_stages import Stages
 
 
 def setup_parser(parser):
@@ -32,16 +31,14 @@ def setup_parser(parser):
 
 
 def run_fcc_linting(args) -> list:
-    if Stages.check_for_unregistered_stage_file():
-        raise RuntimeError(
-            "There exists unregistered stages in your analysis. Please register them following the README.md"
-            " and rerun"
-        )
+    from flare.src.fcc_analysis.fcc_stages import generate_stages_enum
+
+    Stages = generate_stages_enum()
 
     assert (
         Stages.get_stage_ordering()
     ), "No FCC Stages have been detected in your study directory"
-
+    Stages.print_dag()
     paths = [
         str(Stages.get_stage_script(stage)) for stage in Stages.get_stage_ordering()
     ]

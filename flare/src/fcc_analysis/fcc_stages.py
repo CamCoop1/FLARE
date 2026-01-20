@@ -43,31 +43,30 @@ class _TaskDeterminationTool(Enum):
         ]
 
     @classmethod
-    def _get_active_stages(cls):
+    def _get_active_stages(cls) -> list[Enum]:
         """Finds valid steering scripts that match defined Enum variants."""
         steering_script_names = cls._get_steering_script_names()
-        valid_prefixes = list(cls)  # Get all valid enum values
-        return [
-            prefix
-            for prefix in valid_prefixes
+        valid_prefixes_enums = list(cls)
+        # Get all valid enum values
+        found_enum_variants = [
+            prefix_enum
+            for prefix_enum in valid_prefixes_enums
             for name in steering_script_names
-            if name.startswith(prefix.name)
+            if name.startswith(prefix_enum.name)
         ]
+        assert len(found_enum_variants) == len(
+            steering_script_names
+        ), "You have not provided the correct number of steering scripts in your working directory"
 
-    @classmethod
-    def check_for_unregistered_stage_file(cls) -> bool:
-        """
-        Checks if any steering scripts exist in `stages_directory` that are not registered to the Stages enum.
-        """
-        steering_script_names = cls._get_steering_script_names()
-        valid_steering_scripts = cls._get_active_stages()
-        return len(valid_steering_scripts) != len(steering_script_names)
+        return found_enum_variants
 
     @classmethod
     def get_stage_script(cls, stage):
         """
         Gets the steering file for a given stage.
         """
+        if isinstance(stage, str):
+            stage = cls[stage]
         assert isinstance(
             stage, cls
         ), f"get_stage_script expects a stage of type {cls.__name__}, got {type(stage).__name__} instead."
@@ -90,7 +89,8 @@ class _TaskDeterminationTool(Enum):
         """
         Returns a list of `Stages` variants in the order required by the analyst.
         """
-        return cls._get_active_stages()
+        ts = TopologicalSorter(cls.get_dag_for_stages())
+        return ts.static_order()
 
     @classmethod
     def set_new_dag(cls, dag: Dict[str, set]):

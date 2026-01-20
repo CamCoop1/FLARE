@@ -83,7 +83,6 @@ def load_config(
 def load_settings_into_manager(args):
     """Load parsed args into settings manager"""
     logger.info("Loading Settings into FLARE")
-
     cwd = Path.cwd()
     luigi.set_setting("working_dir", cwd)
     logger.info(f"Current Working Directory: {cwd}")
@@ -133,7 +132,7 @@ def load_settings_into_manager(args):
 
     luigi.set_setting(
         "studydir",
-        ((cwd / study_dir) if study_dir else (cwd / config.studydir)),
+        ((cwd / study_dir) if study_dir else config.studydir),
     )
     logger.info(f"Study Directory: {luigi.get_setting('studydir')}")
 
@@ -179,6 +178,7 @@ def load_settings_into_manager(args):
     luigi.set_setting("mcprod", mcprod)
     # Set the add_stages variable for later use
     luigi.set_setting("user_add_stage", config.add_stage)
+
     # Any remaining configuration is added to the settings manager here i.e setting the batch_system
     for name, value in config.extra_config_settings.items():
         name = name.lower()  # All settings are lower case

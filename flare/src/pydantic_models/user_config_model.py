@@ -63,12 +63,6 @@ class UserConfigModel(BaseModel):
         return v
 
     @property
-    def extra_config_settings(self):
-        """Here we capture any additional arguments set by the user
-        Specifically this would be things like:
-        ```YAML
-        batch_system = 'slurm',
-
-        ```
-        """
-        return {k: v for k, v in self.__dict__.items() if k not in self.__fields__}
+    def extra_config_settings(self) -> dict:
+        """Capture any additional user-defined config values."""
+        return self.model_extra or {}

@@ -105,16 +105,19 @@ class Visitor(ast.NodeVisitor):
 
 
 def analyze_python_script(path: str) -> AnalyzerModel:
+    # Initialize a AnalyzerModel for us to build from
+    result_registry = AnalyzerModel.initialize_register_mode()
     with open(path) as f:
         source = f.read()
+    # If the script of empty we tell the Analyzermodel by setting the empty_file flag to true
+    if len(source) == 0:
+        result_registry.set_empty_file_flag_true()
     # Built list of lines for script
     lines = source.splitlines()
     # Build the Analytic Syntax Tree
     tree = ast.parse(source, filename=path)
     # Get the ranges which encompass the docstrings of the script
     docstring_ranges = get_docstring_ranges(tree)
-    # Initialize a AnalyzerModel for us to build from
-    result_registry = AnalyzerModel.initialize_register_mode()
     # Visit the AST and build our AnalyzerModel database
     Visitor(
         lines=lines, docstring_ranges=docstring_ranges, registry=result_registry
