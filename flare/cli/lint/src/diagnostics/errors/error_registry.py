@@ -11,6 +11,14 @@ from flare.cli.lint.src.pydantic_models import AnalyzerModel
 class FlareErrors(Enum):
     """This enum works as a registry for all Flare Errors"""
 
+    def __str__(self) -> str:
+        indent_size = " " * 6
+        output_string_list = [self.name]
+        output_string_list += [f"{indent_size}Description → {self.value.description}"]
+        output_string_list += [f"{indent_size}Error Level → {self.value.level.name}"]
+
+        return "\n".join(output_string_list)
+
     def checker_func(self, analyzer: AnalyzerModel):
         """Little cheat to not have to call .value all the time"""
         return self.value.checker_func(analyzer)
@@ -25,7 +33,7 @@ class FlareErrors(Enum):
         level=ErrorLevel.INFO,
         suggestion=(
             "The first stage of your FCCAnalysis workflow needs a defined inputDir when not"
-            " running the MCProduction workflow.Ensure you have defined an inputDir for this script"
+            " running the MCProduction workflow. Ensure you have defined an inputDir for this script"
         ),
         checker_func=lambda model: "inputDir" not in model.flaggable_variables.keys(),
         # Note we are excluding this error when the diagnostic tool is passed ErrorExceptions.INPUTDIR_NOT_REQUIRED
@@ -77,4 +85,10 @@ class FlareErrors(Enum):
         level=ErrorLevel.PEDANTIC,
         checker_func=lambda model: "inputDir" in model.flaggable_variables.keys(),
         suggestion="FLARE has identified that you have declared an inputDir. FLARE will overwrite this during runtime.",
+    )
+    FLARE102 = Error(
+        description="outdir identified in PLOT stage, will be overwritten",
+        level=ErrorLevel.PEDANTIC,
+        checker_func=lambda model: "outdir" in model.flaggable_variables.keys(),
+        suggestion="FLARE has identified that you have declared an outputDir. FLARE will overwrite this during runtime.",
     )

@@ -1,6 +1,6 @@
 from typing import ClassVar, Dict, List, Optional, Set
 
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from flare.src.pydantic_models.utils import ForbidExtraBaseModel
 
@@ -83,12 +83,9 @@ class AnalyzerModel(ForbidExtraBaseModel):
     )
 
     # allowed keys (not model fields)
-    VALID_VARIABLE_KEYS: ClassVar[Set[str]] = {
-        "inputDir",
-        "outputDir",
-    }
+    VALID_VARIABLE_KEYS: ClassVar[Set[str]] = {"inputDir", "outputDir", "outdir"}
 
-    @root_validator
+    @model_validator(mode='before')
     def check_allowed_dict_keys(cls, values):
         """
         Check that our `flaggable_variabels` exclusively have keys from our VALID_VARIABLE_KEYS attribute

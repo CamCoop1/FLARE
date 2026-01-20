@@ -1,6 +1,6 @@
 from typing import List, Literal
 
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from flare.cli.flare_logging import logger
 from flare.src.pydantic_models.production_types_model import MCProductionModel
@@ -26,10 +26,11 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])
 
-    @root_validator
-    def check_prodtype_and_datatype(cls, values):
-        prodtype = values.get("global_prodtype")
-        datatype = values.get("datatype")
+    @model_validator(mode='after')
+    @classmethod
+    def check_prodtype_and_datatype(cls, model):
+        prodtype = model.global_prodtype
+        datatype = model.datatype
 
         if prodtype != "default":
             assert isinstance(
@@ -38,7 +39,7 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
             assert all(
                 isinstance(x, str) for x in datatype
             ), "When setting a global_prodtype, each type in the datatype list must be a string"
-            return values
+            return model
 
         if not isinstance(datatype, list):
             raise ValueError("datatype must be a list")
@@ -67,7 +68,7 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
                         f"Invalid prodtype '{inner_prodtype}' in datatype entry. Valid types are {', '.join(VALID_PRODTYPES)}"
                     )
 
-            global_env_script_path = values.get("global_env_script_path")
+            global_env_script_path = model.global_env_script_path
 
             if global_env_script_path:
                 logger.info(
@@ -76,4 +77,4 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
                     "    source fcc/tool/distro/setup.sh\n"
                     "    source path/to/my/.venv/bin/activate"
                 )
-        return values
+        return model

@@ -1,5 +1,7 @@
 import shutil
 
+from colorama import Fore
+
 from flare.cli.lint.src.diagnostics.errors.definitions import (
     ErrorExceptions,
     ErrorLevel,
@@ -102,7 +104,11 @@ def print_diagnostics(diagnostics: list[Diagnostic]):
         if d.suppressed:
             continue
 
-        print(f">> [{d.code}:{d.level}] {d.file}:{d.lineno}-{d.end_lineno}")
+        print(
+            ">>",
+            Fore.LIGHTRED_EX + f"[{d.code}:{d.level}]",
+            Fore.WHITE + f"{d.file}:{d.lineno}-{d.end_lineno}",
+        )
         print(INDENT_VALUE, f"→ {d.message}")
         if d.context:
             for variable, path in d.context.items():

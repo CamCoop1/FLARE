@@ -19,7 +19,7 @@ def known_VALID_VARIABLE_KEYS():
     """Here we define the known VALID_VARIABLE_KEYS known to be in use.
     This should be updated when/if new ones are added
     """
-    return {"inputDir", "outputDir"}
+    return {"inputDir", "outputDir", "outdir"}
 
 
 @pytest.fixture

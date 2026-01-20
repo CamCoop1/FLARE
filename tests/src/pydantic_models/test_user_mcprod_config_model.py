@@ -4,14 +4,14 @@ from pydantic import ValidationError
 from flare.src.pydantic_models.user_mcprod_config_model import UserMCProdConfigModel
 
 
-def test_extra_arguments_not_allowd():
+def test_extra_field_not_allowed():
     """
-    Test that given extra arguments the pydantic model raises an
+    Test that the model checks for extra fields that should not be passed
     """
     with pytest.raises(ValidationError) as f:
-        _ = UserMCProdConfigModel(extra_variable=[])
+        _ = UserMCProdConfigModel(datatype=['hello'], extra_variable=[])
 
-    assert "extra fields not permitted" in str(f.value)
+    assert "Extra inputs are not permitted" in str(f.value)
 
 
 def test_valid_global_prodtype_with_strings():
@@ -46,7 +46,7 @@ def test_invalid_global_prodtype_with_non_list():
     """
     with pytest.raises(ValidationError) as excinfo:
         UserMCProdConfigModel(global_prodtype="whizard", datatype="not-a-list")
-    assert "datatype must be a list" in str(excinfo.value)
+    assert "Input should be a valid list" in str(excinfo.value)
 
 
 def test_invalid_global_prodtype_with_dicts():
