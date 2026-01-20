@@ -1,14 +1,17 @@
-from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+
+from collections.abc import Mapping
+
+
+from typing import Dict, List, Optional, Iterator
+
+from pydantic import ConfigDict, BaseModel, Field, RootModel
 
 
 class ForbidExtraBaseModel(BaseModel):
     """Define a BaseModel that forbids extra to reject
     unexpected fields"""
-
-    class Config:
-        extra = "forbid"
+    model_config = ConfigDict(extra="forbid")
 
 
 class StageModel(ForbidExtraBaseModel):
@@ -23,15 +26,19 @@ class StageModel(ForbidExtraBaseModel):
     pre_run: Optional[List[str]] = Field(default_factory=list)
 
 
-class ProductionTypeBaseModel(ForbidExtraBaseModel):
+class ProductionTypeBaseModel(
+    RootModel[Dict[str, StageModel]],
+    Mapping[str, StageModel],
+):
     """
-    The ProductionTypeBaseModel that is used to define any
-    production type
-
-    We use this to define the fact a ProductionType should is expected
-    to be a dictionary with the key being the production type and the
-    value being in the format from the Stage model
+    Root model mapping production-type name -> StageModel
     """
 
-    # Allows arbitrary keys, each mapping to a Stage
-    __root__: Dict[str, StageModel]
+    def __getitem__(self, key: str) -> StageModel:
+        return self.root[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.root)
+
+    def __len__(self) -> int:
+        return len(self.root)

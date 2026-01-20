@@ -16,10 +16,10 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.9"
 b2luigi = ">=1.2.0"
 PyYAML = ">=6.0"
-pydantic = "<2"
+pydantic = ">1"
 
 
 [tool.poetry.urls]
