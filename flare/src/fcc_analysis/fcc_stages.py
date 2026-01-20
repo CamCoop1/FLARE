@@ -4,12 +4,13 @@ analysis/config/details.yaml. Because the FCC workflow can have any combinations
 first be able to identify what stages are required before creating the b2luigi.
 """
 
+from collections import Counter, defaultdict
 from enum import Enum
 from functools import lru_cache
 from graphlib import TopologicalSorter
 from itertools import pairwise
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Iterable, List
 
 import b2luigi as luigi
 
@@ -17,7 +18,7 @@ from flare.src.pydantic_models.user_config_model import AddStageModel
 from flare.src.utils.yaml import get_config
 
 
-class _Stages(Enum):
+class _TaskDeterminationTool(Enum):
     """
     This enum will be the interface between analyst steering scripts and the b2luigi workflow
 
@@ -30,9 +31,11 @@ class _Stages(Enum):
         return self.name.capitalize()
 
     @classmethod
-    def _get_steering_script_names(cls):
-        """Gets the list of steering script names from the `stages_directory`."""
-        return ["stage2", "final", "plot"]
+    def _get_steering_script_names(cls) -> list[str]:
+        """Gets the list of steering script names from the `stages_directory`.
+
+        I.e  return ["stage2", "final", "plot"]"""
+
         return [
             x.stem
             for x in luigi.get_setting("studydir").glob("*.py")
@@ -41,7 +44,7 @@ class _Stages(Enum):
 
     @classmethod
     def _get_active_stages(cls):
-        """Finds valid steering scripts that match defined Stages variants."""
+        """Finds valid steering scripts that match defined Enum variants."""
         steering_script_names = cls._get_steering_script_names()
         valid_prefixes = list(cls)  # Get all valid enum values
         return [
@@ -110,29 +113,81 @@ class _Stages(Enum):
         cls._dag: Dict[str, set] = dag
         return cls._dag
 
+    @classmethod
+    def get_roots_of_dag(cls):
+        dag_graph = cls.get_dag_for_stages()
+        incoming = Counter(node for targets in dag_graph.values() for node in targets)
+        return set(dag_graph) - incoming.keys()
 
-def generate_stages_enum():
-    # Get the full available set of FCC Analysis stages
-    fcc_analysis_model = get_config("fcc_production.yaml", dir=Path(__file__).parent)[
-        "fccanalysis"
+    @classmethod
+    def print_dag(cls):
+        """
+        Pretty-print a DAG defined as:
+            node -> set(iterable) of dependencies
+        """
+        graph = cls.get_dag_for_stages()
+        ts = TopologicalSorter(graph)
+        ts.prepare()
+        # Build execution levels
+        levels = []
+        while ts.is_active():
+            ready = sorted(ts.get_ready())
+            levels.append(ready)
+            ts.done(*ready)
+
+        # Reverse dependency lookup
+        children = defaultdict(list)
+        for node, deps in graph.items():
+            for dep in deps:
+                children[dep].append(node)
+
+        # Print
+        for i, level in enumerate(levels):
+            print(f"Level {i}")
+            for idx, node in enumerate(level):
+                connector = "└──" if idx == len(level) - 1 else "├──"
+                print(f"{connector} {node}")
+
+                next_nodes = sorted(children.get(node, []))
+                for j, child in enumerate(next_nodes):
+                    branch = "│   " if idx != len(level) - 1 else "    "
+                    sub = "└──" if j == len(next_nodes) - 1 else "├──"
+                    print(f"{branch}{sub} {child}")
+
+            print()
+
+
+def _check_no_overlap_between_task_names(*task_names: List[Iterable[str]]):
+    """Checks that there are no overlap between internal FLARE task names and the proposed names from
+    the users add_stage"""
+    flattened_task_names = [
+        task_name for internal_list in task_names for task_name in internal_list
     ]
-    # Create a preliminary _Stages enum that we can build off of
-    preliminary_stages = _Stages("FCCProductionTypes", fcc_analysis_model)
-    if not luigi.get_setting("studyDir", default=""):
-            return preliminary_stages
-    # Get the DAG graph for this active FCCAnalysis stages required by the user
-    preliminary_ordered_dag: Dict[str, set] = preliminary_stages.get_dag_for_stages()
-    print(preliminary_ordered_dag)
-    # Get the user_add_stage dictionary that the user MAY have passed to their
-    # Config.yaml file
-    user_add_stage: Dict[str, AddStageModel] = luigi.get_setting("user_add_stage", {})
-    # TODO fix this section as we cannot naievely insert our user_add_stage in case they have
-    # overwritten the names of the internal fccanalysis Tasks
-    fcc_analysis_model.update(user_add_stage)
+    counter_proposed_task_names = Counter(flattened_task_names)
+    double_counted_task_names = [
+        x for x, y in counter_proposed_task_names.items() if y > 1
+    ]
 
+    assert (
+        len(double_counted_task_names) == 0
+    ), f"You cannot define a task name to be the same as an internal FLARE task name, problem name is {double_counted_task_names}"
+
+
+def _build_dag_for_internal_and_user_tasks(
+    preliminary_ordered_dag: Dict[str, set[str]],
+    user_add_stage: Dict[str, AddStageModel],
+):
+    # We want to flatten this DAG into a list of all the stages
+    # We have this as a source of truth for ALL the Task names that will
+    # be ran
+    flattened_dag = list(preliminary_ordered_dag)
+    flattened_dag += [x for s in preliminary_ordered_dag.values() for x in s]
+
+    # For each add_stage we will build the DAG accordingly
     for stage_name, add_stage_model in user_add_stage.items():
-        required_stages = [x.lower() for x in add_stage_model.required_by]
-        requires_stage = add_stage_model.requires.lower()
+        # Get the required_stages of the
+        required_stages = add_stage_model.required_by
+        requires_stage = add_stage_model.requires
         # Check if this node has a incoming edge
         if requires_stage:
             preliminary_ordered_dag.update({stage_name: {requires_stage}})
@@ -140,28 +195,74 @@ def generate_stages_enum():
         if required_stages:
             for stage in required_stages:
                 try:
-                    stage_dependency = preliminary_ordered_dag[stage]
-                    if not any(
-                        x in stage_dependency
-                        for x in preliminary_stages.get_stage_ordering()
-                    ):
-                        raise ValueError(
-                            f"The Task {stage} already has a custom user defined requirement of {stage_dependency}. Each Flare Task can only have one required Task."
-                        )
+                    # Try pull the stage out of our DAG
+                    _ = preliminary_ordered_dag[stage]
+                    # If successful update the set value to our stage_name
                     preliminary_ordered_dag[stage] = {stage_name}
 
                 except KeyError:
-                    if stage in fcc_analysis_model.keys():
+                    # If we encounter a KeyError we have not found the stage in our DAG
+                    # However, this can be the case for our first Task in our DAG, as it will
+                    # not have an associated key-value pair designated it has an incoming edge
+                    # Hence, we can safely add this stage to our DAG and assign the incoming edge
+                    # to be our stage_name
+                    if stage in flattened_dag:
                         preliminary_ordered_dag[stage] = {stage_name}
                     else:
+                        # If the stage is not in our flattened_dag then we have a KeyError we must deal with
                         raise KeyError(
                             f"Unknown Task {stage} declared as requiring {stage_name}. Please check your logic is correct and rerun"
+                            f" If you were expecting that {stage} is apart of the internal FLARE tasks, ensure you have the correct"
+                            f" file present in your working directory {stage}_*.py"
                         )
 
-    dag = TopologicalSorter(preliminary_ordered_dag)
-    dag.static_order()
-    stages_enum = _Stages("FCCAnalysisStages", fcc_analysis_model)
-    stages_enum.set_new_dag(preliminary_ordered_dag)
+    return (
+        preliminary_ordered_dag  # Return the mutated preliminary_ordered_dag variable
+    )
+
+
+def generate_stages_enum():
+    # Get the full available set of FCC Analysis stages
+    fcc_analysis_model = get_config("fcc_production.yaml", dir=Path(__file__).parent)[
+        "fccanalysis"
+    ]
+    # Create a preliminary _Stages enum that we can build off of
+    preliminary_stages = _TaskDeterminationTool(
+        "FCCProductionTypes", fcc_analysis_model
+    )
+    # Return early if no studyDir is present i.e tests
+    if not luigi.get_setting("studydir", default=""):
+        return preliminary_stages
+    # Get the DAG graph for this active FCCAnalysis stages required by the user
+
+    preliminary_ordered_dag: Dict[str, set] = preliminary_stages.get_dag_for_stages()
+    # Get the user_add_stage dictionary that the user MAY have passed to their
+    # Config.yaml file
+    user_add_stage: Dict[str, AddStageModel] = luigi.get_setting("user_add_stage", {})
+    # Return early if no user_add_stage is present
+    if not user_add_stage:
+        return preliminary_stages
+
+    # Check that no internal Tasks are in conflict with the users added stage request
+    _check_no_overlap_between_task_names(
+        fcc_analysis_model.keys(), user_add_stage.keys()
+    )
+
+    # After validated, we can add the user_add_stage
+    fcc_analysis_model.update(user_add_stage)
+    resultant_ordered_dag = _build_dag_for_internal_and_user_tasks(
+        preliminary_ordered_dag=preliminary_ordered_dag, user_add_stage=user_add_stage
+    )
+    # Use the TopologicalSorter class to access the prepare method
+    dag = TopologicalSorter(resultant_ordered_dag)
+    # This method checks there are no circular dependencies
+    # An error is raised if one is found
+    dag.prepare()
+    # If we pass, then we can build a new TaskDeterminationTool enum with our updated
+    # fcc_analysis_model dictionary
+    stages_enum = _TaskDeterminationTool("FCCAnalysisStages", fcc_analysis_model)
+    # Set the updated DAG from our _build_dag_for_internal_and_user_tasks function
+    stages_enum.set_new_dag(resultant_ordered_dag)
     return stages_enum
 
 
