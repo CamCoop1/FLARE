@@ -67,7 +67,7 @@ def test_mc_model_with_extra_field(default_stage_args):
             }
         ).dict()
 
-    assert "extra fields not permitted" in str(excinfo.value)
+    assert "Extra inputs are not permitted" in str(excinfo.value)
 
 
 def test_production_type_with_extra_inner_field(default_stage_args):
@@ -78,4 +78,4 @@ def test_production_type_with_extra_inner_field(default_stage_args):
 
     with pytest.raises(ValidationError) as excinfo:
         FCCProductionModel(**{"fccanalysis": {"stage1": default_stage_args}})
-    assert "extra fields not permitted" in str(excinfo.value)
+    assert "Extra inputs are not permitted" in str(excinfo.value)
