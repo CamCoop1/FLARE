@@ -118,6 +118,8 @@ def generate_stages_enum():
     ]
     # Create a preliminary _Stages enum that we can build off of
     preliminary_stages = _Stages("FCCProductionTypes", fcc_analysis_model)
+    if not luigi.get_setting("studyDir", default=""):
+            return preliminary_stages
     # Get the DAG graph for this active FCCAnalysis stages required by the user
     preliminary_ordered_dag: Dict[str, set] = preliminary_stages.get_dag_for_stages()
     print(preliminary_ordered_dag)

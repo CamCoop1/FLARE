@@ -1,5 +1,5 @@
 import pytest
-from pydantic import ValidationError
+from pydantic import ValidationError, RootModel
 
 from flare.src.pydantic_models.utils import ProductionTypeBaseModel, StageModel
 
@@ -49,7 +49,7 @@ def test_stage_with_extras_should_fail(default_stage_data):
     with pytest.raises(ValidationError) as excinfo:
         StageModel(**default_stage_data)
 
-    assert "extra fields not permitted" in str(excinfo.value)
+    assert "Extra inputs are not permitted" in str(excinfo.value)
 
 
 def test_stage_with_optional_fields(default_stage_data):
@@ -65,13 +65,14 @@ def test_stage_with_optional_fields(default_stage_data):
 
 def test_production_type_model_valid(default_prod_data):
     """
-    Test the model is correctly handling the __root__
+    Test the model is correctly handling the RootModel
     functionality and will act as a dict
     """
-
+    assert issubclass(ProductionTypeBaseModel, RootModel)
     model = ProductionTypeBaseModel.parse_obj(default_prod_data)
-    assert "madgraph" in model.__root__
-    assert model.__root__["whizard"].cmd == "doit.sh"
+    assert hasattr(model, 'root')
+    assert "madgraph" in model.keys()
+    assert model["whizard"].cmd == "doit.sh"
 
 
 def test_production_type_model_rejects_extra_in_stage(default_prod_data):
