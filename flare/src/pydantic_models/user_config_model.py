@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from pydantic import ConfigDict, BaseModel, Field, model_validator, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from flare.src.pydantic_models.utils import StageModel
 
@@ -10,7 +10,7 @@ class AddStageModel(StageModel):
     required_by: List[str] = Field(default_factory=list)
     requires: str = Field(default_factory=str)
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     def check_at_least_one(cls, values):
         if not values.get("required_by") and not values.get("requires"):
             raise ValueError(
@@ -30,7 +30,7 @@ class UserConfigModel(BaseModel):
 
     # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @field_validator("add_stage", mode='after')
+    @field_validator("add_stage", mode="after")
     @classmethod
     def lowercase_keys(cls, v):
         if isinstance(v, dict):
@@ -38,12 +38,6 @@ class UserConfigModel(BaseModel):
         return v
 
     @property
-    def extra_config_settings(self):
-        """Here we capture any additional arguments set by the user
-        Specifically this would be things like:
-        ```YAML
-        batch_system = 'slurm',
-
-        ```
-        """
-        return {k: v for k, v in self.__dict__.items() if k not in self.__fields__}
+    def extra_config_settings(self) -> dict:
+        """Capture any additional user-defined config values."""
+        return self.model_extra or {}
