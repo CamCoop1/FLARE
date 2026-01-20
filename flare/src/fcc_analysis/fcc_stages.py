@@ -32,7 +32,7 @@ class _Stages(Enum):
     @classmethod
     def _get_steering_script_names(cls):
         """Gets the list of steering script names from the `stages_directory`."""
-        # return ["stage1", "stage2", "final", "plot"]
+        return ["stage2", "final", "plot"]
         return [
             x.stem
             for x in luigi.get_setting("studydir").glob("*.py")
@@ -120,10 +120,12 @@ def generate_stages_enum():
     preliminary_stages = _Stages("FCCProductionTypes", fcc_analysis_model)
     # Get the DAG graph for this active FCCAnalysis stages required by the user
     preliminary_ordered_dag: Dict[str, set] = preliminary_stages.get_dag_for_stages()
+    print(preliminary_ordered_dag)
     # Get the user_add_stage dictionary that the user MAY have passed to their
     # Config.yaml file
     user_add_stage: Dict[str, AddStageModel] = luigi.get_setting("user_add_stage", {})
-
+    # TODO fix this section as we cannot naievely insert our user_add_stage in case they have
+    # overwritten the names of the internal fccanalysis Tasks
     fcc_analysis_model.update(user_add_stage)
 
     for stage_name, add_stage_model in user_add_stage.items():
@@ -138,7 +140,8 @@ def generate_stages_enum():
                 try:
                     stage_dependency = preliminary_ordered_dag[stage]
                     if not any(
-                        x in stage_dependency for x in fcc_analysis_model.keys()
+                        x in stage_dependency
+                        for x in preliminary_stages.get_stage_ordering()
                     ):
                         raise ValueError(
                             f"The Task {stage} already has a custom user defined requirement of {stage_dependency}. Each Flare Task can only have one required Task."
