@@ -1,10 +1,10 @@
 import logging
 from functools import lru_cache
+from typing import Iterator
 
 import b2luigi as luigi
 
 from flare.src.fcc_analysis.fcc_analysis_baseclass import FCCAnalysisBaseClass
-from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.mc_production.tasks import MCProductionWrapper
 from flare.src.utils.dirs import find_external_file
 from flare.src.utils.tasks import OutputMixin, _linear_task_workflow_generator
@@ -45,8 +45,11 @@ def get_fcc_stages_dict() -> dict:
     )
     ```
     """
+    from flare.src.fcc_analysis.fcc_stages import Stages
+
     return _linear_task_workflow_generator(
-        stages=Stages.get_stage_ordering(),
+        # stages=Stages.get_stage_ordering(),
+        dag=Stages.get_dag_for_stages(),
         class_name="Analysis",
         base_class=FCCAnalysisBaseClass,
         inject_stage1_dependency=(
@@ -69,11 +72,16 @@ def get_fcc_stages_dict() -> dict:
     )
 
 
-def get_last_task() -> luigi.Task:
+def get_last_tasks() -> Iterator[luigi.Task]:
     """
     Returns the last luigi Task inside `get_mc_prod_stages_dict` and instantiates it
     """
-    return next(reversed(get_fcc_stages_dict().values()))()
+    from flare.src.fcc_analysis.fcc_stages import Stages
+
+    roots = Stages.get_roots_of_dag()
+
+    for root in roots:
+        yield get_fcc_stages_dict()[Stages[root]]()
 
 
 class GenerateAnalysisDescription(OutputMixin, luigi.Task):
@@ -96,7 +104,7 @@ class GenerateAnalysisDescription(OutputMixin, luigi.Task):
 
     def run(self):
         description = luigi.get_setting("description")
-        print(description)
+
         _, output_path = self.get_output_key_path_pair()
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -124,5 +132,5 @@ class FCCAnalysisWrapper(OutputMixin, luigi.WrapperTask):
         return luigi.get_setting("results_subdir")
 
     def requires(self):
-        yield get_last_task()
+        yield from get_last_tasks()
         yield GenerateAnalysisDescription()

@@ -4,16 +4,17 @@ analysis/config/details.yaml. Because the FCC workflow can have any combinations
 first be able to identify what stages are required before creating the b2luigi.
 """
 
-from collections import Counter, defaultdict
+from collections import Counter
 from enum import Enum
 from functools import lru_cache
-from graphlib import TopologicalSorter
 from itertools import pairwise
 from pathlib import Path
 from typing import Dict, Iterable, List
 
 import b2luigi as luigi
 
+from flare.src.pydantic_models.dag_model import Dag
+from flare.src.pydantic_models.production_types_model import FCCProductionModel
 from flare.src.pydantic_models.user_config_model import AddStageModel
 from flare.src.utils.yaml import get_config
 
@@ -65,8 +66,6 @@ class _TaskDeterminationTool(Enum):
         """
         Gets the steering file for a given stage.
         """
-        if isinstance(stage, str):
-            stage = cls[stage]
         assert isinstance(
             stage, cls
         ), f"get_stage_script expects a stage of type {cls.__name__}, got {type(stage).__name__} instead."
@@ -89,17 +88,20 @@ class _TaskDeterminationTool(Enum):
         """
         Returns a list of `Stages` variants in the order required by the analyst.
         """
-        ts = TopologicalSorter(cls.get_dag_for_stages())
-        return ts.static_order()
+        if hasattr(cls, "_dag"):
+            return cls._dag.flattened_dag_ordering
+        cls.get_dag_for_stages()
+        return cls._dag.flattened_dag_ordering
 
     @classmethod
-    def set_new_dag(cls, dag: Dict[str, set]):
+    def set_new_dag(cls, dag: Dag):
         cls._dag = dag
         cls.get_dag_for_stages.cache_clear()
+        cls.get_stage_ordering.cache_clear()
 
     @classmethod
     @lru_cache
-    def get_dag_for_stages(cls) -> Dict[str, set]:
+    def get_dag_for_stages(cls) -> Dag:
         if hasattr(cls, "_dag"):
             return cls._dag
         dag: Dict[str, set] = {}
@@ -108,53 +110,17 @@ class _TaskDeterminationTool(Enum):
         ):
             dag.update({downstream_task: {upstream_task}})
 
-        ts = TopologicalSorter(dag)
-        ts.static_order()
-        cls._dag: Dict[str, set] = dag
+        dag_model = Dag(dag)
+        cls._dag: Dag = dag_model
         return cls._dag
 
     @classmethod
     def get_roots_of_dag(cls):
-        dag_graph = cls.get_dag_for_stages()
-        incoming = Counter(node for targets in dag_graph.values() for node in targets)
-        return set(dag_graph) - incoming.keys()
+        yield from cls._dag.get_roots_of_dag()
 
     @classmethod
     def print_dag(cls):
-        """
-        Pretty-print a DAG defined as:
-            node -> set(iterable) of dependencies
-        """
-        graph = cls.get_dag_for_stages()
-        ts = TopologicalSorter(graph)
-        ts.prepare()
-        # Build execution levels
-        levels = []
-        while ts.is_active():
-            ready = sorted(ts.get_ready())
-            levels.append(ready)
-            ts.done(*ready)
-
-        # Reverse dependency lookup
-        children = defaultdict(list)
-        for node, deps in graph.items():
-            for dep in deps:
-                children[dep].append(node)
-
-        # Print
-        for i, level in enumerate(levels):
-            print(f"Level {i}")
-            for idx, node in enumerate(level):
-                connector = "└──" if idx == len(level) - 1 else "├──"
-                print(f"{connector} {node}")
-
-                next_nodes = sorted(children.get(node, []))
-                for j, child in enumerate(next_nodes):
-                    branch = "│   " if idx != len(level) - 1 else "    "
-                    sub = "└──" if j == len(next_nodes) - 1 else "├──"
-                    print(f"{branch}{sub} {child}")
-
-            print()
+        cls._dag.print_dag()
 
 
 def _check_no_overlap_between_task_names(*task_names: List[Iterable[str]]):
@@ -163,6 +129,7 @@ def _check_no_overlap_between_task_names(*task_names: List[Iterable[str]]):
     flattened_task_names = [
         task_name for internal_list in task_names for task_name in internal_list
     ]
+
     counter_proposed_task_names = Counter(flattened_task_names)
     double_counted_task_names = [
         x for x, y in counter_proposed_task_names.items() if y > 1
@@ -170,19 +137,20 @@ def _check_no_overlap_between_task_names(*task_names: List[Iterable[str]]):
 
     assert (
         len(double_counted_task_names) == 0
-    ), f"You cannot define a task name to be the same as an internal FLARE task name, problem name is {double_counted_task_names}"
+    ), f"You cannot define a task name to be the same as an internal FLARE task name, problem name is {double_counted_task_names}, {counter_proposed_task_names}"
 
 
 def _build_dag_for_internal_and_user_tasks(
-    preliminary_ordered_dag: Dict[str, set[str]],
+    preliminary_ordered_dag_model: Dag,
     user_add_stage: Dict[str, AddStageModel],
-):
+) -> Dict[str, set[str]]:
     # We want to flatten this DAG into a list of all the stages
     # We have this as a source of truth for ALL the Task names that will
     # be ran
-    flattened_dag = list(preliminary_ordered_dag)
-    flattened_dag += [x for s in preliminary_ordered_dag.values() for x in s]
-
+    flattened_dag = preliminary_ordered_dag_model.flattened_dag_ordering
+    # We dump the model to a Dict object so we can mutate the data and
+    # create a new Dag object later
+    preliminary_ordered_dag = preliminary_ordered_dag_model.model_dump()
     # For each add_stage we will build the DAG accordingly
     for stage_name, add_stage_model in user_add_stage.items():
         # Get the required_stages of the
@@ -221,21 +189,22 @@ def _build_dag_for_internal_and_user_tasks(
     )
 
 
+@lru_cache
 def generate_stages_enum():
     # Get the full available set of FCC Analysis stages
-    fcc_analysis_model = get_config("fcc_production.yaml", dir=Path(__file__).parent)[
-        "fccanalysis"
-    ]
+    fcc_analysis_model = FCCProductionModel(
+        **get_config("fcc_production.yaml", dir=Path(__file__).parent)
+    ).fccanalysis.root
     # Create a preliminary _Stages enum that we can build off of
     preliminary_stages = _TaskDeterminationTool(
         "FCCProductionTypes", fcc_analysis_model
     )
-    # Return early if no studyDir is present i.e tests
-    if not luigi.get_setting("studydir", default=""):
-        return preliminary_stages
+    # # Return early if no studyDir is present i.e tests
+    # if not luigi.get_setting("studydir", default=""):
+    #     return preliminary_stages
     # Get the DAG graph for this active FCCAnalysis stages required by the user
 
-    preliminary_ordered_dag: Dict[str, set] = preliminary_stages.get_dag_for_stages()
+    preliminary_ordered_dag_model: Dag = preliminary_stages.get_dag_for_stages()
     # Get the user_add_stage dictionary that the user MAY have passed to their
     # Config.yaml file
     user_add_stage: Dict[str, AddStageModel] = luigi.get_setting("user_add_stage", {})
@@ -251,18 +220,15 @@ def generate_stages_enum():
     # After validated, we can add the user_add_stage
     fcc_analysis_model.update(user_add_stage)
     resultant_ordered_dag = _build_dag_for_internal_and_user_tasks(
-        preliminary_ordered_dag=preliminary_ordered_dag, user_add_stage=user_add_stage
+        preliminary_ordered_dag_model=preliminary_ordered_dag_model,
+        user_add_stage=user_add_stage,
     )
-    # Use the TopologicalSorter class to access the prepare method
-    dag = TopologicalSorter(resultant_ordered_dag)
-    # This method checks there are no circular dependencies
-    # An error is raised if one is found
-    dag.prepare()
+    resultant_ordered_dag_model = Dag(resultant_ordered_dag)
     # If we pass, then we can build a new TaskDeterminationTool enum with our updated
     # fcc_analysis_model dictionary
     stages_enum = _TaskDeterminationTool("FCCAnalysisStages", fcc_analysis_model)
     # Set the updated DAG from our _build_dag_for_internal_and_user_tasks function
-    stages_enum.set_new_dag(resultant_ordered_dag)
+    stages_enum.set_new_dag(resultant_ordered_dag_model)
     return stages_enum
 
 

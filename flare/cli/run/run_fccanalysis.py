@@ -1,7 +1,6 @@
 import flare
 from flare.cli.lint.src.diagnostics.errors.definitions import ErrorLevel
 from flare.cli.run.utils import COMMON_ARGUMENTS
-from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.fcc_analysis.tasks import FCCAnalysisWrapper
 
 
@@ -26,11 +25,7 @@ def setup_parser(parser):
 
 def run_analysis(args):
     """Run the Analysis workflow"""
-    if Stages.check_for_unregistered_stage_file():
-        raise RuntimeError(
-            "There exists unregistered stages in your analysis. Please register them following the README.md"
-            " and rerun"
-        )
+    from flare.src.fcc_analysis.fcc_stages import Stages
 
     assert (
         Stages.get_stage_ordering()

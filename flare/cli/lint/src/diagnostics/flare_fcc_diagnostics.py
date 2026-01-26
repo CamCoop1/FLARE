@@ -1,4 +1,5 @@
 import shutil
+import textwrap
 
 from colorama import Fore
 
@@ -8,6 +9,8 @@ from flare.cli.lint.src.diagnostics.errors.definitions import (
 )
 from flare.cli.lint.src.diagnostics.errors.error_registry import FlareErrors
 from flare.cli.lint.src.pydantic_models import AnalyzerModel, Autofix, Diagnostic
+
+WIDTH = shutil.get_terminal_size(fallback=(80, 20)).columns
 
 
 def emit_error_to_diagnostic(
@@ -100,6 +103,7 @@ def print_diagnostics(diagnostics: list[Diagnostic]):
     """Print our diagnostics for the user to read."""
     _diagnostics_banner()
     INDENT_VALUE = " " * 6
+    wrap_width = max(20, WIDTH - len(INDENT_VALUE))
     for d in diagnostics:
         if d.suppressed:
             continue
@@ -109,12 +113,19 @@ def print_diagnostics(diagnostics: list[Diagnostic]):
             Fore.LIGHTRED_EX + f"[{d.code}:{d.level}]",
             Fore.WHITE + f"{d.file}:{d.lineno}-{d.end_lineno}",
         )
-        print(INDENT_VALUE, f"→ {d.message}")
+        print(INDENT_VALUE, f"{d.message}")
         if d.context:
             for variable, path in d.context.items():
                 print(INDENT_VALUE, f"→ Variable: {variable}, Value: {path}")
         if d.autofix:
-            print(INDENT_VALUE, f"→ Auto suggestion: {d.autofix.description}")
+            wrapped = textwrap.fill(
+                f" → Auto suggestion: {d.autofix.description}",
+                width=wrap_width,
+                break_long_words=False,
+                break_on_hyphens=False,
+            )
+            print(textwrap.indent(wrapped, INDENT_VALUE))
+
             if d.autofix.replacement:
                 print(INDENT_VALUE, f"→ Replacement: {d.autofix.replacement}")
         print("")
@@ -125,10 +136,9 @@ def print_no_diagnostics_to_show():
 
 
 def _diagnostics_banner(title="Flare Linter Diagnostics"):
-    width = shutil.get_terminal_size(fallback=(80, 20)).columns
 
     text = f" {title} "
-    pad = max(0, width - len(text))
+    pad = max(0, WIDTH - len(text))
     left = pad // 2
     right = pad - left
 

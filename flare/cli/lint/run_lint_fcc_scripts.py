@@ -3,6 +3,7 @@ from itertools import chain
 from pathlib import Path
 
 import flare
+from flare.cli.flare_logging import logger
 from flare.cli.lint.src.diagnostics.flare_fcc_diagnostics import (
     ErrorExceptions,
     ErrorLevel,
@@ -31,16 +32,17 @@ def setup_parser(parser):
 
 
 def run_fcc_linting(args) -> list:
-    from flare.src.fcc_analysis.fcc_stages import generate_stages_enum
-
-    Stages = generate_stages_enum()
+    from flare.src.fcc_analysis.fcc_stages import Stages
 
     assert (
         Stages.get_stage_ordering()
     ), "No FCC Stages have been detected in your study directory"
+    logger.info("Below is your Workflow to be ran")
     Stages.print_dag()
+
     paths = [
-        str(Stages.get_stage_script(stage)) for stage in Stages.get_stage_ordering()
+        str(Stages.get_stage_script(Stages[stage]))
+        for stage in Stages.get_stage_ordering()
     ]
     first_stage_error_exceptions = [
         (

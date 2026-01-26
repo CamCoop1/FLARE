@@ -84,7 +84,6 @@ def get_suffix_from_arg(arg) -> str:
 
 
 class BracketMappingCMDBuilderMixin:
-
     unparsed_args = []
 
     def get_file_paths(self):

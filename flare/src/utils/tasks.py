@@ -1,9 +1,10 @@
 import logging
 from itertools import pairwise
-from typing import Any, Type
+from typing import Any, Dict, List, Type
 
 import b2luigi as luigi
 
+from flare.src.pydantic_models.dag_model import Dag
 from flare.src.utils.dirs import find_external_file
 
 logger = logging.getLogger("luigi-interface")
@@ -27,15 +28,19 @@ class OutputMixin:
         return find_external_file("data", self.results_subdir, self.__class__.__name__)
 
     def remove_output(self):
+        """This is actually a function from b2luigis Task class. We set it here as this
+        Mixin is used in every single Task made in FLARE"""
         self._remove_output()
 
 
 def _linear_task_workflow_generator(
-    stages: list[Any],
+    *,
     class_name: str,
     base_class: Type[luigi.Task],
+    stages: list[Any] = [],
+    dag: Dict = {},
     class_attrs: dict[Any, dict[str, Any]] = {},
-    inject_stage1_dependency: None | luigi.Task = None,
+    inject_stage1_dependency: None | Type[luigi.Task] = None,
 ) -> dict[Any, luigi.Task]:
     """The function will take a list of stage strings, a class name and a luigi.Task base class
     and return a dictionary of uninitialised classes that inherit from `luigi.Task` and the `base_class`.
@@ -90,21 +95,109 @@ def _linear_task_workflow_generator(
     assert issubclass(
         base_class, luigi.Task
     ), "To use this hyperfunction the base_class must be a subclass of luigi.Task"
-    assert isinstance(stages, list) or isinstance(
-        stages, dict
-    ), "Argument (1), stages, must be a list or a dict"
+    assert isinstance(stages, list), "The stages argument, must be a list"
 
-    def requires_func(task, dependency):
-        """
-        The generic requires function for stage dependency
-        """
+    assert isinstance(dag, Dag), "Passed Dag graph must be a dictionary"
 
-        def _requires(stage_task):
-            yield stage_task.clone(dependency)
+    assert (
+        stages or dag
+    ), "You must define either a list of stages OR a DAG graph model into this function for the Tasks to be generated"
 
-        return _requires(task)
+    if stages:
+        tasks = _generate_from_stages_list(
+            stages=stages,
+            class_name=class_name,
+            class_attrs=class_attrs,
+            inject_stage1_dependency=inject_stage1_dependency,
+            base_class=base_class,
+        )
+    elif dag:
+        tasks = _generate_from_dag(
+            dag=dag,
+            class_name=class_name,
+            class_attrs=class_attrs,
+            inject_stage1_dependency=inject_stage1_dependency,
+            base_class=base_class,
+        )
 
-    # initialised a dictionary where we will store the tasks
+    return tasks
+
+
+def _generate_from_dag(
+    *,
+    dag: Dag,
+    class_name: str,
+    class_attrs: dict[Any, dict[str, Any]],
+    inject_stage1_dependency: None | Type[luigi.Task],
+    base_class: Type[luigi.Task],
+) -> Dict[str, Type[luigi.Task]]:
+    tasks = dict()
+    from flare.src.fcc_analysis.fcc_stages import Stages
+
+    # First we generate the Task classes
+    for i, stage in enumerate(dag.flattened_dag_ordering):
+        stage = Stages[stage]
+        name = f"{class_name}{stage.capitalize()}"  # e.g., "MCProductionStage1"
+        subclass_attributes = {
+            "stage": stage,
+            "results_subdir": luigi.get_setting("results_subdir"),
+        }  # Class attributes
+        if class_attrs.get(stage, None):
+            subclass_attributes.update(class_attrs[stage])
+
+        # Define the class dynamically
+        new_class = type(
+            name,  # Class name
+            (
+                OutputMixin,
+                base_class,
+            ),  # Inherit from MCProductionBaseTask
+            subclass_attributes,
+        )
+        # Check if injected stage1 dependency is required
+        if i == 0 and inject_stage1_dependency:
+            # Assert the stage1 dependency is a luigi.Task
+            assert issubclass(
+                inject_stage1_dependency, luigi.Task
+            ), "Injected dependency must be a child class of luigi.Task"
+            # Check if any attributes have been passes to the class_attrs that need
+            # to be added to the inject_stage1_dependency class
+            if class_attrs.get("inject_stage1_dependency", None):
+                attr_dict = class_attrs.pop("inject_stage1_dependency")
+                _assigne_inject_stage1_dependency_attrs(
+                    attr_dict, inject_stage1_dependency
+                )
+            # Create the dependency
+            new_class.requires = (
+                lambda task=new_class, dep=inject_stage1_dependency: _requires_func(
+                    task=task, dependency=dep
+                )
+            )
+
+        tasks.update({stage: new_class})
+        logger.info(f"Created and registered: {name}")
+    # Then we setup the requirements
+    for downstream_task_name, upstream_task_name in dag.items():
+        downstream_task = tasks[Stages[downstream_task_name]]
+        upstream_task = tasks[Stages[upstream_task_name]]
+
+        downstream_task.requires = (
+            lambda task=downstream_task, dep=upstream_task: _requires_func(
+                task=task, dependency=dep
+            )
+        )
+        tasks[downstream_task.stage] = downstream_task
+    return tasks
+
+
+def _generate_from_stages_list(
+    *,
+    stages: List[str],
+    class_name: str,
+    class_attrs: dict[Any, dict[str, Any]],
+    inject_stage1_dependency: None | Type[luigi.Task],
+    base_class: Type[luigi.Task],
+) -> Dict[str, Type[luigi.Task]]:
     tasks = dict()
     for i, stage in enumerate(stages):
         name = f"{class_name}{stage.capitalize()}"  # e.g., "MCProductionStage1"
@@ -139,7 +232,7 @@ def _linear_task_workflow_generator(
                 )
             # Create the dependency
             new_class.requires = (
-                lambda task=new_class, dep=inject_stage1_dependency: requires_func(
+                lambda task=new_class, dep=inject_stage1_dependency: _requires_func(
                     task=task, dependency=dep
                 )
             )
@@ -147,15 +240,25 @@ def _linear_task_workflow_generator(
         tasks.update({stage: new_class})
         logger.debug(f"Created and registered: {name}")
 
-        for upsteam_task, downstream_task in pairwise(tasks.values()):
+        for upstream_task, downstream_task in pairwise(tasks.values()):
             downstream_task.requires = (
-                lambda task=downstream_task, dep=upsteam_task: requires_func(
+                lambda task=downstream_task, dep=upstream_task: _requires_func(
                     task=task, dependency=dep
                 )
             )
             tasks[downstream_task.stage] = downstream_task
-
     return tasks
+
+
+def _requires_func(task: Type[luigi.Task], dependency: type[luigi.Task]):
+    """
+    The generic requires function for stage dependency
+    """
+
+    def _requires(stage_task):
+        yield stage_task.clone(dependency)
+
+    return _requires(task)
 
 
 def _assigne_inject_stage1_dependency_attrs(attr_dict, stage1_dependency):

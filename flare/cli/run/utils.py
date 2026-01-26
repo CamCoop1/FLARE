@@ -82,10 +82,10 @@ def load_config(
 
 def load_settings_into_manager(args):
     """Load parsed args into settings manager"""
-    logger.info("Loading Settings into FLARE")
+    logger.debug("Loading Settings into FLARE")
     cwd = Path.cwd()
     luigi.set_setting("working_dir", cwd)
-    logger.info(f"Current Working Directory: {cwd}")
+    logger.debug(f"Current Working Directory: {cwd}")
 
     # Match on config_yaml in args
     config_path = Path.cwd()
@@ -102,7 +102,7 @@ def load_settings_into_manager(args):
         if args.name:
             name = args.name
     luigi.set_setting(key="name", value=name)
-    logger.info(f"Name: {luigi.get_setting('name')}")
+    logger.debug(f"Name: {luigi.get_setting('name')}")
 
     # Add Default/config.yaml version to the settings
     version = config.version
@@ -111,7 +111,7 @@ def load_settings_into_manager(args):
         if args.version:
             version = args.version
     luigi.set_setting("version", version)
-    logger.info(f"Version: {luigi.get_setting('version')}")
+    logger.debug(f"Version: {luigi.get_setting('version')}")
 
     # Add Default/config.yaml description to the settings
     description = config.description
@@ -121,7 +121,7 @@ def load_settings_into_manager(args):
             description = args.description
 
     luigi.set_setting("description", description)
-    logger.info(f"description: {luigi.get_setting('description')}")
+    logger.debug(f"description: {luigi.get_setting('description')}")
 
     # Set Default for the study directory to the settings
     study_dir = ""
@@ -134,7 +134,7 @@ def load_settings_into_manager(args):
         "studydir",
         ((cwd / study_dir) if study_dir else config.studydir),
     )
-    logger.info(f"Study Directory: {luigi.get_setting('studydir')}")
+    logger.debug(f"Study Directory: {luigi.get_setting('studydir')}")
 
     # At the results_subdir used in the OutputMixin to the settings
     luigi.set_setting(
@@ -150,7 +150,7 @@ def load_settings_into_manager(args):
     results_dir = (
         luigi.get_setting("outputdir") / "data" / luigi.get_setting("results_subdir")
     )
-    logger.info(f"Results Directory: {results_dir}")
+    logger.debug(f"Results Directory: {results_dir}")
 
     # Add the dataprod_dir to the settings
     luigi.set_setting("dataprod_dir", luigi.get_setting("studydir") / "mc_production")
