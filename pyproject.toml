@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "hep-flare"
-version = "0.2.1"
+version = "0.2.2"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = ["Cameron Harris <cameron.harris@adelaide.edu.au>"]
 readme = "README.md"
