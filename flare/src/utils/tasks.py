@@ -26,6 +26,10 @@ class OutputMixin:
     def result_dir(self):
         return find_external_file("data", self.results_subdir, self.__class__.__name__)
 
+    @property
+    def task_file_dir(self):
+        return find_external_file("data", self.results_subdir)
+
     def remove_output(self):
         self._remove_output()
 
