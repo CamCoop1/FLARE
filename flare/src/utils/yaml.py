@@ -52,4 +52,4 @@ Once you have added this, please re-run flare.
             ", ".join(models.keys())
         )
 
-    return validated_model.dict()
+    return validated_model.model_dump()

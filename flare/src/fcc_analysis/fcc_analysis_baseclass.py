@@ -1,16 +1,28 @@
 import logging
 import shutil
 import subprocess
+from pathlib import Path
+from typing import Protocol
 
 import b2luigi as luigi
 
 from flare.src.fcc_analysis.fcc_inputfiles_mixin import FCCInputFilesMixin
-from flare.src.fcc_analysis.fcc_stages import Stages
+from flare.src.pydantic_models.user_config_model import AddStageModel
 from flare.src.utils.bracket_mappings import BracketMappingCMDBuilderMixin
 from flare.src.utils.dirs import find_file
 from flare.src.utils.jinja2_utils import get_template
 
 logger = logging.getLogger("luigi-interface")
+
+
+class Stages(Protocol):
+    def get_stage_script(self, stage) -> Path: ...
+
+    @property
+    def name(self) -> str: ...
+
+    @property
+    def value(self) -> AddStageModel: ...
 
 
 class FCCTemplateMethodMixin:
@@ -74,6 +86,8 @@ class FCCTemplateMethodMixin:
 
         If both assertions are passed, the stage template is rendered and saved to the output directory of this stage
         """
+        from flare.src.fcc_analysis.fcc_stages import Stages
+
         # Get stage script from Stages enum
         stage_script_path = Stages.get_stage_script(self.stage)
         # Load the python script as text
@@ -148,11 +162,11 @@ class FCCAnalysisBaseClass(
     stage: Stages
 
     @property
-    def stage_dict(self):
+    def stage_dict(self) -> AddStageModel:
         """
         The dictionary of information for this stage
         """
-        return Stages(self.stage).value
+        return self.stage.value
 
     @property
     def prod_cmd(self):
@@ -160,7 +174,7 @@ class FCCAnalysisBaseClass(
         The cmd for this stage of the FCC Analysis as defined inside
         the fcc_production.yaml
         """
-        return self.stage_dict["cmd"].format(*self.collect_cmd_inputs())
+        return self.stage_dict.cmd.format(*self.collect_cmd_inputs())
 
     @property
     def outputDir_name(self):
@@ -168,7 +182,7 @@ class FCCAnalysisBaseClass(
         The output file may be dependent on a datatype parameter so must determine if the output
         file name needs to be parsed and transformed or if we can return the unparsed output file name
         """
-        return self.stage_dict["output_file"]
+        return self.stage_dict.output_file
 
     @property
     def outputDir(self):
@@ -179,11 +193,13 @@ class FCCAnalysisBaseClass(
         Required by `BracketMappingCMDBuilderMixin` to use for error handling when a required file
         cannot be matched with a BracketMapping or found in the analysis directory
         """
+        from flare.src.fcc_analysis.fcc_stages import Stages
+
         yield Stages.get_stage_script(self.stage)
 
     @property
     def unparsed_args(self):
-        return self.stage_dict["args"]
+        return self.stage_dict.args
 
     def bm_free_name(self, *args, **kwargs) -> str:
         """
@@ -233,7 +249,7 @@ class FCCAnalysisBaseClass(
         for this stage detailed in production_types.yaml
         """
         try:
-            func_names = self.stage_dict["on_completion"]
+            func_names = self.stage_dict.on_completion
         except KeyError:
             return
 
@@ -248,7 +264,7 @@ class FCCAnalysisBaseClass(
         for this stage detailed in production_types.yaml
         """
         try:
-            func_names = self.stage_dict["pre_run"]
+            func_names = self.stage_dict.pre_run
         except KeyError:
             return
 

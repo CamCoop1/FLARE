@@ -1,11 +1,16 @@
 import json
 import logging
 import shutil
+from pathlib import Path
+from typing import Protocol
 
-from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.utils.dirs import find_file
 
 logger = logging.getLogger("luigi-interface")
+
+
+class Stages(Protocol):
+    def get_stage_script(self, stage) -> Path: ...
 
 
 class FCCInputFilesMixin:
@@ -36,6 +41,7 @@ class FCCInputFilesMixin:
 
         This function is declared inside the fcc_production.yaml file as a `pre_run` function
         """
+        from flare.src.fcc_analysis.fcc_stages import Stages
 
         with Stages.get_stage_script(self.stage).open("r") as f:
             python_code = f.read()

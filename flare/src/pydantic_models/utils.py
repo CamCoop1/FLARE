@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Dict, Iterator, List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -31,9 +31,6 @@ class ProductionTypeBaseModel(
 
     def __getitem__(self, key: str) -> FlareTask:
         return self.root[key]
-
-    def __iter__(self) -> Iterator[str]:
-        return iter(self.root)
 
     def __len__(self) -> int:
         return len(self.root)

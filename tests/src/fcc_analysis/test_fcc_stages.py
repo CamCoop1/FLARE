@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from flare.src.fcc_analysis.fcc_stages import Stages, _Stages
+from flare.src.fcc_analysis.fcc_stages import Stages, _TaskDeterminationTool
 
 
 @pytest.fixture
@@ -19,14 +19,14 @@ def ordered_permutations():
     ]
 
 
-def test__Stages_issubclass_of_Enum():
-    """Test the _Stages class is a child of Enum"""
-    assert issubclass(_Stages, Enum)
+def test__TaskDeterminationTools_issubclass_of_Enum():
+    """Test the _TaskDeterminationTools class is a child of Enum"""
+    assert issubclass(_TaskDeterminationTool, Enum)
 
 
-def test_Stages_issubclass_of__Stages():
-    """Test the Stages class is a subclass of _Stages )"""
-    assert issubclass(Stages, _Stages)
+def test_TaskDeterminationTools_issubclass_of__TaskDeterminationTools():
+    """Test the Stages class is a subclass of _TaskDeterminationTools )"""
+    assert issubclass(Stages, _TaskDeterminationTool)
 
 
 @pytest.mark.parametrize(
@@ -42,7 +42,7 @@ def test_Stages_issubclass_of__Stages():
 )
 def test__Stages_has_correct_attributes(method):
     """Test _Stages class has required methods"""
-    assert hasattr(_Stages, method)
+    assert hasattr(_TaskDeterminationTool, method)
 
 
 def test_fcc_Stages_returns_capitalised_name():
