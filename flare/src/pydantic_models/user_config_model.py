@@ -3,10 +3,10 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from flare.src.pydantic_models.utils import StageModel
+from flare.src.pydantic_models.utils import FlareTask
 
 
-class AddStageModel(StageModel):
+class AddFlareTask(FlareTask):
     required_by: List[str] = Field(default_factory=list)
     requires: str = Field(default_factory=str)
 
@@ -25,7 +25,7 @@ class UserConfigModel(BaseModel):
     description: str = Field(default="No Description")
     studydir: Path | str = Field(default_factory=Path.cwd)
     outputdir: Path | str = Field(default_factory=Path.cwd)
-    add_stage: Optional[Dict[str, AddStageModel]] = Field(default_factory=dict)
+    add_stage: Optional[Dict[str, AddFlareTask]] = Field(default_factory=dict)
     model_config = ConfigDict(extra="allow")
 
     # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.

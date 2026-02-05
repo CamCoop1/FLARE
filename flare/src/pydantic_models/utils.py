@@ -1,20 +1,15 @@
-
-
 from collections.abc import Mapping
+from typing import Dict, Iterator, List, Optional
 
-
-from typing import Dict, List, Optional, Iterator
-
-from pydantic import ConfigDict, BaseModel, Field, RootModel
+from pydantic import BaseModel, Field, RootModel
 
 
 class ForbidExtraBaseModel(BaseModel):
     """Define a BaseModel that forbids extra to reject
     unexpected fields"""
-    model_config = ConfigDict(extra="forbid")
 
 
-class StageModel(ForbidExtraBaseModel):
+class FlareTask(ForbidExtraBaseModel):
     """
     The base yaml that every stage must follow
     """
@@ -27,14 +22,14 @@ class StageModel(ForbidExtraBaseModel):
 
 
 class ProductionTypeBaseModel(
-    RootModel[Dict[str, StageModel]],
-    Mapping[str, StageModel],
+    RootModel[Dict[str, FlareTask]],
+    Mapping[str, FlareTask],
 ):
     """
     Root model mapping production-type name -> StageModel
     """
 
-    def __getitem__(self, key: str) -> StageModel:
+    def __getitem__(self, key: str) -> FlareTask:
         return self.root[key]
 
     def __iter__(self) -> Iterator[str]:

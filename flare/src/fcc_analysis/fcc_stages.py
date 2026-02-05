@@ -13,7 +13,7 @@ from typing import Dict
 
 import b2luigi as luigi
 
-from flare.src.pydantic_models.user_config_model import AddStageModel
+from flare.src.pydantic_models.user_config_model import AddFlareTask
 from flare.src.utils.yaml import get_config
 
 
@@ -119,12 +119,12 @@ def generate_stages_enum():
     # Create a preliminary _Stages enum that we can build off of
     preliminary_stages = _Stages("FCCProductionTypes", fcc_analysis_model)
     if not luigi.get_setting("studyDir", default=""):
-            return preliminary_stages
+        return preliminary_stages
     # Get the DAG graph for this active FCCAnalysis stages required by the user
     preliminary_ordered_dag: Dict[str, set] = preliminary_stages.get_dag_for_stages()
     # Get the user_add_stage dictionary that the user MAY have passed to their
     # Config.yaml file
-    user_add_stage: Dict[str, AddStageModel] = luigi.get_setting("user_add_stage", {})
+    user_add_stage: Dict[str, AddFlareTask] = luigi.get_setting("user_add_stage", {})
 
     fcc_analysis_model.update(user_add_stage)
 
