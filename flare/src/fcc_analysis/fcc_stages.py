@@ -39,7 +39,7 @@ class _TaskDeterminationTool(Enum):
 
         return [
             x.stem
-            for x in luigi.get_setting("studydir").glob("*.py")
+            for x in luigi.get_setting("studydir", Path.cwd()).glob("*.py")
             if any(s.name in x.stem for s in cls)
         ]
 
@@ -70,7 +70,7 @@ class _TaskDeterminationTool(Enum):
             stage, cls
         ), f"get_stage_script expects a stage of type {cls.__name__}, got {type(stage).__name__} instead."
         stage_steering_file = list(
-            luigi.get_setting("studydir").glob(f"{stage.name}*.py")
+            luigi.get_setting("studydir", Path.cwd()).glob(f"{stage.name}*.py")
         )
         if not stage_steering_file:
             raise FileNotFoundError(
