@@ -100,3 +100,5 @@ target/
 poetry.lock
 
 publish_version.sh
+
+*venv*
