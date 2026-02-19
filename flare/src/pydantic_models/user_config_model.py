@@ -9,7 +9,6 @@ from flare.src.pydantic_models.utils import FlareTask
 
 class AddFlareTask(FlareTask):
     required_by: List[str] = Field(default_factory=list)
-    requires: str = Field(default_factory=str)
 
     @model_validator(mode="before")
     def check_at_least_one(cls, values):

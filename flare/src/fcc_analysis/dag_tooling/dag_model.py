@@ -6,6 +6,12 @@ from pydantic import RootModel, model_validator
 
 
 class Dag(RootModel[Dict[str, Set[str]]], Mapping[str, str]):
+    """
+    This Pydantic Model serves as the FINAL validation of our Dag object. The Dag object
+    must be a dictionary of strings and Sets. Once the model is validated, the `@model_validator(mode='after')`
+    is used to check that there are no circular dependencies in our Dag.
+    """
+
     # Defining the dundermethods requires for dictionary-like
     # Operations like .items() provided by Mapping
     def __getitem__(self, key: str) -> str:

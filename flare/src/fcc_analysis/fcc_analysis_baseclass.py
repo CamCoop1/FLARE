@@ -7,7 +7,7 @@ from typing import Protocol
 import b2luigi as luigi
 
 from flare.src.fcc_analysis.fcc_inputfiles_mixin import FCCInputFilesMixin
-from flare.src.pydantic_models.user_config_model import AddStageModel
+from flare.src.pydantic_models.user_config_model import AddFlareTask
 from flare.src.utils.bracket_mappings import BracketMappingCMDBuilderMixin
 from flare.src.utils.dirs import find_file
 from flare.src.utils.jinja2_utils import get_template
@@ -22,7 +22,7 @@ class Stages(Protocol):
     def name(self) -> str: ...
 
     @property
-    def value(self) -> AddStageModel: ...
+    def value(self) -> AddFlareTask: ...
 
 
 class FCCTemplateMethodMixin:
@@ -162,7 +162,7 @@ class FCCAnalysisBaseClass(
     stage: Stages
 
     @property
-    def stage_dict(self) -> AddStageModel:
+    def stage_dict(self) -> AddFlareTask:
         """
         The dictionary of information for this stage
         """

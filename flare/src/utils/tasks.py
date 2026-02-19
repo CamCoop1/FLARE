@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Type
 
 import b2luigi as luigi
 
-from flare.src.pydantic_models.dag_model import Dag
+from flare.src.fcc_analysis.dag_tooling.dag_model import Dag
 from flare.src.utils.dirs import find_external_file
 
 logger = logging.getLogger("luigi-interface")
@@ -172,10 +172,8 @@ def _generate_from_dag(
                     attr_dict, inject_stage1_dependency
                 )
             # Create the dependency
-            new_class.requires = (
-                lambda task=new_class, dep=inject_stage1_dependency: _requires_func(
-                    task=task, dependency=dep
-                )
+            new_class.requires = lambda task=new_class, dep=inject_stage1_dependency: (
+                _requires_func(task=task, dependency=dep)
             )
 
         tasks.update({stage: new_class})
@@ -185,10 +183,8 @@ def _generate_from_dag(
         downstream_task = tasks[Stages[downstream_task_name]]
         upstream_task = tasks[Stages[upstream_task_name]]
 
-        downstream_task.requires = (
-            lambda task=downstream_task, dep=upstream_task: _requires_func(
-                task=task, dependency=dep
-            )
+        downstream_task.requires = lambda task=downstream_task, dep=upstream_task: (
+            _requires_func(task=task, dependency=dep)
         )
         tasks[downstream_task.stage] = downstream_task
     return tasks
@@ -235,20 +231,16 @@ def _generate_from_stages_list(
                     attr_dict, inject_stage1_dependency
                 )
             # Create the dependency
-            new_class.requires = (
-                lambda task=new_class, dep=inject_stage1_dependency: _requires_func(
-                    task=task, dependency=dep
-                )
+            new_class.requires = lambda task=new_class, dep=inject_stage1_dependency: (
+                _requires_func(task=task, dependency=dep)
             )
 
         tasks.update({stage: new_class})
         logger.debug(f"Created and registered: {name}")
 
         for upstream_task, downstream_task in pairwise(tasks.values()):
-            downstream_task.requires = (
-                lambda task=downstream_task, dep=upstream_task: _requires_func(
-                    task=task, dependency=dep
-                )
+            downstream_task.requires = lambda task=downstream_task, dep=upstream_task: (
+                _requires_func(task=task, dependency=dep)
             )
             tasks[downstream_task.stage] = downstream_task
     return tasks

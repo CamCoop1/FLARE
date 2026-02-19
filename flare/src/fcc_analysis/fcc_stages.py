@@ -13,7 +13,7 @@ from typing import Dict, Iterable, List
 
 import b2luigi as luigi
 
-from flare.src.pydantic_models.dag_model import Dag
+from flare.src.fcc_analysis.dag_tooling.dag_model import Dag
 from flare.src.pydantic_models.production_types_model import FCCProductionModel
 from flare.src.pydantic_models.user_config_model import AddFlareTask
 from flare.src.utils.yaml import get_config

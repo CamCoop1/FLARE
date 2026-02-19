@@ -5,6 +5,7 @@ from typing import Iterator
 import b2luigi as luigi
 
 from flare.src.fcc_analysis.fcc_analysis_baseclass import FCCAnalysisBaseClass
+from flare.src.fcc_analysis.fcc_stages import Stages
 from flare.src.mc_production.tasks import MCProductionWrapper
 from flare.src.utils.dirs import find_external_file
 from flare.src.utils.tasks import OutputMixin, _linear_task_workflow_generator
@@ -45,8 +46,6 @@ def get_fcc_stages_dict() -> dict:
     )
     ```
     """
-    from flare.src.fcc_analysis.fcc_stages import Stages
-
     return _linear_task_workflow_generator(
         # stages=Stages.get_stage_ordering(),
         dag=Stages.get_dag_for_stages(),
@@ -76,7 +75,6 @@ def get_last_tasks() -> Iterator[luigi.Task]:
     """
     Returns the last luigi Task inside `get_mc_prod_stages_dict` and instantiates it
     """
-    from flare.src.fcc_analysis.fcc_stages import Stages
 
     roots = Stages.get_roots_of_dag()
 

@@ -14,11 +14,15 @@ class FlareTask(ForbidExtraBaseModel):
     The base yaml that every stage must follow
     """
 
+    # name: str
     cmd: str
     args: List[str]
     output_file: str
     on_completion: Optional[List[str]] = Field(default_factory=list)
     pre_run: Optional[List[str]] = Field(default_factory=list)
+    requires: Optional[str] = Field(
+        default_factory=str,
+    )
 
 
 class ProductionTypeBaseModel(
