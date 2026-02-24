@@ -12,6 +12,8 @@ from flare.cli.lint.src.diagnostics.flare_fcc_diagnostics import (
     print_no_diagnostics_to_show,
 )
 from flare.cli.lint.src.python_script_analyzer import analyze_python_script
+from flare.src.fcc_analysis.dag_tooling.builder import get_task_graph
+from flare.src.fcc_analysis.dag_tooling.discovery import get_python_script_for_task
 
 
 def setup_parser(parser):
@@ -32,17 +34,16 @@ def setup_parser(parser):
 
 
 def run_fcc_linting(args) -> list:
-    from flare.src.fcc_analysis.fcc_stages import Stages
+    dag = get_task_graph()
 
     assert (
-        Stages.get_stage_ordering()
+        dag.flattened_dag_ordering
     ), "No FCC Stages have been detected in your study directory"
     logger.info("Below is your Workflow to be ran")
-    Stages.print_dag()
+    dag.print_dag()
 
     paths = [
-        str(Stages.get_stage_script(Stages[stage]))
-        for stage in Stages.get_stage_ordering()
+        str(get_python_script_for_task(task)) for task in dag.flattened_dag_ordering
     ]
     first_stage_error_exceptions = [
         (

@@ -10,15 +10,17 @@ import b2luigi as luigi
 
 from flare.src.fcc_analysis.dag_tooling.dag_model import Dag
 from flare.src.fcc_analysis.dag_tooling.discovery import discover_task_scripts
+from flare.src.fcc_analysis.dag_tooling.task_registry import TaskRegistry
 from flare.src.fcc_analysis.dag_tooling.validation import validate_no_overlap
-from flare.src.pydantic_models.user_config_model import AddFlareTask
-from flare.src.pydantic_models.utils import FlareTask
+from flare.src.pydantic_models import AddFlareTask, FlareTask
 
 
 def get_task_graph() -> Dag:
+    """
+    This returns to the user the Directed Acyclic Graph for their FCC Analysis Workflow
+    """
     # Get the User Added stages
     user_add_tasks: Dict[str, AddFlareTask] = luigi.get_setting("user_add_stage", {})
-    print(user_add_tasks)
     # Get the internal FLARE FCC Production tasks
     internal_tasks: Dict[str, FlareTask] = luigi.get_setting(
         "internal_fcc_analysis_tasks"
@@ -30,6 +32,26 @@ def build_task_graph(
     internal_tasks: dict[str, FlareTask],
     user_tasks: dict[str, AddFlareTask],
 ) -> Dag:
+    """
+    Arguments
+    ==========
+    - `internal_tasks` : dict[str, FlareTask] = The internal FCC Analaysis Tasks defined in FLARE
+    - `user_tasks` : dict[str, AddFlareTask] = Any user defined Tasks added inside their config.yaml, note it uses the AddFlareTask model which includes a `required_by` field
+
+    Returns
+    ========
+    `Dag` = The Dag Model defined inside dag_model.py, the central source of truth for the FCC Analysis workflow required by the user
+
+    Notes
+    =====
+
+    This function builds the Directed Acyclic Graph that determines the order in which FLARE Tasks should be ran
+
+    In this function we make use of all the functionality defined inside dag_tooling. We
+        - `validate_no_overlap` to ensure any user defined Tasks do not have the same identifying name as an internal FLARE task
+        - `discover_tasks_scripts` which finds the active FCC Analysis Tasks the user wants to fun from their current working directory
+        - The `Dag` Model which builds a DAG from the edges dictionary created in this function.
+    """
 
     # Check if internal_tasks and user_tasks share any values
     validate_no_overlap(
@@ -43,14 +65,22 @@ def build_task_graph(
         x: y for x, y in internal_tasks.items() if x in discovered_tasks
     }
     # We must update the FlareTask models with the correct requires field based on the order of the discovered_task list
+    # We go pairwise through the list in with the Nth element is an Upstream Task and the N+1 is the Downstream task that
+    # requires N to run before it
     for upstream_task, downstream_task in pairwise(discovered_tasks):
+        # Get the model as a dictionary so we can manipulate it
         downstream_task_model = active_fcc_analysis_tasks[downstream_task].model_dump()
+        # Update the requires field
         downstream_task_model["requires"] = upstream_task
-        active_fcc_analysis_tasks[downstream_task] = FlareTask(**downstream_task_model)
+        # Rebuild our FlareTask model and validate everything is as intended
+        active_fcc_analysis_tasks[downstream_task] = FlareTask(
+            name=downstream_task, **downstream_task_model
+        )
 
     # Build our dictionary of all tasks
     tasks = {**active_fcc_analysis_tasks, **user_tasks}
-
+    # Register all the Tasks into our TaskRegistry
+    TaskRegistry(tasks=tasks)
     # Empty dict that will hold the nodes and edges of our Dag
     edges: dict[str, set[str]] = {}
 
@@ -60,6 +90,8 @@ def build_task_graph(
             edges.setdefault(name, set()).add(stage.requires)
 
         if not isinstance(stage, AddFlareTask):
+            # If not isinstance(stage, AddFlareTask) then this is a FlareTask which does not
+            # have a required_by field, so we can continue to the next iteration
             continue
 
         for downstream in stage.required_by:

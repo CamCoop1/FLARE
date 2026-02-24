@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Type
 import b2luigi as luigi
 
 from flare.src.fcc_analysis.dag_tooling.dag_model import Dag
+from flare.src.fcc_analysis.dag_tooling.task_registry import TaskRegistry
 from flare.src.utils.dirs import find_external_file
 
 logger = logging.getLogger("luigi-interface")
@@ -42,7 +43,7 @@ def _linear_task_workflow_generator(
     class_name: str,
     base_class: Type[luigi.Task],
     stages: list[Any] = [],
-    dag: Dict = {},
+    dag: Dag = None,
     class_attrs: dict[Any, dict[str, Any]] = {},
     inject_stage1_dependency: None | Type[luigi.Task] = None,
 ) -> dict[Any, luigi.Task]:
@@ -101,7 +102,8 @@ def _linear_task_workflow_generator(
     ), "To use this hyperfunction the base_class must be a subclass of luigi.Task"
     assert isinstance(stages, list), "The stages argument, must be a list"
 
-    assert isinstance(dag, Dag), "Passed Dag graph must be a dictionary"
+    if dag is not None:
+        assert isinstance(dag, Dag), "Passed Dag graph must be a dictionary"
 
     assert (
         stages or dag
@@ -136,14 +138,13 @@ def _generate_from_dag(
     base_class: Type[luigi.Task],
 ) -> Dict[str, Type[luigi.Task]]:
     tasks = dict()
-    from flare.src.fcc_analysis.fcc_stages import Stages
-
+    tasks_information = TaskRegistry.registered_tasks
     # First we generate the Task classes
     for i, stage in enumerate(dag.flattened_dag_ordering):
-        stage = Stages[stage]
+        task = tasks_information[stage]
         name = f"{class_name}{stage.capitalize()}"  # e.g., "MCProductionStage1"
         subclass_attributes = {
-            "stage": stage,
+            "stage": task,
             "results_subdir": luigi.get_setting("results_subdir"),
         }  # Class attributes
         if class_attrs.get(stage, None):
@@ -179,14 +180,15 @@ def _generate_from_dag(
         tasks.update({stage: new_class})
         logger.info(f"Created and registered: {name}")
     # Then we setup the requirements
+    print(tasks)
     for downstream_task_name, upstream_task_name in dag.items():
-        downstream_task = tasks[Stages[downstream_task_name]]
-        upstream_task = tasks[Stages[upstream_task_name]]
+        downstream_task = tasks[downstream_task_name]
+        upstream_task = tasks[upstream_task_name]
 
         downstream_task.requires = lambda task=downstream_task, dep=upstream_task: (
             _requires_func(task=task, dependency=dep)
         )
-        tasks[downstream_task.stage] = downstream_task
+        tasks[downstream_task_name] = downstream_task
     return tasks
 
 

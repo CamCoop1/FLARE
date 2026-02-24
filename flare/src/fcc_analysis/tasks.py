@@ -4,8 +4,10 @@ from typing import Iterator
 
 import b2luigi as luigi
 
-from flare.src.fcc_analysis.fcc_analysis_baseclass import FCCAnalysisBaseClass
-from flare.src.fcc_analysis.fcc_stages import Stages
+from flare.src.fcc_analysis.base_classes.fcc_analysis_baseclass import (
+    FCCAnalysisBaseClass,
+)
+from flare.src.fcc_analysis.dag_tooling.builder import get_task_graph
 from flare.src.mc_production.tasks import MCProductionWrapper
 from flare.src.utils.dirs import find_external_file
 from flare.src.utils.tasks import OutputMixin, _linear_task_workflow_generator
@@ -48,7 +50,7 @@ def get_fcc_stages_dict() -> dict:
     """
     return _linear_task_workflow_generator(
         # stages=Stages.get_stage_ordering(),
-        dag=Stages.get_dag_for_stages(),
+        dag=get_task_graph(),
         class_name="Analysis",
         base_class=FCCAnalysisBaseClass,
         inject_stage1_dependency=(
@@ -60,9 +62,7 @@ def get_fcc_stages_dict() -> dict:
         class_attrs=(
             {
                 "inject_stage1_dependency": {
-                    "prodtype": luigi.get_setting("dataprod_config").get(
-                        "global_prodtype"
-                    )
+                    "prodtype": luigi.get_setting("dataprod_config").global_prodtype
                 }
             }
             if luigi.get_setting("dataprod_config")
@@ -76,10 +76,10 @@ def get_last_tasks() -> Iterator[luigi.Task]:
     Returns the last luigi Task inside `get_mc_prod_stages_dict` and instantiates it
     """
 
-    roots = Stages.get_roots_of_dag()
-
+    dag = get_task_graph()
+    roots = dag.get_roots_of_dag()
     for root in roots:
-        yield get_fcc_stages_dict()[Stages[root]]()
+        yield get_fcc_stages_dict()[root]()
 
 
 class GenerateAnalysisDescription(OutputMixin, luigi.Task):

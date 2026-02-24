@@ -1,6 +1,7 @@
 import flare
 from flare.cli.lint.src.diagnostics.errors.definitions import ErrorLevel
 from flare.cli.run.utils import COMMON_ARGUMENTS
+from flare.src.fcc_analysis.dag_tooling.builder import get_task_graph
 from flare.src.fcc_analysis.tasks import FCCAnalysisWrapper
 
 
@@ -25,10 +26,9 @@ def setup_parser(parser):
 
 def run_analysis(args):
     """Run the Analysis workflow"""
-    from flare.src.fcc_analysis.fcc_stages import Stages
-
+    task_graph = get_task_graph()
     assert (
-        Stages.get_stage_ordering()
+        task_graph.flattened_dag_ordering
     ), "No FCC Stages have been detected in your study directory"
     flare.process(
         FCCAnalysisWrapper(),
