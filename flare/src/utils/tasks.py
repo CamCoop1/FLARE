@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Type
 import b2luigi as luigi
 
 from flare.src.fcc_analysis.dag_tooling.dag_model import Dag
-from flare.src.fcc_analysis.dag_tooling.task_registry import TaskRegistry
+from flare.src.fcc_analysis.task_registry import TaskRegistry
 from flare.src.utils.dirs import find_external_file
 
 logger = logging.getLogger("luigi-interface")
@@ -180,7 +180,6 @@ def _generate_from_dag(
         tasks.update({stage: new_class})
         logger.info(f"Created and registered: {name}")
     # Then we setup the requirements
-    print(tasks)
     for downstream_task_name, upstream_task_name in dag.items():
         downstream_task = tasks[downstream_task_name]
         upstream_task = tasks[upstream_task_name]

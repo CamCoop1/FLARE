@@ -10,8 +10,8 @@ import b2luigi as luigi
 
 from flare.src.fcc_analysis.dag_tooling.dag_model import Dag
 from flare.src.fcc_analysis.dag_tooling.discovery import discover_task_scripts
-from flare.src.fcc_analysis.dag_tooling.task_registry import TaskRegistry
 from flare.src.fcc_analysis.dag_tooling.validation import validate_no_overlap
+from flare.src.fcc_analysis.task_registry import TaskRegistry
 from flare.src.pydantic_models import AddFlareTask, FlareTask
 
 

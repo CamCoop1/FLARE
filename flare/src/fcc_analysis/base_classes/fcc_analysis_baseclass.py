@@ -6,17 +6,12 @@ import b2luigi as luigi
 
 from flare.src.fcc_analysis.base_classes.fcc_inputfiles_mixin import FCCInputFilesMixin
 from flare.src.fcc_analysis.dag_tooling.discovery import get_python_script_for_task
-from flare.src.fcc_analysis.dag_tooling.task_registry import RegisteredFlareTask
-from flare.src.pydantic_models import AddFlareTask
+from flare.src.fcc_analysis.task_registry import RegisteredFlareTask
 from flare.src.utils.bracket_mappings import BracketMappingCMDBuilderMixin
 from flare.src.utils.dirs import find_file
 from flare.src.utils.jinja2_utils import get_template
 
 logger = logging.getLogger("luigi-interface")
-
-
-class Stages:
-    pass
 
 
 class FCCTemplateMethodMixin:
@@ -154,7 +149,7 @@ class FCCAnalysisBaseClass(
     stage: RegisteredFlareTask
 
     @property
-    def stage_dict(self) -> AddFlareTask:
+    def stage_dict(self) -> RegisteredFlareTask:
         """
         The dictionary of information for this stage
         """
