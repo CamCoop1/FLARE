@@ -9,7 +9,7 @@ from flare.src.pydantic_models.utils import ForbidExtraBaseModel
 # We define here the valid prodtypes, keeping the valid types central to
 # the MCProductionModel pydantic model. There is no point importing the production_types.yaml
 # As this is dependent on the MCProductionModel anyway. And so we keep it centralised there
-VALID_PRODTYPES = tuple(MCProductionModel.__fields__.keys())
+VALID_PRODTYPES = ("default", *tuple(MCProductionModel.__fields__.keys()))
 
 
 class UserMCProdConfigModel(ForbidExtraBaseModel):
@@ -26,7 +26,7 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     @classmethod
     def check_prodtype_and_datatype(cls, model):
         prodtype = model.global_prodtype

@@ -307,13 +307,13 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
         # If the prodtype is default i.e wasn't defined globally
         # we must call the default_prodtype requires function
         if self.prodtype == "default":
-            datatypes_dict = flatten_to_dict(dataprod_config.datatype.model_dump())
+            datatypes_dict = flatten_to_dict(dataprod_config.datatype)
             datatypes = list(datatypes_dict.keys())
 
             for datatype, card, edm4hep in product(
                 datatypes,
-                dataprod_config["card"],
-                dataprod_config["edm4hep"],
+                dataprod_config.card,
+                dataprod_config.edm4hep,
             ):
                 prodtype = datatypes_dict[datatype]["prodtype"]
 
