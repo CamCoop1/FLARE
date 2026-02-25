@@ -1,15 +1,17 @@
 import json
 import logging
 import shutil
+from pathlib import Path
 
-from flare.src.fcc_analysis.fcc_stages import Stages
+from flare.src.fcc_analysis.dag_tooling.discovery import get_python_script_for_task
+from flare.src.fcc_analysis.task_registry import RegisteredFlareTask
 from flare.src.utils.dirs import find_file
 
 logger = logging.getLogger("luigi-interface")
 
 
 class FCCInputFilesMixin:
-    stage: Stages
+    stage: RegisteredFlareTask
 
     @property
     def outputDir(self):
@@ -36,8 +38,7 @@ class FCCInputFilesMixin:
 
         This function is declared inside the fcc_production.yaml file as a `pre_run` function
         """
-
-        with Stages.get_stage_script(self.stage).open("r") as f:
+        with Path(get_python_script_for_task(self.stage.name)).open("r") as f:
             python_code = f.read()
 
         for line in python_code.splitlines():
@@ -47,6 +48,8 @@ class FCCInputFilesMixin:
                 )
                 paths_list = json.loads(unparsed_paths_list)
                 for path in paths_list:
-                    stages_directory = Stages.get_stage_script(self.stage).parent
+                    stages_directory = Path(
+                        get_python_script_for_task(self.stage.name)
+                    ).parent
                     file_src = f"{stages_directory}/{path}"
                     self.copy_input_file_to_outputDir(file_src)

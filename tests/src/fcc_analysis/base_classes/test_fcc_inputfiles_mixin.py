@@ -2,7 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from flare.src.fcc_analysis.fcc_inputfiles_mixin import FCCInputFilesMixin
+from flare.src.fcc_analysis.base_classes.fcc_inputfiles_mixin import FCCInputFilesMixin
+from flare.src.fcc_analysis.task_registry import RegisteredFlareTask
+
+
+@pytest.fixture
+def registered_flare_task():
+    return RegisteredFlareTask(name="stage1", cmd="foo", args=[], output_file="bar")
 
 
 @pytest.fixture
@@ -22,7 +28,7 @@ def test_copy_input_file_to_outputDir(mocker, mock_class):
     source_file_path = Path("tmp/source_file.root")
     # Mock the find_file function to return our source_file_path
     mock_find_file = mocker.patch(
-        "flare.src.fcc_analysis.fcc_inputfiles_mixin.find_file",
+        "flare.src.fcc_analysis.base_classes.fcc_inputfiles_mixin.find_file",
         return_value=source_file_path,
     )
     # Mock the shutil.copy function as to not actually copy anything
@@ -37,11 +43,13 @@ def test_copy_input_file_to_outputDir(mocker, mock_class):
     )
 
 
-def test_copy_inputfiles_declared_in_stage_script_with_inputPaths(mocker, mock_class):
+def test_copy_inputfiles_declared_in_stage_script_with_inputPaths(
+    mocker, mock_class, registered_flare_task
+):
     """Test that when inputPaths are included,"""
     # Mock the Stages.get_stage_script function
     mock_stage_script = mocker.patch(
-        "flare.src.fcc_analysis.fcc_inputfiles_mixin.Stages.get_stage_script"
+        "flare.src.fcc_analysis.base_classes.fcc_inputfiles_mixin.get_python_script_for_task"
     )
 
     # Mock `Stages.get_stage_script` to return a Path object
@@ -56,7 +64,7 @@ def test_copy_inputfiles_declared_in_stage_script_with_inputPaths(mocker, mock_c
 
     mock_copy = mocker.patch.object(mock_class, "copy_input_file_to_outputDir")
 
-    mock_class.stage = "test_stage"
+    mock_class.stage = registered_flare_task
     mock_class.copy_inputfiles_declared_in_stage_script()
 
     assert mock_copy.call_count == 2
@@ -66,12 +74,12 @@ def test_copy_inputfiles_declared_in_stage_script_with_inputPaths(mocker, mock_c
 
 
 def test_copy_inputfiles_declared_in_stage_script_with_no_inputPaths(
-    mocker, mock_class
+    mocker, mock_class, registered_flare_task
 ):
     """Test that when not inputPaths are included, the copy_input_files_to_outputDir is not called"""
     # Mock the Stages.get_stage_script function
     mock_stage_script = mocker.patch(
-        "flare.src.fcc_analysis.fcc_inputfiles_mixin.Stages.get_stage_script"
+        "flare.src.fcc_analysis.base_classes.fcc_inputfiles_mixin.get_python_script_for_task"
     )
 
     # Mock `Stages.get_stage_script` to return a Path object
@@ -84,7 +92,7 @@ def test_copy_inputfiles_declared_in_stage_script_with_no_inputPaths(
 
     mock_copy = mocker.patch.object(mock_class, "copy_input_file_to_outputDir")
 
-    mock_class.stage = "test_stage"
+    mock_class.stage = registered_flare_task
     mock_class.copy_inputfiles_declared_in_stage_script()
 
     assert mock_copy.call_count == 0

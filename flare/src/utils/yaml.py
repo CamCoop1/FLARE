@@ -27,7 +27,11 @@ def get_config(config_name, dir="analysis/config", user_yaml=False) -> dict:
         contents = yaml.safe_load(f)
 
     # If no model is provided return early with the contents
-    validation_model = contents.pop("$model", None)
+    if contents:
+        validation_model = contents.pop("$model", None)
+    else:
+        validation_model = None
+
     if not validation_model:
         if user_yaml:
             raise ValueError(
@@ -52,4 +56,4 @@ Once you have added this, please re-run flare.
             ", ".join(models.keys())
         )
 
-    return validated_model.dict()
+    return validated_model.model_dump()

@@ -4,8 +4,9 @@ import subprocess
 
 import b2luigi as luigi
 
-from flare.src.fcc_analysis.fcc_inputfiles_mixin import FCCInputFilesMixin
-from flare.src.fcc_analysis.fcc_stages import Stages
+from flare.src.fcc_analysis.base_classes.fcc_inputfiles_mixin import FCCInputFilesMixin
+from flare.src.fcc_analysis.dag_tooling.discovery import get_python_script_for_task
+from flare.src.fcc_analysis.task_registry import RegisteredFlareTask
 from flare.src.utils.bracket_mappings import BracketMappingCMDBuilderMixin
 from flare.src.utils.dirs import find_file
 from flare.src.utils.jinja2_utils import get_template
@@ -20,7 +21,7 @@ class FCCTemplateMethodMixin:
     stage of the analysis with the correct input and output directories
     """
 
-    stage: Stages
+    stage: RegisteredFlareTask
 
     @property
     def outputDir(self):
@@ -75,7 +76,7 @@ class FCCTemplateMethodMixin:
         If both assertions are passed, the stage template is rendered and saved to the output directory of this stage
         """
         # Get stage script from Stages enum
-        stage_script_path = Stages.get_stage_script(self.stage)
+        stage_script_path = get_python_script_for_task(self.stage.name)
         # Load the python script as text
         with stage_script_path.open("r") as f:
             python_code = f.read()
@@ -84,7 +85,7 @@ class FCCTemplateMethodMixin:
         python_code_lines = python_code.splitlines()
         # Check for plot stage as its outputdir is defined differently (for no good reason?)
 
-        outputdir_element = "outputDir" if self.stage != Stages.plot else "outdir"
+        outputdir_element = "outputDir" if self.stage.name != "plots" else "outdir"
         print("lines of code before: ", len(python_code_lines))
         # Check no outputDir is defined by the user
         if outputdir_element in python_code:
@@ -109,7 +110,7 @@ class FCCTemplateMethodMixin:
                 p for p in python_code_lines if not p.startswith("inputDir")
             ]
 
-        if self.stage == Stages.plot:
+        if self.stage.name == "plots":
             output_code_list = [
                 line for line in python_code_lines if "customLabel" not in line
             ]
@@ -123,7 +124,7 @@ class FCCTemplateMethodMixin:
             outputDir=self.outputDir,
             inputDir=self.inputDir,
             python_code=output_code,
-            plot_stage=(self.stage == Stages.plot),
+            plot_stage=(self.stage.name == "plots"),
         )
 
         with self.rendered_template_path.open("w") as f:
@@ -145,14 +146,14 @@ class FCCAnalysisBaseClass(
         This attribute is a variant of the Stages enum
     """
 
-    stage: Stages
+    stage: RegisteredFlareTask
 
     @property
-    def stage_dict(self):
+    def stage_dict(self) -> RegisteredFlareTask:
         """
         The dictionary of information for this stage
         """
-        return Stages(self.stage).value
+        return self.stage
 
     @property
     def prod_cmd(self):
@@ -160,7 +161,7 @@ class FCCAnalysisBaseClass(
         The cmd for this stage of the FCC Analysis as defined inside
         the fcc_production.yaml
         """
-        return self.stage_dict["cmd"].format(*self.collect_cmd_inputs())
+        return self.stage_dict.cmd.format(*self.collect_cmd_inputs())
 
     @property
     def outputDir_name(self):
@@ -168,7 +169,7 @@ class FCCAnalysisBaseClass(
         The output file may be dependent on a datatype parameter so must determine if the output
         file name needs to be parsed and transformed or if we can return the unparsed output file name
         """
-        return self.stage_dict["output_file"]
+        return self.stage_dict.output_file
 
     @property
     def outputDir(self):
@@ -179,11 +180,12 @@ class FCCAnalysisBaseClass(
         Required by `BracketMappingCMDBuilderMixin` to use for error handling when a required file
         cannot be matched with a BracketMapping or found in the analysis directory
         """
-        yield Stages.get_stage_script(self.stage)
+
+        yield get_python_script_for_task(self.stage.name)
 
     @property
     def unparsed_args(self):
-        return self.stage_dict["args"]
+        return self.stage_dict.args
 
     def bm_free_name(self, *args, **kwargs) -> str:
         """
@@ -233,7 +235,7 @@ class FCCAnalysisBaseClass(
         for this stage detailed in production_types.yaml
         """
         try:
-            func_names = self.stage_dict["on_completion"]
+            func_names = self.stage_dict.on_completion
         except KeyError:
             return
 
@@ -248,7 +250,7 @@ class FCCAnalysisBaseClass(
         for this stage detailed in production_types.yaml
         """
         try:
-            func_names = self.stage_dict["pre_run"]
+            func_names = self.stage_dict.pre_run
         except KeyError:
             return
 

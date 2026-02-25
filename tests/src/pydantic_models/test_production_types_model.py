@@ -14,14 +14,11 @@ def default_stage_args():
 
 def test_valid_fcc_production_model(default_stage_args):
     """Given valid FCCProductionModel input, check output is as expected"""
-    model = FCCProductionModel(**{"fccanalysis": {"stage1": default_stage_args}}).dict()
-
-    assert model["fccanalysis"]["stage1"]["cmd"] == default_stage_args["cmd"]
-    assert model["fccanalysis"]["stage1"]["args"] == default_stage_args["args"]
-    assert (
-        model["fccanalysis"]["stage1"]["output_file"]
-        == default_stage_args["output_file"]
-    )
+    model = FCCProductionModel(**{"fccanalysis": {"stage1": default_stage_args}})
+    fccanalysis_model = model.fccanalysis
+    assert fccanalysis_model["stage1"].cmd == default_stage_args["cmd"]
+    assert fccanalysis_model["stage1"].args == default_stage_args["args"]
+    assert fccanalysis_model["stage1"].output_file == default_stage_args["output_file"]
 
 
 def test_valid_mc_production_model(default_stage_args):

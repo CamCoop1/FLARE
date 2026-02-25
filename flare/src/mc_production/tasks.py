@@ -307,13 +307,13 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
         # If the prodtype is default i.e wasn't defined globally
         # we must call the default_prodtype requires function
         if self.prodtype == "default":
-            datatypes_dict = flatten_to_dict(dataprod_config["datatype"])
+            datatypes_dict = flatten_to_dict(dataprod_config.datatype)
             datatypes = list(datatypes_dict.keys())
 
             for datatype, card, edm4hep in product(
                 datatypes,
-                dataprod_config["card"],
-                dataprod_config["edm4hep"],
+                dataprod_config.card,
+                dataprod_config.edm4hep,
             ):
                 prodtype = datatypes_dict[datatype]["prodtype"]
 
@@ -329,11 +329,10 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
 
         else:
             for datatype, card, edm4hep in product(
-                dataprod_config["datatype"],
-                dataprod_config["card"],
-                dataprod_config["edm4hep"],
+                dataprod_config.datatype,
+                dataprod_config.card,
+                dataprod_config.edm4hep,
             ):
-
                 yield get_last_stage_task(
                     inject_stage1_dependency=self.inject_stage1_dependency_task
                 )(
@@ -352,7 +351,7 @@ def _get_mc_prod_stages(prodtype=None) -> dict:
         Returned dictionary is that specific to the production type as per src/mc_production/production_types.yaml'
     """
     requested_prodtype = (
-        prodtype or luigi.get_setting("dataprod_config")["global_prodtype"]
+        prodtype or luigi.get_setting("dataprod_config").global_prodtype
     )
     try:
         return get_config("production_types.yaml", "flare/src/mc_production")[
@@ -395,7 +394,7 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
     class_name = "MCProduction"
     class_name += prodtype.capitalize() if prodtype else ""
     return _linear_task_workflow_generator(
-        stages=_get_mc_prod_stages(prodtype=prodtype),
+        stages=list(_get_mc_prod_stages(prodtype=prodtype)),
         class_name=class_name,
         base_class=MCProductionBaseTask,
         class_attrs={

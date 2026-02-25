@@ -77,6 +77,7 @@ class AnalyzerModel(ForbidExtraBaseModel):
 
     """
 
+    script_is_empty: bool = Field(default=False)
     flaggable_variables: Dict[str, FlaggableVariable] = Field(default_factory=dict)
     identified_path_variables: Dict[str, IdentifiedPathEntry] = Field(
         default_factory=dict
@@ -85,7 +86,7 @@ class AnalyzerModel(ForbidExtraBaseModel):
     # allowed keys (not model fields)
     VALID_VARIABLE_KEYS: ClassVar[Set[str]] = {"inputDir", "outputDir", "outdir"}
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     def check_allowed_dict_keys(cls, values):
         """
         Check that our `flaggable_variabels` exclusively have keys from our VALID_VARIABLE_KEYS attribute
@@ -104,6 +105,10 @@ class AnalyzerModel(ForbidExtraBaseModel):
             raise ValueError("; ".join(errors))
 
         return values
+
+    @classmethod
+    def set_empty_file_flag_true(cls):
+        cls.builder_dict["script_is_empty"] = True
 
     @classmethod
     def initialize_register_mode(cls):
