@@ -1,9 +1,11 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from . import ForbidExtraBaseModel
 
 
-class FlareTask(BaseModel):
+class FlareTask(ForbidExtraBaseModel):
     """
     The base yaml that every stage must follow
     """

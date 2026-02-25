@@ -1,4 +1,6 @@
-from typing import Dict
+from typing import Dict, Optional
+
+from pydantic import Field
 
 from flare.src.pydantic_models.utils.flare_task import FlareTask
 
@@ -26,6 +28,10 @@ class RegisteredFlareTask(FlareTask):
     """
 
     name: str
+    # Here we include this as the AddFlareTask has the required_by field
+    # and since we do not allow extra fields to be passed to any Pydantic
+    # models in FLARE we must include it here
+    required_by: Optional[list[str]] = Field(default_factory=list)
 
 
 class TaskRegistryClass:

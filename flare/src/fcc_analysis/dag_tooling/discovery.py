@@ -15,7 +15,8 @@ def discover_task_scripts() -> list[str]:
     define create their python scripts in the CWD and we identify what FCC Analysis stages
     must be ran from that. This all must happen at run time.
     """
-    studydir = luigi.get_setting("study_dir", Path.cwd())
+    studydir = luigi.get_setting("studydir", Path.cwd())
+
     # Grab the valid internal tasks, the names of which define the task
     # I.e stage1.py would be picked up as stage1
     valid_internal_task_names = luigi.get_setting("internal_fcc_analysis_tasks").keys()
@@ -37,5 +38,9 @@ def discover_task_scripts() -> list[str]:
 def get_python_script_for_task(task: str) -> Path:
     studydir = luigi.get_setting("studydir")
     # This is guaranteed since this function is only ever called after all validation is done
-    python_script = [p for p in studydir.glob("*py")][0]
-    return python_script
+    python_script = [p for p in studydir.glob("*py") if task in p.name]
+
+    assert (
+        len(python_script) == 1
+    ), f"The python script for {task} could not be found in {studydir}"
+    return python_script[0]

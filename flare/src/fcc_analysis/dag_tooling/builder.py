@@ -73,8 +73,8 @@ def build_task_graph(
         # Update the requires field
         downstream_task_model["requires"] = upstream_task
         # Rebuild our FlareTask model and validate everything is as intended
-        active_fcc_analysis_tasks[downstream_task] = FlareTask(
-            name=downstream_task, **downstream_task_model
+        active_fcc_analysis_tasks[downstream_task] = AddFlareTask(
+            **downstream_task_model
         )
 
     # Build our dictionary of all tasks
