@@ -1,5 +1,6 @@
-[![CI](https://github.com/CamCoop1/FLARE/actions/workflows/ci.yaml/badge.svg)](https://github.com/CamCoop1/FLARE/actions/workflows/ci.yaml)
-[![DOI](https://zenodo.org/badge/953801229.svg)](https://doi.org/10.5281/zenodo.15694628)
+[![CI](https://img.shields.io/github/actions/workflow/status/CamCoop1/FLARE/ci.yaml?style=flat-square&label=CI)](https://github.com/CamCoop1/FLARE/actions/workflows/ci.yaml)
+[![Zenodo DOI](https://img.shields.io/badge/Zenodo-10.5281/zenodo.15694628-blue?style=flat-square&logo=zenodo)](https://doi.org/10.5281/zenodo.15694628)
+[![CPC DOI](https://img.shields.io/badge/CPC-10.1016/j.cpc.2026.110062-blue?style=flat-square&logo=doi)](https://doi.org/10.1016/j.cpc.2026.110062)
 [![Website](https://img.shields.io/badge/Website-FLARE-blue?style=flat-square)](https://camcoop1.github.io/FLARE/)
 
 # FLARE: FCCee b2Luigi Automated Reconstruction and Event processing
@@ -328,3 +329,7 @@ mc_production stage1_analysis.py stage2_analysis.py final_analysis.py plot_analy
 details.yaml wzp6_ee_mumuH_Hbb_ecm240.sin wzp6_ee_mumuH_HWW_ecm240.sin card_IDEA.tcl edm4hep_IDEA.tcl
 (venv)$ flare run analysis --config-yaml config.yaml --study-dir studies/fancy_BSM_study/
 ```
+
+## How to Cite: 
+
+@article{CooperHarris:2025lqd, author = "Cooper Harris, Cameron and Desai, Aman", title = "{FLARE: FCCee b2Luigi Automated Reconstruction and Event processing}", eprint = "2506.16094", archivePrefix = "arXiv", primaryClass = "hep-ph", reportNumber = "ADP-25-23/T1285", doi = "10.1016/j.cpc.2026.110062", journal = "Comput. Phys. Commun.", volume = "322", pages = "110062", year = "2026" }
