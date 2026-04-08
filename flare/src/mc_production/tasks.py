@@ -38,9 +38,10 @@ class MCProductionBaseTask(
 
     @property
     def env_script(self):
-        global_env_script_path = luigi.get_setting("dataprod_config")[
-            "global_env_script_path"
-        ]
+        global_env_script_path = luigi.get_setting(
+            "dataprod_config"
+        ).global_env_script_path
+
         if not global_env_script_path:
             return
 
@@ -179,9 +180,10 @@ class MCProductionBaseTask(
             case _:
                 # More than one, we assume we are looping over a parameter of this class
                 if "card" in arg:
-                    path = [p for p in file_path if self.card_name == Path(p).stem][0]
-                elif "ed4hep" in arg:
-                    path = [p for p in file_path if self.edm4hep_name == Path(p).stem][
+                    path = [p for p in file_path if self.card_name in Path(p).stem][0]
+                elif "edm4hep" in arg:
+
+                    path = [p for p in file_path if self.edm4hep_name in Path(p).stem][
                         0
                     ]
                 elif self.datatype in arg:
@@ -272,7 +274,7 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
     @property
     def slurm_settings(self):
         settings = luigi.get_setting("slurm_settings", {})
-        env_script = luigi.get_setting("dataprod_config")["global_env_script_path"]
+        env_script = luigi.get_setting("dataprod_config").global_env_script_path
         if env_script:
             settings["export"] = "ALL"
         return settings
