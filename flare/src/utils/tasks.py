@@ -30,7 +30,7 @@ class OutputMixin:
 
     @property
     def task_file_dir(self):
-        return find_external_file("data", self.results_subdir)
+        return find_external_file("data", self.results_subdir, "submission_scripts")
 
     def remove_output(self):
         """This is actually a function from b2luigis Task class. We set it here as this

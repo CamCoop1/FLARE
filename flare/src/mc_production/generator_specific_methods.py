@@ -2,6 +2,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from b2luigi import set_setting
+
 
 class MadgraphMethods:
     """
@@ -65,3 +67,35 @@ class MadgraphMethods:
         shutil.copyfile(
             self.input_file_path, dst=f"{self.tmp_output_parent_dir}/{input_file_name}"
         )
+
+
+class K4RunMethods:
+    CLDCONFIG = "/cvmfs/sw.hsf.org/key4hep/releases/2025-05-29/x86_64-almalinux9-gcc14.2.0-opt/cldconfig/2025-05-26-72663j/share/CLDConfig/"
+
+    @property
+    def tmp_output_parent_dir(self):
+        raise NotImplementedError
+
+    def cp_cld_files(self):
+        """
+        Copy the CLD files to the CWD
+        """
+        for path in Path(self.CLDCONFIG).glob("*"):
+            link = self.tmp_output_parent_dir / path.relative_to(self.CLDCONFIG)
+            if not link.exists():
+                link.symlink_to(path)
+
+    def count_cld_file(self):
+        """
+        Count the number of CLD files
+        """
+        CLD_files = list(Path(self.CLDCONFIG).glob("*"))
+        set_setting("cld_file_count", len(CLD_files))
+        set_setting("cld_files", CLD_files)
+
+    def mv_rootfiles(self):
+        mcprod_dir = Path.cwd() / "mc_production"
+        file = list(mcprod_dir.glob("*.root"))
+
+        for f in file:
+            shutil.move(f, self.tmp_output_parent_dir / f.name)

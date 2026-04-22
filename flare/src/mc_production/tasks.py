@@ -8,7 +8,10 @@ from pathlib import Path
 import b2luigi as luigi
 from b2luigi.core.utils import flatten_to_dict
 
-from flare.src.mc_production.generator_specific_methods import MadgraphMethods
+from flare.src.mc_production.generator_specific_methods import (
+    K4RunMethods,
+    MadgraphMethods,
+)
 from flare.src.mc_production.mc_production_types import get_mc_production_types
 from flare.src.utils.bracket_mappings import (
     BracketMappingCMDBuilderMixin,
@@ -23,7 +26,7 @@ logger = logging.getLogger("luigi-interface")
 
 
 class MCProductionBaseTask(
-    luigi.DispatchableTask, BracketMappingCMDBuilderMixin, MadgraphMethods
+    luigi.DispatchableTask, BracketMappingCMDBuilderMixin, MadgraphMethods, K4RunMethods
 ):
     """
     This base class is total generalised to be able to run on any N-stage MC production
@@ -111,9 +114,10 @@ class MCProductionBaseTask(
                 return f"{self.datatype}{suffix}"
 
             case BracketMappings.b2luigi_detemined_parameter:
-                suffix = get_suffix_from_arg(
-                    self._unparsed_output_file_name
-                )  # eg .root
+                suffix = self._unparsed_output_file_name.split(
+                    BracketMappings.b2luigi_detemined_parameter
+                )[-1]
+                # eg .root
                 prefix = self.b2luigi_parameter_output_file_name
                 return f"{prefix}{suffix}"
             case _:
@@ -155,6 +159,12 @@ class MCProductionBaseTask(
             arg=arg, bracket_mapping=BracketMappings.free_name
         )
 
+    def bm_b2luigi_determined_parameter(self, arg: str) -> Path:
+        arg = arg.replace(BracketMappings.b2luigi_detemined_parameter, self.datatype)
+        return self._find_file_path_given_arg_and_bracketmapping(
+            arg=arg, bracket_mapping=BracketMappings.b2luigi_detemined_parameter
+        )
+
     def _find_file_path_given_arg_and_bracketmapping(
         self, arg: str, bracket_mapping: BracketMappings
     ) -> Path:
@@ -182,7 +192,6 @@ class MCProductionBaseTask(
                 if "card" in arg:
                     path = [p for p in file_path if self.card_name in Path(p).stem][0]
                 elif "edm4hep" in arg:
-
                     path = [p for p in file_path if self.edm4hep_name in Path(p).stem][
                         0
                     ]
@@ -207,11 +216,13 @@ class MCProductionBaseTask(
         tmp folder to the correct folder at which point b2luigi flags the job as done
         """
 
-        logger.info(f"Command to be ran \n\n {self.prod_cmd} \n\n")
+        print(f"Command to be ran \n\n {self.prod_cmd} \n\n")
 
         # Run any required pre_run methods for this specific stage for this specific prodtype
         self.pre_run()
         # Run the cmd in the tmp directory
+        print("Submitting", self.prod_cmd)
+        print("Output file name: ", self.output_file_name)
         subprocess.check_call(self.prod_cmd, cwd=self.tmp_output_parent_dir, shell=True)
         # Run any required on_completion methods for this specific stage for this specific prodtype
         self.on_completion()
@@ -219,7 +230,7 @@ class MCProductionBaseTask(
         # Get final output dir
         target = self.tmp_output_parent_dir.with_suffix("")
 
-        logger.info(f"Moving {self.tmp_output_parent_dir} -> {target}")
+        print(f"Moving {self.tmp_output_parent_dir} -> {target}")
 
         # Move the contents of the tmp dir to the output dir. Not we cannot just move the
         # directory as b2luigi's batch submitter saves the executable_wrapper.sh to the output dir
@@ -253,6 +264,7 @@ class MCProductionBaseTask(
             return
 
         for func_name in func_names:
+            print(f"Attempting to run {func_name}")
             if hasattr(self, func_name):
                 func = getattr(self, func_name)
                 func()
@@ -392,7 +404,6 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
     )
     ```
     """
-    last_stage = next(reversed(_get_mc_prod_stages(prodtype=prodtype)))
     class_name = "MCProduction"
     class_name += prodtype.capitalize() if prodtype else ""
     return _linear_task_workflow_generator(
@@ -400,10 +411,11 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
         class_name=class_name,
         base_class=MCProductionBaseTask,
         class_attrs={
-            last_stage: {
+            task: {
                 "card_name": luigi.Parameter(default="default"),
                 "edm4hep_name": luigi.Parameter(default="default"),
             }
+            for task in list(_get_mc_prod_stages(prodtype=prodtype))[1:]
         },
         inject_stage1_dependency=inject_stage1_dependency,
     )

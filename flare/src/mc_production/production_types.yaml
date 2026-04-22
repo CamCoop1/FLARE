@@ -40,46 +40,72 @@
 
 "$model": "MCProductionModel"
 
-whizard :
-  stage1 :
-    cmd : whizard {0}
-    args :
-      - ++.sin
-    output_file: proc.stdhep
-  stage2:
-    cmd : DelphesSTDHEP_EDM4HEP {0} {1} {2} {3}
-    args:
-      - card_<>.tcl
-      - edm4hep_<>.tcl
-      - ().root
-      - --.stdhep
-    output_file : $$.root
+whizard:
+    stage1:
+        cmd: whizard {0}
+        args:
+            - ++.sin
+        output_file: proc.stdhep
+    stage2:
+        cmd: DelphesSTDHEP_EDM4HEP {0} {1} {2} {3}
+        args:
+            - card_<>.tcl
+            - edm4hep_<>.tcl
+            - ().root
+            - --.stdhep
+        output_file: $$.root
+
+whizard_fullsim:
+    stage1:
+        cmd: whizard {0}
+        args:
+            - ++.sin
+        output_file: proc.stdhep
+    stage2:
+        cmd: ddsim -I {0} -N 10 -O {1} --compactFile $(readlink -f {2}) --steeringFile {3}
+        args:
+            - --
+            - ().root
+            - card_<>.xml
+            - ddsim_<>.py
+        output_file: $$.root
+    stage3:
+        cmd: k4run {0} --inputFiles {1} --num-event -1 --outputBasename {2}
+        args:
+            - k4run_<>.py
+            - --
+            - ++
+        output_file: $$.sin_REC.edm4hep.root
+        pre_run:
+            - cp_cld_files
+        on_completion:
+            - mv_rootfiles
 
 madgraph:
-  stage1 :
-    cmd : mg5_aMC {0}
-    args :
-      - ++_runcard.dat
-    on_completion:
-      - madgraph_move_contents_to_tmp_output
-    output_file: signal.lhe
-  stage2:
-    cmd : DelphesPythia8_EDM4HEP {0} {1} {2} {3}
-    args:
-      - card_<>.tcl
-      - edm4hep_<>.tcl
-      - pythia_card_<>.cmd
-      - ().root
-    output_file : $$.root
-    pre_run:
-      - madgraph_copy_lhe_file_to_cwd
+    stage1:
+        cmd: mg5_aMC {0}
+        args:
+            - ++_runcard.dat
+        on_completion:
+            - madgraph_move_contents_to_tmp_output
+        output_file: signal.lhe
+    stage2:
+        cmd: DelphesPythia8_EDM4HEP {0} {1} {2} {3}
+        args:
+            - card_<>.tcl
+            - edm4hep_<>.tcl
+            - pythia_card_<>.cmd
+            - ().root
+        output_file: output_.root
+        pre_run:
+            - madgraph_copy_lhe_file_to_cwd
 
-pythia8 :
-  stage1:
-    cmd : DelphesPythia8_EDM4HEP {0} {1} {2} {3}
-    args:
-      - card_<>.tcl
-      - edm4hep_<>.tcl
-      - ++.cmd
-      - ().root
-    output_file : $$.root
+pythia8:
+    stage1:
+        cmd: DelphesPythia8_EDM4HEP {0} {1} {2} {3}
+        args:
+            - card_<>.tcl
+            - edm4hep_<>.tcl
+            - ++.cmd
+            - ().root
+        output_file: $$.root
