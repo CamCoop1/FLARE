@@ -25,6 +25,7 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     global_env_script_path: str = Field(default="")
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])
+    k4run_sandbox: str = Field(default="")
 
     @model_validator(mode="after")
     @classmethod

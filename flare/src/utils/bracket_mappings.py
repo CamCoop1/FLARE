@@ -1,4 +1,5 @@
 import logging
+from functools import reduce
 from pathlib import Path
 
 logger = logging.getLogger("luigi-interface")
@@ -34,7 +35,9 @@ class BracketMappings:
     output = "()"
     input = "--"
     datatype_parameter = "++"
+    datatype_parameter_stem = "+stem+"
     free_name = "<>"
+    free_name_use_copied_output = "<?>"
     b2luigi_detemined_parameter = "$$"
 
     @staticmethod
@@ -58,12 +61,14 @@ class BracketMappings:
         return None
 
 
-def _strip(arg, mapping: BracketMappings):
+def _strip(arg, mapping: str):
     """
     This method does nothing more than strip the free name
     brackets from the argument
     """
-    return arg.replace(mapping[0], "").replace(mapping[1], "")
+    print("Argument to be stripped", arg)
+    stripped_argment = reduce(lambda s, z: s.replace(z, ""), iter(mapping), arg)
+    return stripped_argment
 
 
 def check_if_path_matches_mapping(arg: str, path: str | Path, mapping: str) -> bool:
@@ -73,6 +78,7 @@ def check_if_path_matches_mapping(arg: str, path: str | Path, mapping: str) -> b
     Returns False when there is an argument that does not have a matching path
     """
     args = _strip(arg, mapping).split("_")
+    print("Stripped argument", args)
     return all([(arg in str(path)) for arg in args])
 
 
@@ -104,7 +110,13 @@ class BracketMappingCMDBuilderMixin:
     def bm_datatype_parameter(self, arg: str) -> Path:
         raise NotImplementedError
 
+    def bm_datatype_parameter_stem(self, arg: str) -> Path:
+        raise NotImplementedError
+
     def bm_free_name(self, arg: str) -> Path:
+        raise NotImplementedError
+
+    def bm_free_name_use_copied_output(self, arg: str) -> Path:
         raise NotImplementedError
 
     def bm_b2luigi_determined_parameter(self, arg: str) -> Path:
@@ -136,9 +148,18 @@ class BracketMappingCMDBuilderMixin:
                     path = self.bm_datatype_parameter(arg=arg)
                     cmd_inputs.append(str(path))
 
+                case BracketMappings.datatype_parameter_stem:
+                    path = self.bm_datatype_parameter_stem(arg=arg)
+                    cmd_inputs.append(str(path))
+
                 case BracketMappings.free_name:
                     # Find the associated file using the check_if_path_maetches_mapping function
                     path = self.bm_free_name(arg=arg)
+                    cmd_inputs.append(str(path))
+
+                case BracketMappings.free_name_use_copied_output:
+                    # Find the associated copied file and use that as the input
+                    path = self.bm_free_name_use_copied_output(arg=arg)
                     cmd_inputs.append(str(path))
 
                 case BracketMappings.b2luigi_detemined_parameter:

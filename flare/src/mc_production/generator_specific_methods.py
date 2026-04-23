@@ -2,7 +2,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from b2luigi import set_setting
+from b2luigi import get_setting
 
 
 class MadgraphMethods:
@@ -76,26 +76,16 @@ class K4RunMethods:
     def tmp_output_parent_dir(self):
         raise NotImplementedError
 
-    def cp_cld_files(self):
+    def cp_sandbox_files(self):
         """
         Copy the CLD files to the CWD
         """
-        for path in Path(self.CLDCONFIG).glob("*"):
-            link = self.tmp_output_parent_dir / path.relative_to(self.CLDCONFIG)
+        dataprod_config = get_setting("dataprod_config")
+        sandbox_path = dataprod_config.k4run_sandbox
+        if not sandbox_path:
+            return
+
+        for path in Path(sandbox_path).glob("*"):
+            link = self.tmp_output_parent_dir / path.relative_to(sandbox_path)
             if not link.exists():
                 link.symlink_to(path)
-
-    def count_cld_file(self):
-        """
-        Count the number of CLD files
-        """
-        CLD_files = list(Path(self.CLDCONFIG).glob("*"))
-        set_setting("cld_file_count", len(CLD_files))
-        set_setting("cld_files", CLD_files)
-
-    def mv_rootfiles(self):
-        mcprod_dir = Path.cwd() / "mc_production"
-        file = list(mcprod_dir.glob("*.root"))
-
-        for f in file:
-            shutil.move(f, self.tmp_output_parent_dir / f.name)

@@ -72,14 +72,12 @@ whizard_fullsim:
     stage3:
         cmd: k4run {0} --inputFiles {1} --num-event -1 --outputBasename {2}
         args:
-            - k4run_<>.py
+            - k4run_<?>.py
             - --
-            - ++
-        output_file: $$.sin_REC.edm4hep.root
+            - +stem+
+        output_file: $$_REC.edm4hep.root
         pre_run:
-            - cp_cld_files
-        on_completion:
-            - mv_rootfiles
+            - cp_sandbox_files
 
 madgraph:
     stage1:

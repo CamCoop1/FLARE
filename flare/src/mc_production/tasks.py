@@ -123,7 +123,7 @@ class MCProductionBaseTask(
             case _:
                 return self._unparsed_output_file_name
 
-    def copy_input_file_to_output_dir(self, path):
+    def copy_input_file_to_output_dir(self, path, return_destination=False):
         """
         This function serves to copy a file from analysis/mc_production/ to
         the tmp output dir for historical book keeping
@@ -132,6 +132,8 @@ class MCProductionBaseTask(
         self.tmp_output_parent_dir.mkdir(parents=True, exist_ok=True)
         destination = self.tmp_output_parent_dir / source.name
         shutil.copy(source, destination)
+        if return_destination:
+            return destination
 
     def get_file_paths(self):
         return luigi.get_setting("dataprod_dir").glob("*")
@@ -154,10 +156,20 @@ class MCProductionBaseTask(
             arg=arg, bracket_mapping=BracketMappings.datatype_parameter
         )
 
+    def bm_datatype_parameter_stem(self, arg: str) -> Path:
+        return self.datatype
+
     def bm_free_name(self, arg):
         return self._find_file_path_given_arg_and_bracketmapping(
             arg=arg, bracket_mapping=BracketMappings.free_name
         )
+
+    def bm_free_name_use_copied_output(self, arg: str) -> Path:
+        path = self._find_file_path_given_arg_and_bracketmapping(
+            arg=arg, bracket_mapping=BracketMappings.free_name_use_copied_output
+        )
+        destination = self.copy_input_file_to_output_dir(path, return_destination=True)
+        return destination
 
     def bm_b2luigi_determined_parameter(self, arg: str) -> Path:
         arg = arg.replace(BracketMappings.b2luigi_detemined_parameter, self.datatype)
@@ -166,9 +178,10 @@ class MCProductionBaseTask(
         )
 
     def _find_file_path_given_arg_and_bracketmapping(
-        self, arg: str, bracket_mapping: BracketMappings
+        self, arg: str, bracket_mapping: str
     ) -> Path:
         file_paths = [f for f in self.get_file_paths()]
+        print("These are the file paths found by flare", file_paths)
         # Find the associated file using the check_if_path_matches_mapping function
         file_path = [
             str(f)
@@ -180,7 +193,7 @@ class MCProductionBaseTask(
             case 0:
                 raise IndexError(
                     f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
-                    " The framework will exit, ensure this file is present and try again."
+                    " Flare will exit, ensure this file is present and try again."
                 )
             case 1:
                 # We copy this file to the tmp output dir so we have a history of what input files were used
@@ -199,7 +212,7 @@ class MCProductionBaseTask(
                     path = [p for p in file_path if self.datatype == Path(p).stem][0]
                 else:
                     raise FileNotFoundError(
-                        f"The file associated with {arg} is unknown to flare. The found paths are {file_path}."
+                        f"The file associated with {arg} has more than one found path. The found paths are {file_path}."
                         f" This may occur if there are multiple files being picked up by flare for {arg}"
                     )
 
