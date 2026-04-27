@@ -44,7 +44,7 @@ def run_analysis(args):
 from flare.cli.run.registry import run_subparsers  # noqa
 
 parser = run_subparsers.add_parser(
-    "analysis",
+    "fccanalysis",
     help="Run FCC analysis",
 )
 setup_parser(parser)
