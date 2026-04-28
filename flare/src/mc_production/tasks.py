@@ -2,11 +2,9 @@ import logging
 import shutil
 import subprocess
 from functools import lru_cache
-from itertools import product
 from pathlib import Path
 
 import b2luigi as luigi
-from b2luigi.core.utils import flatten_to_dict
 
 from flare.src.mc_production.generator_specific_methods import (
     K4RunMethods,
@@ -331,43 +329,55 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
 
     def requires(self):
         dataprod_config = luigi.get_setting("dataprod_config")
-        # If the prodtype is default i.e wasn't defined globally
-        # we must call the default_prodtype requires function
-        if self.prodtype == "default":
-            datatypes_dict = flatten_to_dict(dataprod_config.datatype)
-            datatypes = list(datatypes_dict.keys())
 
-            for datatype, card, edm4hep in product(
-                datatypes,
-                dataprod_config.card,
-                dataprod_config.edm4hep,
-            ):
-                prodtype = datatypes_dict[datatype]["prodtype"]
+        for datatype_bundle in dataprod_config.datatype_bundles:
+            yield get_last_stage_task(
+                inject_stage1_dependency=self.inject_stage1_dependency_task
+            )(
+                prodtype=get_mc_production_types()[datatype_bundle.prodtype],
+                datatype=datatype_bundle.datatype,
+                card_name=datatype_bundle.card,
+                edm4hep_name=datatype_bundle.edm4hep,
+            )
+        # # If the prodtype is default i.e wasn't defined globally
+        # # we must call the default_prodtype requires function
+        # if self.prodtype == "default":
+        #     datatypes_dict = flatten_to_dict(
+        #         dataprod_config.datatype
+        #     )  # TODO this is now redundant
+        #     datatypes = list(datatypes_dict.keys())
 
-                yield get_last_stage_task(
-                    inject_stage1_dependency=self.inject_stage1_dependency_task,
-                    prodtype=prodtype,
-                )(
-                    prodtype=get_mc_production_types()[prodtype],
-                    datatype=datatype,
-                    card_name=card,
-                    edm4hep_name=edm4hep,
-                )
+        #     for datatype, card, edm4hep in product(
+        #         datatypes,
+        #         dataprod_config.get_cards(datatypes),
+        #         dataprod_config.edm4hep,
+        #     ):
+        #         prodtype = datatypes_dict[datatype]["prodtype"]
 
-        else:
-            for datatype, card, edm4hep in product(
-                dataprod_config.datatype,
-                dataprod_config.card,
-                dataprod_config.edm4hep,
-            ):
-                yield get_last_stage_task(
-                    inject_stage1_dependency=self.inject_stage1_dependency_task
-                )(
-                    prodtype=get_mc_production_types()[self.prodtype],
-                    datatype=datatype,
-                    card_name=card,
-                    edm4hep_name=edm4hep,
-                )
+        #         yield get_last_stage_task(
+        #             inject_stage1_dependency=self.inject_stage1_dependency_task,
+        #             prodtype=prodtype,
+        #         )(
+        #             prodtype=get_mc_production_types()[prodtype],
+        #             datatype=datatype,
+        #             card_name=card,
+        #             edm4hep_name=edm4hep,
+        #         )
+
+        # else:
+        #     for datatype, card, edm4hep in product(
+        #         dataprod_config.datatype,
+        #         dataprod_config.get_cards(dataprod_config.datatype),
+        #         dataprod_config.edm4hep,
+        #     ):
+        #         yield get_last_stage_task(
+        #             inject_stage1_dependency=self.inject_stage1_dependency_task
+        #         )(
+        #             prodtype=get_mc_production_types()[self.prodtype],
+        #             datatype=datatype,
+        #             card_name=card,
+        #             edm4hep_name=edm4hep,
+        #         )
 
 
 def _get_mc_prod_stages(prodtype=None) -> dict:

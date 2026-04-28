@@ -73,6 +73,7 @@ def load_config(
         unparsed_data = get_config(
             config_path.name, dir=config_path.parent, user_yaml=user_yaml
         )
+        print("Unparsed config data:", unparsed_data)
         if not unparsed_data:
             return pydantic_model()
         parsed_data = (
