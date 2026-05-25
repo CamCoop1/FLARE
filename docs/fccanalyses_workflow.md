@@ -1,4 +1,8 @@
-# Setting Up Your Analysis
+--
+id: fccanalyses-workflow
+--
+
+## Setting Up Your Analysis
 
 To begin, you can place all of your analysis scripting and tooling in your current working directory. However, it is standard to create an `analysis` directory to house all your scripts.
 
