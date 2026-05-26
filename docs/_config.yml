@@ -3,4 +3,6 @@ remote_theme: zendesk/jekyll-theme-zendesk-garden@main
 title: FLARE
 description: "FLARE : FCCee b2Luigi Automated Reconstruction And Event processing"
 sidebar:
-  - fccanalyses-workflow
+  - label: Workflows
+    children:
+      - fccanalyses-workflow
