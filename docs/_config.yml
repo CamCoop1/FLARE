@@ -4,13 +4,13 @@ title: "FLARE: The Workflow Orchestration Tool"
 description: "FLARE: The Workflow Orchestration Tool"
 sidebar:
   - getting-started
+  - cli
   - label: Workflows
     children:
       - fccanalyses
       - mcproduction
       - fastsim
       - fullsim
-  - cli
   - citation
 
 #search_enabled: true

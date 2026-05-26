@@ -2,6 +2,7 @@
 id: getting-started
 title: Getting Started
 sidebar_label: Getting Started
+next_page: cli
 ---
 FLARE can be accessed from two sources, from the `key4HEP` nightly stack or from PyPI. 
 
