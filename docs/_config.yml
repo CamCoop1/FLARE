@@ -7,7 +7,11 @@ sidebar:
   - label: Workflows
     children:
       - fccanalyses
+      - label: mcproduction
+        children:
+          - fullsim
+          - fastsim
   - citation
 
-search_enabled: true
+#search_enabled: true
 auto_page_title: true
