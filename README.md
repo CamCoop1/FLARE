@@ -7,6 +7,8 @@
 
 Framework powered by b2luigi to enable streamlined use of MC generators and fccanalysis commandline tool.
 
+👉 [Full FLARE Documentation](https://camcoop1.github.io/FLARE/)
+
 # Install
 To install the package, follow the basic install process. It is recommended you use a virtual environment. To begin, setup the fcc software from cvmfs
 
