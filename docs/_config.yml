@@ -3,6 +3,7 @@ remote_theme: zendesk/jekyll-theme-zendesk-garden@main
 title: "FLARE: The Workflow Orchestration Tool"
 description: "FLARE: The Workflow Orchestration Tool"
 sidebar:
+  - home
   - getting-started
   - cli
   - label: Workflows
