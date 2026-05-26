@@ -7,10 +7,9 @@ sidebar:
   - label: Workflows
     children:
       - fccanalyses
-      - title: mcproduction
-        children:
-          - fastsim
-          - fullsim
+      - mcproduction
+      - ↳ fastsim
+      - ↳ fullsim
   - citation
 
 #search_enabled: true
