@@ -10,6 +10,7 @@ sidebar:
       - mcproduction
       - fastsim
       - fullsim
+  - cli
   - citation
 
 #search_enabled: true
