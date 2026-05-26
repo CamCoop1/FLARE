@@ -1,12 +1,13 @@
 #theme: jekyll-theme-cayman
 remote_theme: zendesk/jekyll-theme-zendesk-garden@main
-title: "FLARE: FCCee b2Luigi Automated Reconstruction And Event processing"
-description: "FLARE : FCCee b2Luigi Automated Reconstruction And Event processing"
+title: "FLARE: The Workflow Orchestration Tool"
+description: "FLARE: The Workflow Orchestration Tool"
 sidebar:
   - getting-started
   - label: Workflows
     children:
       - fccanalyses-workflow
+  - citation
 
 search_enabled: true
-auto_page_title: true
+#auto_page_title: true
