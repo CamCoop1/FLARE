@@ -8,8 +8,8 @@ sidebar:
     children:
       - fccanalyses
       - mcproduction
-      - ↳ fastsim
-      - ↳ fullsim
+      - fastsim
+      - fullsim
   - citation
 
 #search_enabled: true
