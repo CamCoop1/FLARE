@@ -6,7 +6,7 @@ sidebar:
   - getting-started
   - label: Workflows
     children:
-      - fccanalyses-workflow
+      - fccanalyses
   - citation
 
 search_enabled: true
