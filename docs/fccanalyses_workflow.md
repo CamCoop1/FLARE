@@ -1,5 +1,7 @@
 ---
-id: fccanalyses-workflow
+id: fccanalyses
+title: FCCAnalyses Workflows
+sidebar_label: FCCAnalyses
 ---
 
 ## Setting Up Your Analysis
