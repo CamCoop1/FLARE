@@ -1,7 +1,7 @@
 ---
 id: citation
 title: How To Cite FLARE
-sidebar_label: Citation
+sidebar_label: How To Cite FLARE
 ---
 
 ## How to Cite: 
