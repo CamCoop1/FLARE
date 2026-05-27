@@ -12,7 +12,7 @@ sidebar:
       - mcproduction
       - fastsim
       - fullsim
-  - label: features
+  - label: Features
       - add-stage
   - citation
 
