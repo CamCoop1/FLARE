@@ -101,7 +101,7 @@ description: This workflow is defined in the documentation
 batch_system: lsf
 ```
 
-## FLARE Settings Hierachy
+### FLARE Settings Hierachy
 
 ```mermaid
 graph TD;
@@ -126,3 +126,19 @@ class UserConfigModel(BaseModel):
     studydir: Path | str = Field(default_factory=Path.cwd)
     outputdir: Path | str = Field(default_factory=Path.cwd)
 ```
+
+
+## FLARE lint 
+```bash
+flare lint fccanalysis
+``
+
+The FLARE linting tool is an addition to version 0.3.0 which will crawl through workflow input files and ensure they are formatted correctly. To use the tool, a user must be in the working directoy in which their input workflow files are located. 
+
+The FLARE linter is designed to enforce the following 'FLARE Principles'
+
+- FLARE has full control of the input and output directories of workflow data. 
+- For each Task required by a user, there must exist a unique script for that step
+- Every Task in FLARE can have at most one required Task. I.e each Task can have a single input data directory to draw from
+
+These principles are especially important when utilizing the [Add Custome Tasks](features/add_stage.md) feature of FLARE.
