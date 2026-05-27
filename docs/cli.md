@@ -105,9 +105,24 @@ batch_system: lsf
 
 ```mermaid
 graph TD;
-  A[CLI Interface]
-  B[FLARE yaml settings]
-  C[Default Settings]
+  A[1. CLI Interface]
+  B[2. FLARE yaml settings]
+  C[3. Default Settings]
 
   A --> B --> C
+```
+
+The FLARE settings manager works on a hierachy. FLARE prioritizes the settings passed to the CLI. If a setting was not passed there, FLARE will next refer to the `flare.yaml`. Lastly, is a setting value is not provided, a default is used.
+
+FLARE uses [Pydantic](https://pydantic.dev/docs/validation/latest/get-started/) to validate user input data. The exact Pydantic model along with the defaults are shown below. 
+
+```python
+from pathlib import Path
+
+class UserConfigModel(BaseModel):
+    name: str = Field(default="default_name")
+    version: str = Field(default="1.0")
+    description: str = Field(default="No Description")
+    studydir: Path | str = Field(default_factory=Path.cwd)
+    outputdir: Path | str = Field(default_factory=Path.cwd)
 ```
