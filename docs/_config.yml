@@ -13,6 +13,7 @@ sidebar:
       - fastsim
       - fullsim
   - label: Features
+    children:
       - add-stage
   - citation
 
