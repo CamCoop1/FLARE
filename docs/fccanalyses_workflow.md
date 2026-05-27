@@ -6,7 +6,7 @@ sidebar_label: FCCAnalyses
 
 ## Setting Up Your Analysis
 
-To begin, you can place all of your analysis scripting and tooling in your current working directory. However, it is standard to create an `analysis` directory to house all your scripts.
+To begin, move to the directory in which you want to conduct your analysis. 
 
 1. Your analysis stage scripts must be prefixed by which stage it is, as per the `Stages` enum in `flare/src/fcc_analysis/fcc_stages.py`. What this boils down to is your stage 1 analysis script must be named `stage1_{detailed name}.py`, likewise your final stage analysis script must be named `final_{detailed name}.py`. This is necessary as these prefixes are how the framework knows what stages need to be ran for your analysis.
 
