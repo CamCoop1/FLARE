@@ -1,0 +1,743 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>FCCAnalyses Workflows &#8212; FLARE: The Workflow Orchestration Tool 0.1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=e1a75a79"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'source/workflows/fccanalyses_workflow';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="MC Production Workflows" href="mc_production/index.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/flare-noBackgrond-evenSpacing-v5.png" class="logo__image only-light" alt="FLARE: The Workflow Orchestration Tool 0.1 documentation - Home"/>
+    <img src="../../_static/flare-noBackgrond-evenSpacing-v5.png" class="logo__image only-dark pst-js-only" alt="FLARE: The Workflow Orchestration Tool 0.1 documentation - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">FLARE Commandline Interface</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">FCCAnalyses Workflows</a></li>
+
+<li class="toctree-l1 has-children"><a class="reference internal" href="mc_production/index.html">MC Production Workflows</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="mc_production/fastsim.html">Fast Simulation in FLARE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mc_production/fullsim.html">Full Simulation in FLARE</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../features/add_stage.html">Add Custom Tasks to FCCAnalyses Workflows</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citation.html">How To Cite FLARE</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/source/workflows/fccanalyses_workflow.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>FCCAnalyses Workflows</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">FCCAnalyses Workflows</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-your-analysis">Setting Up Your Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-your-analysis">Running Your Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-new-altered-analysis">Running New/Altered Analysis</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-mc-production">Setting Up MC Production</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whizard-delphespythia6-production">Whizard + DelphesPythia6 Production</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#details-yaml">details.yaml</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#madgraph-delphespythia8">Madgraph + DelphesPythia8</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">details.yaml</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Input Files</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pythia8">Pythia8</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">details.yaml</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Input Files</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixed-production">Mixed Production</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-mc-production">Running the MC Production</a></li>
+</ul>
+</li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="fccanalyses-workflows">
+<span id="fccanalyses"></span><h1>FCCAnalyses Workflows<a class="headerlink" href="#fccanalyses-workflows" title="Link to this heading">#</a></h1>
+<section id="setting-up-your-analysis">
+<h2>Setting Up Your Analysis<a class="headerlink" href="#setting-up-your-analysis" title="Link to this heading">#</a></h2>
+<p>To begin, move to the directory in which you want to conduct your analysis.</p>
+<ol class="arabic simple">
+<li><p>Your analysis stage scripts must be prefixed by which stage it is, as per the <code class="docutils literal notranslate"><span class="pre">Stages</span></code> enum in <code class="docutils literal notranslate"><span class="pre">flare/src/fcc_analysis/fcc_stages.py</span></code>. What this boils down to is your stage 1 analysis script must be named <code class="docutils literal notranslate"><span class="pre">stage1_{detailed</span> <span class="pre">name}.py</span></code>, likewise your final stage analysis script must be named <code class="docutils literal notranslate"><span class="pre">final_{detailed</span> <span class="pre">name}.py</span></code>. This is necessary as these prefixes are how the framework knows what stages need to be run for your analysis.</p></li>
+<li><p>You must not define an <code class="docutils literal notranslate"><span class="pre">inputDir</span></code> or <code class="docutils literal notranslate"><span class="pre">outputDir</span></code> variable in your analysis scripts for any stage. These are reserved for b2luigi to determine during runtime. The only exception is the very first stage of your analysis, which requires an <code class="docutils literal notranslate"><span class="pre">inputDir</span></code> to define where to look for the MC. The framework checks during runtime if you have accidentally added one of these variables to your scripts and lets you know what you need to change to fix it. Apart from this, you the analyst can define your analysis scripts as you usually would, including adding additional <code class="docutils literal notranslate"><span class="pre">includePaths</span></code> and so forth.</p></li>
+</ol>
+<p>If you wish to use the batch system capabilities of FLARE, you will need to create a YAML file. In this yaml file you must define the <code class="docutils literal notranslate"><span class="pre">batch_system</span></code> variable. The <code class="docutils literal notranslate"><span class="pre">batch_system</span></code> variable tells b2luigi which batch system it should attempt to submit to. You must set the <code class="docutils literal notranslate"><span class="pre">batch_system</span></code> value inside the YAML to one of the following, depending on your required batch system:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lsf</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">htcondor</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">slurm</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">local</span></code></p></li>
+</ul>
+<p>Note, if <code class="docutils literal notranslate"><span class="pre">local</span></code> is set then b2luigi will not submit to the batch system and will instead submit to the head node that you are currently on. This is usually for when your batch system is not available in b2luigi or you wish to do some basic testing. An example of such a config yaml is shown below:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># analysis/config.yaml</span>
+<span class="nt">batch_system</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">slurm</span>
+</pre></div>
+</div>
+<p>For more details on the available batch systems see <a class="reference external" href="https://b2luigi.belle2.org/usage/batch.html?highlight=batch#batch-system-specific-settings">b2luigi Batch System Specific Settings</a>. Note some batch systems require/allow for you to pass batch-specific arguments which can also be defined in this YAML file.</p>
+</section>
+<section id="running-your-analysis">
+<h2>Running Your Analysis<a class="headerlink" href="#running-your-analysis" title="Link to this heading">#</a></h2>
+<p>To run the framework you can use the handy CLI tool. To begin type the following into your terminal:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis<span class="w"> </span>--help
+<span class="go">usage: flare run analysis [-h] [--name NAME] [--version VERSION] [--description DESCRIPTION] [--study-dir STUDY_DIR] [--output-dir OUTPUT_DIR] [--config-yaml CONFIG_YAML] [--mcprod]</span>
+
+<span class="go">options:</span>
+<span class="go">  -h, --help            show this help message and exit</span>
+<span class="go">  --name NAME           Name of the study</span>
+<span class="go">  --version VERSION     Version of the study</span>
+<span class="go">  --description DESCRIPTION</span>
+<span class="go">                        Description of the study</span>
+<span class="go">  --study-dir STUDY_DIR</span>
+<span class="go">                        Study directory path where the files for production are located</span>
+<span class="go">  --output-dir OUTPUT_DIR</span>
+<span class="go">                        The location where the output file will be produced, by default will be the current working directory</span>
+<span class="go">  --config-yaml CONFIG_YAML</span>
+<span class="go">                        Path to a YAML config file</span>
+<span class="go">  --mcprod              If set, also run mcproduction as part of the analysis</span>
+</pre></div>
+</div>
+<p>What will be returned is all the command line arguments you can pass to FLARE. Importantly, you can pass the path to your config YAML to the <code class="docutils literal notranslate"><span class="pre">--config-yaml</span></code> argument which will set the batch system variable. If no argument is passed to <code class="docutils literal notranslate"><span class="pre">--config-yaml</span></code>, FLARE will attempt to find a YAML file in your current working directory to use. If no YAML is found and no additional arguments are parsed to the CLI, then default values are set.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>No default <code class="docutils literal notranslate"><span class="pre">batch_system</span></code> is set, meaning you must set it in your config YAML.</p>
+</div>
+<p>To run your analysis workflow you can use the following command in your terminal:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls
+<span class="go">stage1_analysis.py stage2_analysis.py final_analysis.py plot_analysis.py config.yaml</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis<span class="w"> </span>--config-yaml<span class="w"> </span>config.yaml<span class="w"> </span>--name<span class="w"> </span>MyAnalysis<span class="w"> </span>--version<span class="w"> </span>higgs<span class="w"> </span>mass
+</pre></div>
+</div>
+<p>FLARE will automatically load the <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> along with your passed command line arguments into its settings manager and will run your analysis using the current working directory as the source of your FCC analysis stage scripts.</p>
+<p>If you wish to be more systematic with your directory layout, you can move the FCC stages into their own directory like so:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>mkdir<span class="w"> </span>studies/higgs_mass<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mv<span class="w"> </span>*.py<span class="w"> </span>studies/higgs_mass/.
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls<span class="w"> </span>studies/higgs_mass
+<span class="go">stage1_analysis.py stage2_analysis.py final_analysis.py plot_analysis.py</span>
+</pre></div>
+</div>
+<p>Those who have read the CLI help documentation will know that you can set <code class="docutils literal notranslate"><span class="pre">--study-dir</span></code> to specify where FLARE should look for your stage scripts:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis<span class="w"> </span>--config-yaml<span class="w"> </span>config.yaml<span class="w"> </span>--name<span class="w"> </span>MyAnalysis<span class="w"> </span>--version<span class="w"> </span>higgs<span class="w"> </span>mass<span class="w"> </span>--study-dir<span class="w"> </span>studies/higgs_mass
+</pre></div>
+</div>
+<p>If an argument for <code class="docutils literal notranslate"><span class="pre">--output-dir</span></code> is not given, then the current working directory is used. If you wish to centralise all your outputs you can either always call FLARE from the same working directory, or more simply, just set the <code class="docutils literal notranslate"><span class="pre">outputdir</span></code> variable inside the config YAML file.</p>
+<p>If all of this is cumbersome and repetitive you can define these variables in your <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> instead:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># config.yaml</span>
+<span class="c1"># flare config</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MyAnalysis</span>
+<span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">higgs mass</span>
+<span class="nt">studydir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">studies/higgs_mass</span>
+
+<span class="c1"># b2luigi settings</span>
+<span class="nt">batch_system</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">slurm</span>
+</pre></div>
+</div>
+<p>Now we can simply run the following for our analysis (assuming the config YAML is in the current working directory):</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis
+</pre></div>
+</div>
+<p>If your config YAML is not in your current working directory, say you have a central config in a parent directory, set the <code class="docutils literal notranslate"><span class="pre">--config-yaml</span></code> argument to its path:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis<span class="w"> </span>--config-yaml<span class="w"> </span>../central_config/config.yaml
+</pre></div>
+</div>
+<p>Lastly, you can use a combination of command line arguments and arguments in your yaml file. FLARE will <strong>always</strong> take the command line argument as priority; if no command line argument is passed for a given variable, it will default to the YAML file. If no value is found there, a default set of values are used by FLARE.</p>
+<p>For example, to change the version name for one test without modifying the YAML file:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis<span class="w"> </span>--version<span class="o">=</span><span class="s2">&quot;higgs mass test&quot;</span>
+</pre></div>
+</div>
+<p>This will set the version to that passed on the command line, ignoring the value defined in the YAML file.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is best practice to keep your setup in a YAML file as this will make it easily repeatable and trackable by FLARE.</p>
+</div>
+</section>
+<section id="running-new-altered-analysis">
+<h2>Running New/Altered Analysis<a class="headerlink" href="#running-new-altered-analysis" title="Link to this heading">#</a></h2>
+<p>You will notice the output data directory structure is based off the information provided by the user via the command line or a config YAML. This is helpful as if you make changes to your analysis you can change the <code class="docutils literal notranslate"><span class="pre">version</span></code> variable inside the yaml file and b2luigi will run another analysis workflow for you. Note that once you have run the workflow once and it was successful, you cannot run it again without changing the details. Alternatively, if you need to delete a section or all of the previously created data, you can delete the data and run your analysis with the exact same configuration.</p>
+</section>
+</section>
+<section id="setting-up-mc-production">
+<h1>Setting Up MC Production<a class="headerlink" href="#setting-up-mc-production" title="Link to this heading">#</a></h1>
+<p>If MC production is required then a <code class="docutils literal notranslate"><span class="pre">mc_production</span></code> directory needs to be created like so:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>studies/special_mc_production/mc_production
+</pre></div>
+</div>
+<p>Inside this directory you will need a YAML file that follows the format below:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="s">&quot;$model&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;UserMCProdConfigModel&quot;</span>
+
+<span class="nt">global_prodtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whizard</span>
+
+<span class="nt">datatype</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">of</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">datatypes</span>
+</pre></div>
+</div>
+<p>The details of this yaml file will be explained shortly. The definitions and layout are exact and will always be checked by Pydantic as per the <code class="docutils literal notranslate"><span class="pre">$model</span></code>. It is important that you follow the template. If you do not include the <code class="docutils literal notranslate"><span class="pre">$model</span></code> at the top of your MC Production config, FLARE will not run and will instruct you to add that line to your config yaml.</p>
+<section id="whizard-delphespythia6-production">
+<h2>Whizard + DelphesPythia6 Production<a class="headerlink" href="#whizard-delphespythia6-production" title="Link to this heading">#</a></h2>
+<p>If you require Whizard for your MC production, you will need the following:</p>
+<section id="details-yaml">
+<h3>details.yaml<a class="headerlink" href="#details-yaml" title="Link to this heading">#</a></h3>
+<p>To select Whizard, set <code class="docutils literal notranslate"><span class="pre">global_prodtype:</span> <span class="pre">whizard</span></code>. Under <code class="docutils literal notranslate"><span class="pre">datatype</span></code> list all the datatypes you will be generating. The exact names are of your own choosing and can be as detailed or simple as you like. An example <code class="docutils literal notranslate"><span class="pre">details.yaml</span></code> is shown below:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="s">&quot;$model&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;UserMCProdConfigModel&quot;</span>
+
+<span class="nt">global_prodtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whizard</span>
+
+<span class="nt">datatype</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wzp6_ee_mumuH_Hbb_ecm240</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wzp6_ee_mumuH_HWW_ecm240</span>
+</pre></div>
+</div>
+</section>
+<section id="input-files">
+<h3>Input Files<a class="headerlink" href="#input-files" title="Link to this heading">#</a></h3>
+<p>To run the Whizard + DelphesPythia6 workflow the following files must be located in the <code class="docutils literal notranslate"><span class="pre">mc_production</span></code> directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;datatype&gt;.sin</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">card_&lt;&gt;.tcl</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">edm4hep_&lt;&gt;.tcl</span></code></p></li>
+</ul>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;&gt;</span></code> indicates areas where you can input your own naming conventions. The software checks for the key words and suffixes. Note that there must be a <code class="docutils literal notranslate"><span class="pre">.sin</span></code> file for each datatype. Using the example <code class="docutils literal notranslate"><span class="pre">details.yaml</span></code> above, we would need two <code class="docutils literal notranslate"><span class="pre">.sin</span></code> files:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">wzp6_ee_mumuH_Hbb_ecm240.sin</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wzp6_ee_mumuH_HWW_ecm240.sin</span></code></p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;datatype&gt;.sin</span></code> file must have its output file named <code class="docutils literal notranslate"><span class="pre">proc</span></code> (the standard inside FCC). Ensure each <code class="docutils literal notranslate"><span class="pre">.sin</span></code> file has the correct output file name, otherwise the software will not be able to work correctly.</p>
+</div>
+</section>
+</section>
+<section id="madgraph-delphespythia8">
+<h2>Madgraph + DelphesPythia8<a class="headerlink" href="#madgraph-delphespythia8" title="Link to this heading">#</a></h2>
+<section id="id1">
+<h3>details.yaml<a class="headerlink" href="#id1" title="Link to this heading">#</a></h3>
+<p>To select Madgraph, set <code class="docutils literal notranslate"><span class="pre">global_prodtype:</span> <span class="pre">madgraph</span></code>. Under <code class="docutils literal notranslate"><span class="pre">datatype</span></code> list all the datatypes you will be generating. An example <code class="docutils literal notranslate"><span class="pre">details.yaml</span></code> is shown below:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="s">&quot;$model&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;UserMCProdConfigModel&quot;</span>
+
+<span class="nt">global_prodtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">madgraph</span>
+
+<span class="nt">datatype</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">p8_ee_mumuH_Hbb_ecm240</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">p8_ee_mumuH_HWW_ecm240</span>
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h3>Input Files<a class="headerlink" href="#id2" title="Link to this heading">#</a></h3>
+<p>To run the Madgraph + DelphesPythia8 workflow the following files must be located in the <code class="docutils literal notranslate"><span class="pre">mc_production</span></code> directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;datatype&gt;_runcard.dat</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">card_&lt;&gt;.tcl</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">edm4hep_&lt;&gt;.tcl</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pythia_card_&lt;&gt;.cmd</span></code></p></li>
+</ul>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;&gt;</span></code> indicates areas where you can input your own naming conventions. There must be a <code class="docutils literal notranslate"><span class="pre">.dat</span></code> file for each datatype. Using the example <code class="docutils literal notranslate"><span class="pre">details.yaml</span></code> above, we would need two <code class="docutils literal notranslate"><span class="pre">.dat</span></code> files:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">p8_ee_mumuH_Hbb_ecm240_runcard.dat</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">p8_ee_mumuH_HWW_ecm240_runcard.dat</span></code></p></li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">pythia_card_&lt;&gt;.cmd</span></code> file must have the variable <code class="docutils literal notranslate"><span class="pre">Beams:LHEF</span> <span class="pre">=</span> <span class="pre">signal.lhe</span></code>. If this is not present, the software will be unable to run the <code class="docutils literal notranslate"><span class="pre">DelphesPythia8_EDM4HEP</span></code> command.</p>
+</div>
+</section>
+</section>
+<section id="pythia8">
+<h2>Pythia8<a class="headerlink" href="#pythia8" title="Link to this heading">#</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>As of version 0.1.0, Pythia8 is supported.</p>
+</div>
+<section id="id3">
+<h3>details.yaml<a class="headerlink" href="#id3" title="Link to this heading">#</a></h3>
+<p>To select Pythia8, set <code class="docutils literal notranslate"><span class="pre">global_prodtype:</span> <span class="pre">pythia8</span></code>. Under <code class="docutils literal notranslate"><span class="pre">datatype</span></code> list all the datatypes you will be generating. An example <code class="docutils literal notranslate"><span class="pre">details.yaml</span></code> is shown below:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="s">&quot;$model&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;UserMCProdConfigModel&quot;</span>
+
+<span class="nt">global_prodtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pythia8</span>
+
+<span class="nt">datatype</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">p8_ee_mumuH_Hbb_ecm240</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">p8_ee_mumuH_HWW_ecm240</span>
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>Input Files<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
+<p>To run the Pythia8 workflow the following files must be located in the <code class="docutils literal notranslate"><span class="pre">mc_production</span></code> directory:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">card_&lt;&gt;.tcl</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">edm4hep_&lt;&gt;.tcl</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;datatype&gt;.cmd</span></code></p></li>
+</ul>
+<p>Where <code class="docutils literal notranslate"><span class="pre">&lt;&gt;</span></code> indicates areas where you can input your own naming conventions. There must be a <code class="docutils literal notranslate"><span class="pre">.cmd</span></code> file for each datatype. Using the example <code class="docutils literal notranslate"><span class="pre">details.yaml</span></code> above, we would need two <code class="docutils literal notranslate"><span class="pre">.cmd</span></code> files:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">p8_ee_mumuH_Hbb_ecm240.cmd</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">p8_ee_mumuH_HWW_ecm240.cmd</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="mixed-production">
+<h2>Mixed Production<a class="headerlink" href="#mixed-production" title="Link to this heading">#</a></h2>
+<p>If you wish to conduct a mixture of production types, the config yaml inside <code class="docutils literal notranslate"><span class="pre">mc_production</span></code> must follow the format below:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="s">&quot;$model&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="s">&quot;UserMCProdConfigModel&quot;</span>
+
+<span class="nt">datatype</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">wzp6_ee_mumuH_Hbb_ecm240</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">prodtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">whizard</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">p8_ee_WW_ecm240</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">prodtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pythia8</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">p8_ee_ZZ_ecm240</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">prodtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pythia8</span>
+</pre></div>
+</div>
+<p>Note that <code class="docutils literal notranslate"><span class="pre">global_prodtype</span></code> is no longer set; instead a local <code class="docutils literal notranslate"><span class="pre">prodtype</span></code> is set for each dataset. Note also that <code class="docutils literal notranslate"><span class="pre">datatype</span></code> is now a list of dictionaries instead of a list of strings. The Pydantic model will check at runtime if your config yaml is correctly formatted and if not, will indicate what you must change.</p>
+</section>
+<section id="running-the-mc-production">
+<h2>Running the MC Production<a class="headerlink" href="#running-the-mc-production" title="Link to this heading">#</a></h2>
+<p>Once you have selected your MC production type and ensured all input files are present adhering to naming conventions and required output file names (see <strong>IMPORTANT</strong> notes above), you are ready to run your MC production.</p>
+<p>This can be done in one of two ways. If you wish to <em>just</em> produce the MC for now, run the following command:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls
+<span class="go">mc_production config.yaml</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls<span class="w"> </span>mc_production/
+<span class="go">details.yaml wzp6_ee_mumuH_Hbb_ecm240.sin wzp6_ee_mumuH_HWW_ecm240.sin card_IDEA.tcl edm4hep_IDEA.tcl</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>mcproduction<span class="w"> </span>--config-yaml<span class="w"> </span>config.yaml
+</pre></div>
+</div>
+<p>If you instead wish to run the full workflow from the start of MC production all the way to producing plots using <code class="docutils literal notranslate"><span class="pre">fcc</span> <span class="pre">plots</span></code>, and provided you have followed the instructions in <a class="reference internal" href="#setting-up-your-analysis">Setting Up Your Analysis</a>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls
+<span class="go">mc_production config.yaml stage1_analysis.py stage2_analysis.py final_analysis.py plot_analysis.py</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls<span class="w"> </span>mc_production/
+<span class="go">details.yaml wzp6_ee_mumuH_Hbb_ecm240.sin wzp6_ee_mumuH_HWW_ecm240.sin card_IDEA.tcl edm4hep_IDEA.tcl</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis<span class="w"> </span>--config-yaml<span class="w"> </span>config.yaml
+</pre></div>
+</div>
+<p>As explained in <a class="reference internal" href="#running-your-analysis">Running Your Analysis</a>, if you wish to create subdirectories to store your various studies you can do so, e.g.:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls
+<span class="go">config.yaml studies</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls<span class="w"> </span>studies/
+<span class="go">higgs_mass fancy_BSM_study</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls<span class="w"> </span>studies/fancy_BSM_study/
+<span class="go">mc_production stage1_analysis.py stage2_analysis.py final_analysis.py plot_analysis.py</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>ls<span class="w"> </span>mc_production/
+<span class="go">details.yaml wzp6_ee_mumuH_Hbb_ecm240.sin wzp6_ee_mumuH_HWW_ecm240.sin card_IDEA.tcl edm4hep_IDEA.tcl</span>
+<span class="gp gp-VirtualEnv">(venv)</span><span class="gp">$ </span>flare<span class="w"> </span>run<span class="w"> </span>analysis<span class="w"> </span>--config-yaml<span class="w"> </span>config.yaml<span class="w"> </span>--study-dir<span class="w"> </span>studies/fancy_BSM_study/
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">&lt;no title&gt;</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="mc_production/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">MC Production Workflows</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">FCCAnalyses Workflows</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-your-analysis">Setting Up Your Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-your-analysis">Running Your Analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-new-altered-analysis">Running New/Altered Analysis</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-mc-production">Setting Up MC Production</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#whizard-delphespythia6-production">Whizard + DelphesPythia6 Production</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#details-yaml">details.yaml</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#input-files">Input Files</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#madgraph-delphespythia8">Madgraph + DelphesPythia8</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">details.yaml</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Input Files</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pythia8">Pythia8</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">details.yaml</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Input Files</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mixed-production">Mixed Production</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-mc-production">Running the MC Production</a></li>
+</ul>
+</li>
+</ul>
+
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Cameron Harris
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright MIT.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
