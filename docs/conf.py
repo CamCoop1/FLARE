@@ -34,7 +34,7 @@ autodoc_pydantic_settings_show_json = False
 
 
 html_theme = "sphinx_book_theme"
-html_logo = "source/_static/flare-logo-1280-640.png"
+html_logo = "source/_static/flare-noBackgrond-evenSpacing-v5.png"
 html_static_path = ["source/_static"]
 
 # -- General configuration ---------------------------------------------------

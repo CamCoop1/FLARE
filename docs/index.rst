@@ -1,3 +1,8 @@
+.. _home:
+
+**FLARE**: Workflow Management for Key4HEP and FCCee
+====================================================
+
 .. image:: https://img.shields.io/github/actions/workflow/status/CamCoop1/FLARE/ci.yaml?style=flat-square&label=CI
    :target: https://github.com/CamCoop1/FLARE/actions/workflows/ci.yaml
    :alt: CI
