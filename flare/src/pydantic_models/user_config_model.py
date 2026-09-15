@@ -1,6 +1,6 @@
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -33,8 +33,8 @@ class UserConfigModel(BaseModel):
     name: str = Field(default="default_name")
     version: str = Field(default="1.0")
     description: str = Field(default="No Description")
-    studydir: Path | str = Field(default_factory=Path.cwd)
-    outputdir: Path | str = Field(default_factory=Path.cwd)
+    studydir: Union[Path, str] = Field(default_factory=Path.cwd)
+    outputdir: Union[Path, str] = Field(default_factory=Path.cwd)
     add_stage: Optional[Dict[str, AddFlareTask]] = Field(default_factory=dict)
     model_config = ConfigDict(extra="allow")
 

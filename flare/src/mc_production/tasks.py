@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 import subprocess
 from functools import lru_cache
@@ -7,6 +8,7 @@ from pathlib import Path
 
 import b2luigi as luigi
 from b2luigi.core.utils import flatten_to_dict
+from typing_extensions import Union
 
 from flare.src.mc_production.generator_specific_methods import MadgraphMethods
 from flare.src.mc_production.mc_production_types import get_mc_production_types
@@ -37,7 +39,7 @@ class MCProductionBaseTask(
     results_subdir: str
 
     @property
-    def env_script(self):
+    def dataprod_env_script(self) -> Union[None, str]:
         global_env_script_path = luigi.get_setting(
             "dataprod_config"
         ).global_env_script_path
@@ -51,8 +53,8 @@ class MCProductionBaseTask(
     @property
     def slurm_settings(self):
         settings = luigi.get_setting("slurm_settings", {})
-        if self.env_script:
-            settings["export"] = "NONE"
+        # if self.env_script:
+        #     settings["export"] = "NONE"
         return settings
 
     @property
@@ -103,21 +105,18 @@ class MCProductionBaseTask(
         The output file may be dependent on a datatype, card_name or edm4hep_name parameters so must determine if the output
         file name needs to be parsed and transformed or if we can return the unparsed output file name
         """
-        match BracketMappings.determine_bracket_mapping(
+        mapping = BracketMappings.determine_bracket_mapping(
             self._unparsed_output_file_name
-        ):
-            case BracketMappings.datatype_parameter:
-                suffix = get_suffix_from_arg(self._unparsed_output_file_name)
-                return f"{self.datatype}{suffix}"
-
-            case BracketMappings.b2luigi_detemined_parameter:
-                suffix = get_suffix_from_arg(
-                    self._unparsed_output_file_name
-                )  # eg .root
-                prefix = self.b2luigi_parameter_output_file_name
-                return f"{prefix}{suffix}"
-            case _:
-                return self._unparsed_output_file_name
+        )
+        if mapping == BracketMappings.datatype_parameter:
+            suffix = get_suffix_from_arg(self._unparsed_output_file_name)
+            return f"{self.datatype}{suffix}"
+        elif mapping == BracketMappings.b2luigi_detemined_parameter:
+            suffix = get_suffix_from_arg(self._unparsed_output_file_name)  # eg .root
+            prefix = self.b2luigi_parameter_output_file_name
+            return f"{prefix}{suffix}"
+        else:
+            return self._unparsed_output_file_name
 
     def copy_input_file_to_output_dir(self, path):
         """
@@ -165,37 +164,73 @@ class MCProductionBaseTask(
             for f in file_paths
             if check_if_path_matches_mapping(arg, f, bracket_mapping)
         ]
+        length = len(file_path)
+        if length == 0:
+            raise IndexError(
+                f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
+                " The framework will exit, ensure this file is present and try again."
+            )
+        elif length == 1:
+            # We copy this file to the tmp output dir so we have a history of what input files were used
+            path = file_path[0]
+            self.copy_input_file_to_output_dir(path)
+            return path
+        else:
+            # More than one, we assume we are looping over a parameter of this class
+            if "card" in arg:
+                path = [p for p in file_path if self.card_name in Path(p).stem][0]
+            elif "edm4hep" in arg:
 
-        match len(file_path):
-            case 0:
-                raise IndexError(
-                    f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
-                    " The framework will exit, ensure this file is present and try again."
+                path = [p for p in file_path if self.edm4hep_name in Path(p).stem][0]
+            elif self.datatype in arg:
+                path = [p for p in file_path if self.datatype == Path(p).stem][0]
+            else:
+                raise FileNotFoundError(
+                    f"The file associated with {arg} is unknown to flare. The found paths are {file_path}."
+                    f" This may occur if there are multiple files being picked up by flare for {arg}"
                 )
-            case 1:
-                # We copy this file to the tmp output dir so we have a history of what input files were used
-                path = file_path[0]
-                self.copy_input_file_to_output_dir(path)
-                return path
-            case _:
-                # More than one, we assume we are looping over a parameter of this class
-                if "card" in arg:
-                    path = [p for p in file_path if self.card_name in Path(p).stem][0]
-                elif "edm4hep" in arg:
 
-                    path = [p for p in file_path if self.edm4hep_name in Path(p).stem][
-                        0
-                    ]
-                elif self.datatype in arg:
-                    path = [p for p in file_path if self.datatype == Path(p).stem][0]
-                else:
-                    raise FileNotFoundError(
-                        f"The file associated with {arg} is unknown to flare. The found paths are {file_path}."
-                        f" This may occur if there are multiple files being picked up by flare for {arg}"
-                    )
+            self.copy_input_file_to_output_dir(path)
+            return path
 
-                self.copy_input_file_to_output_dir(path)
-                return path
+    def get_sourced_env(self, setup_script, extra_args="", preserve=None):
+        """
+        Run `source setup_script` in a bash subshell started with a
+        completely clean environment (env -i), so nothing from the
+        calling process's environment (LD_LIBRARY_PATH, PYTHONPATH,
+        PATH, etc.) leaks in and conflicts with what setup_script sets.
+        """
+        if setup_script is None:
+            return None
+
+        preserve = preserve or {}
+        base_preserved = {
+            "HOME": os.environ.get("HOME", ""),
+            "USER": os.environ.get("USER", ""),
+            "TERM": os.environ.get("TERM", "dumb"),
+        }
+        base_preserved.update(preserve)
+
+        preserved_exports = " ".join(f"{k}={v!r}" for k, v in base_preserved.items())
+
+        command = (
+            f"env -i {preserved_exports} "
+            f"bash -c 'source {setup_script} {extra_args} && env -0'"
+        )
+
+        output = subprocess.check_output(
+            ["bash", "-c", command],
+            env={},  # belt-and-suspenders: don't inherit here either
+            universal_newlines=False,
+        )
+
+        env = {}
+        for line in output.split(b"\0"):
+            if not line:
+                continue
+            key, _, value = line.partition(b"=")
+            env[key.decode()] = value.decode()
+        return env
 
     def process(self):
         """
@@ -208,11 +243,15 @@ class MCProductionBaseTask(
         """
 
         logger.info(f"Command to be ran \n\n {self.prod_cmd} \n\n")
-
         # Run any required pre_run methods for this specific stage for this specific prodtype
         self.pre_run()
         # Run the cmd in the tmp directory
-        subprocess.check_call(self.prod_cmd, cwd=self.tmp_output_parent_dir, shell=True)
+        subprocess.check_call(
+            self.prod_cmd,
+            cwd=self.tmp_output_parent_dir,
+            shell=True,
+            env=self.get_sourced_env(self.dataprod_env_script),
+        )
         # Run any required on_completion methods for this specific stage for this specific prodtype
         self.on_completion()
 

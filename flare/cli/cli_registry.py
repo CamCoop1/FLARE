@@ -1,6 +1,6 @@
 import argparse
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Optional, Union
 
 _PARSER = None
 _GROUP_SUBPARSERS = None
@@ -30,7 +30,7 @@ def get_parser():
     return _PARSER
 
 
-def register_group(name, help, hooks: GroupHooks | None = None):
+def register_group(name, help, hooks: Union[GroupHooks, None] = None):
     get_parser()
 
     parser = _GROUP_SUBPARSERS.add_parser(name, help=help)

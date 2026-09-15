@@ -1,6 +1,17 @@
 import logging
-from itertools import pairwise
-from typing import Any, Dict, List, Type
+
+try:
+    from itertools import pairwise
+except ImportError:  # Python < 3.10
+    from itertools import tee
+
+    def pairwise(iterable):
+        a, b = tee(iterable)
+        next(b, None)
+        return zip(a, b)
+
+
+from typing import Any, Dict, List, Type, Union
 
 import b2luigi as luigi
 
@@ -45,7 +56,7 @@ def _linear_task_workflow_generator(
     stages: list[Any] = [],
     dag: Dag = None,
     class_attrs: dict[Any, dict[str, Any]] = {},
-    inject_stage1_dependency: None | Type[luigi.Task] = None,
+    inject_stage1_dependency: Union[None, Type[luigi.Task]] = None,
 ) -> dict[Any, luigi.Task]:
     """The function will take a list of stage strings, a class name and a luigi.Task base class
     and return a dictionary of uninitialised classes that inherit from `luigi.Task` and the `base_class`.
@@ -134,7 +145,7 @@ def _generate_from_dag(
     dag: Dag,
     class_name: str,
     class_attrs: dict[Any, dict[str, Any]],
-    inject_stage1_dependency: None | Type[luigi.Task],
+    inject_stage1_dependency: Union[None, Type[luigi.Task]],
     base_class: Type[luigi.Task],
 ) -> Dict[str, Type[luigi.Task]]:
     tasks = dict()
@@ -196,7 +207,7 @@ def _generate_from_stages_list(
     stages: List[str],
     class_name: str,
     class_attrs: dict[Any, dict[str, Any]],
-    inject_stage1_dependency: None | Type[luigi.Task],
+    inject_stage1_dependency: Union[None, Type[luigi.Task]],
     base_class: Type[luigi.Task],
 ) -> Dict[str, Type[luigi.Task]]:
     tasks = dict()

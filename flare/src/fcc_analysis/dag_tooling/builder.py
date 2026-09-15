@@ -3,7 +3,17 @@ Here we will build the Dag object based on the internal Flare Tasks and the
 ones requested by the User in the AddTask feature (if they have requested it)
 """
 
-from itertools import pairwise
+try:
+    from itertools import pairwise
+except ImportError:  # Python < 3.10
+    from itertools import tee
+
+    def pairwise(iterable):
+        a, b = tee(iterable)
+        next(b, None)
+        return zip(a, b)
+
+
 from typing import Dict
 
 import b2luigi as luigi

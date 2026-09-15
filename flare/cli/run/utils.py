@@ -204,8 +204,12 @@ def build_for_regular_flare_cli(args):
             if value and key not in _get_unwanted_cli_arguments()
         )
     ]
+
     # Set the executable setting to be flare CLI
-    luigi.set_setting("executable", sys.orig_argv)
+    orig_argv = getattr(sys, "orig_argv", sys.argv)
+    print("Original argv", orig_argv)
+    luigi.set_setting("executable", orig_argv)
+
     # Add the flare CLI commandline arguments
     luigi.set_setting("task_cmd_additional_args", additional_args)
     # Set the add_filename_to_cmd to False so executable_wrapper.sh is formatted correctly

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Callable
+from typing import Callable, Union
 
 from flare.cli.lint.src.pydantic_models import AnalyzerModel, IdentifiedPathEntry
 
@@ -36,7 +36,7 @@ class Error:
     # The function which checks if an error should be called
     # Takes the AnalyzerModel and returns a bool or a dict object
     # to be handled by the diagnostic tool
-    checker_func: Callable[[AnalyzerModel], bool | dict[str, IdentifiedPathEntry]]
+    checker_func: Callable[[AnalyzerModel], Union[bool, dict[str, IdentifiedPathEntry]]]
     # If an exception is passed to the diagnostic tools then
     # we skip errors which include these exceptions
     exceptions: list[ErrorExceptions] = field(default_factory=list)
