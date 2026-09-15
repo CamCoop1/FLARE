@@ -21,4 +21,4 @@ jobs:
               run: pip install . pytest-mock
 
             - name: Run tests
-              run: python3 -m pytest -W ignore::DeprecationWarning
+              run: python3 -m pytest -W ignore::DeprecationWarning -s

@@ -88,6 +88,7 @@ def test_build_task_graph_no_user_tasks(internal_tasks):
     dag = build_task_graph(internal_tasks=internal_tasks, user_tasks={})
     assert "stage1" in dag.flattened_dag_ordering
     assert "stage2" in dag.flattened_dag_ordering
+    print(dag.dag)
     assert dag.dag["stage2"] == {"stage1"}
 
 
@@ -102,6 +103,7 @@ def test_build_task_graph_with_user_tasks(internal_tasks, user_tasks):
 
     assert "stage1" in dag.flattened_dag_ordering
     assert "stage2" in dag.flattened_dag_ordering
+    print(dag.dag)
     assert dag.dag["stage2"] == {"stage1"}
 
     assert "stage0" in dag.flattened_dag_ordering
