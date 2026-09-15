@@ -64,37 +64,36 @@ def generate_flare_diagnostics(
             continue
 
         # Match on the type of result, if its a bool or dict changes how we want to handle it
-        match result:
-            case bool():
+        if isinstance(result, bool):
+            diags.append(
+                emit_error_to_diagnostic(
+                    code=error.name,
+                    level=error_value.level.name,
+                    message=error_value.description,
+                    filename=filename,
+                    # Because the ErrorLevel enum uses auto() it has automatic numbering.
+                    # Say INFO = 0 and ERROR = 1, if we pass to this function
+                    # error_level=ErrorLevel.INFO then we suppress all errors which are higher
+                    suppressed=(error_level.value < error_value.level.value),
+                    suggestion=error_value.suggestion,
+                )
+            )
+        elif isinstance(result, dict):
+            # For each IdentifiedPathEntry(ForbidExtraBaseModel collected, raise an error
+            for model in result.values():
                 diags.append(
                     emit_error_to_diagnostic(
                         code=error.name,
                         level=error_value.level.name,
                         message=error_value.description,
                         filename=filename,
-                        # Because the ErrorLevel enum uses auto() it has automatic numbering.
-                        # Say INFO = 0 and ERROR = 1, if we pass to this function
-                        # error_level=ErrorLevel.INFO then we suppress all errors which are higher
+                        lineno=model.lineno,
+                        end_lineno=model.end_lineno,
+                        context={model.name: model.path},
                         suppressed=(error_level.value < error_value.level.value),
                         suggestion=error_value.suggestion,
                     )
                 )
-            case dict():
-                # For each IdentifiedPathEntry(ForbidExtraBaseModel collected, raise an error
-                for model in result.values():
-                    diags.append(
-                        emit_error_to_diagnostic(
-                            code=error.name,
-                            level=error_value.level.name,
-                            message=error_value.description,
-                            filename=filename,
-                            lineno=model.lineno,
-                            end_lineno=model.end_lineno,
-                            context={model.name: model.path},
-                            suppressed=(error_level.value < error_value.level.value),
-                            suggestion=error_value.suggestion,
-                        )
-                    )
 
     return diags
 

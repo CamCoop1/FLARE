@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List, Literal, Union
 
 from pydantic import Field, model_validator
 
@@ -20,8 +20,8 @@ class UserMCProdConfigModel(ForbidExtraBaseModel):
     structure
     """
 
-    datatype: List[str | dict]
-    global_prodtype: Literal[VALID_PRODTYPES] = Field(default="default")
+    datatype: List[Union[str, dict]]
+    global_prodtype: Literal[tuple(VALID_PRODTYPES)] = Field(default="default")
     global_env_script_path: str = Field(default="")
     card: List[str] = Field(default=["default"])
     edm4hep: List[str] = Field(default=["default"])

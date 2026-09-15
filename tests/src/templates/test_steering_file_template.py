@@ -16,13 +16,13 @@ def test_template_module_contains_steering_file_template():
         (
             {
                 "outputdir_string": "OUTDIR",
-                "outputDir": "/path/to/output",
+                "outputDir": "/path/to/output/",
                 "inputDir": "/path/to/input",
                 "python_code": "print('Hello')",
             },
             [
-                'OUTDIR = "/path/to/output"',
-                'inputDir = "/path/to/input"',
+                'OUTDIR = "/path/to/output/"',
+                'inputDir = "/path/to/input/"',
                 "print('Hello')",
             ],
         ),
@@ -30,12 +30,12 @@ def test_template_module_contains_steering_file_template():
         (
             {
                 "outputdir_string": "OUTDIR",
-                "outputDir": "/path/to/output",
+                "outputDir": "/path/to/output/",
                 "inputDir": None,
                 "python_code": "print('Hello')",
             },
             [
-                'OUTDIR = "/path/to/output"',
+                'OUTDIR = "/path/to/output/"',
                 "print('Hello')",
             ],  # inputDir should not appear
         ),

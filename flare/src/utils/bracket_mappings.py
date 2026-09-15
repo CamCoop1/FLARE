@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Union
 
 logger = logging.getLogger("luigi-interface")
 
@@ -38,7 +39,7 @@ class BracketMappings:
     b2luigi_detemined_parameter = "$$"
 
     @staticmethod
-    def determine_bracket_mapping(arg: str) -> str | None:
+    def determine_bracket_mapping(arg: str) -> Union[str, None]:
         """
         Given a arg (type string) this method will check all attributes of the class
         in an attempt to match the arg with one of the attributes.
@@ -66,7 +67,9 @@ def _strip(arg, mapping: BracketMappings):
     return arg.replace(mapping[0], "").replace(mapping[1], "")
 
 
-def check_if_path_matches_mapping(arg: str, path: str | Path, mapping: str) -> bool:
+def check_if_path_matches_mapping(
+    arg: str, path: Union[str, Path], mapping: str
+) -> bool:
     """
     This function returns True if an argument matches a path
 
@@ -123,31 +126,26 @@ class BracketMappingCMDBuilderMixin:
         cmd_inputs = []
         for arg in self.unparsed_args:
             # Match the type of argument
-            match BracketMappings.determine_bracket_mapping(arg):
-                case BracketMappings.output:
-                    path = self.bm_output()
-                    cmd_inputs.append(str(path))
-
-                case BracketMappings.input:
-                    path = self.bm_input()
-                    cmd_inputs.append(str(path))
-
-                case BracketMappings.datatype_parameter:
-                    path = self.bm_datatype_parameter(arg=arg)
-                    cmd_inputs.append(str(path))
-
-                case BracketMappings.free_name:
-                    # Find the associated file using the check_if_path_maetches_mapping function
-                    path = self.bm_free_name(arg=arg)
-                    cmd_inputs.append(str(path))
-
-                case BracketMappings.b2luigi_detemined_parameter:
-                    path = self.bm_b2luigi_determined_parameter(arg=arg)
-                    cmd_inputs.append(str(path))
-
-                case _:
-                    raise FileNotFoundError(
-                        f"There is no file in {self.cmd_files_dir()} that"
-                        f" matches {arg}. Please ensure all files are present"
-                    )
+            mapping = BracketMappings.determine_bracket_mapping(arg)
+            if mapping == BracketMappings.output:
+                path = self.bm_output()
+                cmd_inputs.append(str(path))
+            elif mapping == BracketMappings.input:
+                path = self.bm_input()
+                cmd_inputs.append(str(path))
+            elif mapping == BracketMappings.datatype_parameter:
+                path = self.bm_datatype_parameter(arg=arg)
+                cmd_inputs.append(str(path))
+            elif mapping == BracketMappings.free_name:
+                # Find the associated file using the check_if_path_maetches_mapping function
+                path = self.bm_free_name(arg=arg)
+                cmd_inputs.append(str(path))
+            elif mapping == BracketMappings.b2luigi_detemined_parameter:
+                path = self.bm_b2luigi_determined_parameter(arg=arg)
+                cmd_inputs.append(str(path))
+            else:
+                raise FileNotFoundError(
+                    f"There is no file in {self.cmd_files_dir()} that"
+                    f" matches {arg}. Please ensure all files are present"
+                )
         return cmd_inputs
