@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hep-flare"
-version = "0.4.0"
+version = "0.5.0"
 description = "Framework for streamlining the FCC framework powered by b2luigi"
 authors = [{ name = "Cameron Harris", email = "cameron.harris@adelaide.edu.au" }]
 readme = "README.md"
