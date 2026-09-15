@@ -20,7 +20,7 @@ jobs:
       suffix: ${{ steps.release.outputs.suffix }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Extract tag and Details
         id: release
@@ -40,62 +40,67 @@ jobs:
             exit 1
           fi
 
-  # check_pypi:
-  #   needs: details
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Fetch information from PyPI
-  #       run: |
-  #         response=$(curl -s https://pypi.org/pypi/${{ env.PACKAGE_NAME }}/json || echo "{}")
-  #         latest_previous_version=$(echo $response | jq --raw-output "select(.releases != null) | .releases | keys_unsorted | last")
-  #         if [ -z "$latest_previous_version" ]; then
-  #           echo "Package not found on PyPI."
-  #           latest_previous_version="0.0.0"
-  #         fi
-  #         echo "Latest version on PyPI: $latest_previous_version"
-  #         echo "latest_previous_version=$latest_previous_version" >> $GITHUB_ENV
-
-  #     - name: Compare versions and exit if not newer
-  #       run: |
-  #         NEW_VERSION=${{ needs.details.outputs.new_version }}
-  #         LATEST_VERSION=$latest_previous_version
-  #         if [ "$(printf '%s\n' "$LATEST_VERSION" "$NEW_VERSION" | sort -rV | head -n 1)" != "$NEW_VERSION" ] || [ "$NEW_VERSION" == "$LATEST_VERSION" ]; then
-  #           echo "The new version $NEW_VERSION is not greater than the latest version $LATEST_VERSION on PyPI."
-  #           exit 1
-  #         else
-  #           echo "The new version $NEW_VERSION is greater than the latest version $LATEST_VERSION on PyPI."
-  #         fi
-
-  setup_and_build:
-    needs: [details]
+  check_pypi:
+    needs: details
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Fetch information from PyPI
+        run: |
+          http_status=$(curl -s -o response.json -w "%{http_code}" https://pypi.org/pypi/${{ env.PACKAGE_NAME }}/json)
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+          if [ "$http_status" = "404" ]; then
+            echo "Package not found on PyPI yet — treating as first release."
+            latest_previous_version="0.0.0"
+          elif [ "$http_status" != "200" ]; then
+            echo "Unexpected response from PyPI (HTTP $http_status)."
+            cat response.json
+            exit 1
+          else
+            latest_previous_version=$(jq --raw-output '.releases | keys[]' response.json | sort -V | tail -n 1)
+            if [ -z "$latest_previous_version" ]; then
+              echo "Package exists on PyPI but has no releases — treating as first release."
+              latest_previous_version="0.0.0"
+            fi
+          fi
+
+          echo "Latest version on PyPI: $latest_previous_version"
+          echo "latest_previous_version=$latest_previous_version" >> "$GITHUB_ENV"
+
+      - name: Compare versions and exit if not newer
+        run: |
+          NEW_VERSION=${{ needs.details.outputs.new_version }}
+          LATEST_VERSION=$latest_previous_version
+          HIGHEST=$(printf '%s\n%s\n' "$LATEST_VERSION" "$NEW_VERSION" | sort -V | tail -n 1)
+
+          if [ "$HIGHEST" != "$NEW_VERSION" ] || [ "$NEW_VERSION" == "$LATEST_VERSION" ]; then
+            echo "The new version $NEW_VERSION is not greater than the latest version $LATEST_VERSION on PyPI."
+            exit 1
+          else
+            echo "The new version $NEW_VERSION is greater than the latest version $LATEST_VERSION on PyPI."
+          fi
+
+  setup_and_build:
+    needs: [details, check_pypi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.10"
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Set project version with Poetry
-        run: |
-          poetry version ${{ needs.details.outputs.new_version }}
+      - name: Set project version with uv
+        run: uv version ${{ needs.details.outputs.new_version }}
 
       - name: Install dependencies
-        run: poetry install --sync --no-interaction
+        run: uv sync --locked
 
       - name: Build source and wheel distribution
-        run: |
-          poetry build
+        run: uv build
 
       - name: Verify build output
-        run: |
-          ls -lh ./dist/
+        run: ls -lh ./dist/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -103,27 +108,26 @@ jobs:
           name: dist
           path: dist/
 
-  # pypi_publish:
-  #   name: Upload release to PyPI
-  #   needs: [setup_and_build, details]
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: release
-  #   permissions:
-  #     id-token: write
-  #   steps:
-  #     - name: Download artifacts
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: dist
-  #         path: dist/
+  pypi_publish:
+    name: Upload release to PyPI
+    needs: [setup_and_build, details]
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+    permissions:
+      id-token: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
-  #     - name: Publish distribution to PyPI
-  #       uses: pypa/gh-action-pypi-publish@release/v1
-  #       with:
-  #         password: ${{ secrets.PYPI_API_TOKEN }}
-  #       env:
-  #         TWINE_VERBOSE: 1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Publish distribution to PyPI
+        run: uv publish --trusted-publishing automatic
 
   github_release:
     name: Create GitHub Release
@@ -133,7 +137,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
