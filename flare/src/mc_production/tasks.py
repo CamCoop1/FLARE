@@ -1,16 +1,15 @@
 import logging
-import os
 import shutil
 import subprocess
 from functools import lru_cache
-from itertools import product
 from pathlib import Path
 
 import b2luigi as luigi
-from b2luigi.core.utils import flatten_to_dict
-from typing_extensions import Union
 
-from flare.src.mc_production.generator_specific_methods import MadgraphMethods
+from flare.src.mc_production.generator_specific_methods import (
+    K4RunMethods,
+    MadgraphMethods,
+)
 from flare.src.mc_production.mc_production_types import get_mc_production_types
 from flare.src.utils.bracket_mappings import (
     BracketMappingCMDBuilderMixin,
@@ -25,7 +24,7 @@ logger = logging.getLogger("luigi-interface")
 
 
 class MCProductionBaseTask(
-    luigi.DispatchableTask, BracketMappingCMDBuilderMixin, MadgraphMethods
+    luigi.DispatchableTask, BracketMappingCMDBuilderMixin, MadgraphMethods, K4RunMethods
 ):
     """
     This base class is total generalised to be able to run on any N-stage MC production
@@ -39,7 +38,7 @@ class MCProductionBaseTask(
     results_subdir: str
 
     @property
-    def dataprod_env_script(self) -> Union[None, str]:
+    def env_script(self):
         global_env_script_path = luigi.get_setting(
             "dataprod_config"
         ).global_env_script_path
@@ -53,8 +52,8 @@ class MCProductionBaseTask(
     @property
     def slurm_settings(self):
         settings = luigi.get_setting("slurm_settings", {})
-        # if self.env_script:
-        #     settings["export"] = "NONE"
+        if self.env_script:
+            settings["export"] = "NONE"
         return settings
 
     @property
@@ -105,20 +104,22 @@ class MCProductionBaseTask(
         The output file may be dependent on a datatype, card_name or edm4hep_name parameters so must determine if the output
         file name needs to be parsed and transformed or if we can return the unparsed output file name
         """
-        mapping = BracketMappings.determine_bracket_mapping(
-            self._unparsed_output_file_name
-        )
-        if mapping == BracketMappings.datatype_parameter:
+        var = BracketMappings.determine_bracket_mapping(self._unparsed_output_file_name)
+        if var == BracketMappings.datatype_parameter:
             suffix = get_suffix_from_arg(self._unparsed_output_file_name)
             return f"{self.datatype}{suffix}"
-        elif mapping == BracketMappings.b2luigi_detemined_parameter:
-            suffix = get_suffix_from_arg(self._unparsed_output_file_name)  # eg .root
+
+        elif var == BracketMappings.b2luigi_detemined_parameter:
+            suffix = self._unparsed_output_file_name.split(
+                BracketMappings.b2luigi_detemined_parameter
+            )[-1]
+            # eg .root
             prefix = self.b2luigi_parameter_output_file_name
             return f"{prefix}{suffix}"
         else:
             return self._unparsed_output_file_name
 
-    def copy_input_file_to_output_dir(self, path):
+    def copy_input_file_to_output_dir(self, path, return_destination=False):
         """
         This function serves to copy a file from analysis/mc_production/ to
         the tmp output dir for historical book keeping
@@ -127,6 +128,8 @@ class MCProductionBaseTask(
         self.tmp_output_parent_dir.mkdir(parents=True, exist_ok=True)
         destination = self.tmp_output_parent_dir / source.name
         shutil.copy(source, destination)
+        if return_destination:
+            return destination
 
     def get_file_paths(self):
         return luigi.get_setting("dataprod_dir").glob("*")
@@ -149,88 +152,68 @@ class MCProductionBaseTask(
             arg=arg, bracket_mapping=BracketMappings.datatype_parameter
         )
 
+    def bm_datatype_parameter_stem(self, arg: str) -> Path:
+        return self.datatype
+
     def bm_free_name(self, arg):
         return self._find_file_path_given_arg_and_bracketmapping(
             arg=arg, bracket_mapping=BracketMappings.free_name
         )
 
+    def bm_free_name_use_copied_output(self, arg: str) -> Path:
+        path = self._find_file_path_given_arg_and_bracketmapping(
+            arg=arg, bracket_mapping=BracketMappings.free_name_use_copied_output
+        )
+        destination = self.copy_input_file_to_output_dir(path, return_destination=True)
+        return destination
+
+    def bm_b2luigi_determined_parameter(self, arg: str) -> Path:
+        arg = arg.replace(BracketMappings.b2luigi_detemined_parameter, self.datatype)
+        return self._find_file_path_given_arg_and_bracketmapping(
+            arg=arg, bracket_mapping=BracketMappings.b2luigi_detemined_parameter
+        )
+
     def _find_file_path_given_arg_and_bracketmapping(
-        self, arg: str, bracket_mapping: BracketMappings
+        self, arg: str, bracket_mapping: str
     ) -> Path:
         file_paths = [f for f in self.get_file_paths()]
+        print("These are the file paths found by flare", file_paths)
         # Find the associated file using the check_if_path_matches_mapping function
         file_path = [
             str(f)
             for f in file_paths
             if check_if_path_matches_mapping(arg, f, bracket_mapping)
         ]
-        length = len(file_path)
-        if length == 0:
-            raise IndexError(
-                f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
-                " The framework will exit, ensure this file is present and try again."
-            )
-        elif length == 1:
-            # We copy this file to the tmp output dir so we have a history of what input files were used
-            path = file_path[0]
-            self.copy_input_file_to_output_dir(path)
-            return path
-        else:
-            # More than one, we assume we are looping over a parameter of this class
-            if "card" in arg:
-                path = [p for p in file_path if self.card_name in Path(p).stem][0]
-            elif "edm4hep" in arg:
 
-                path = [p for p in file_path if self.edm4hep_name in Path(p).stem][0]
-            elif self.datatype in arg:
-                path = [p for p in file_path if self.datatype == Path(p).stem][0]
-            else:
-                raise FileNotFoundError(
-                    f"The file associated with {arg} is unknown to flare. The found paths are {file_path}."
-                    f" This may occur if there are multiple files being picked up by flare for {arg}"
+        match len(file_path):
+            case 0:
+                raise IndexError(
+                    f"There is no file associated with {arg} inside {str(luigi.get_setting('dataprod_dir'))}."
+                    " Flare will exit, ensure this file is present and try again."
                 )
+            case 1:
+                # We copy this file to the tmp output dir so we have a history of what input files were used
+                path = file_path[0]
+                self.copy_input_file_to_output_dir(path)
+                return path
+            case _:
+                # More than one, we assume we are looping over a parameter of this class
+                if "card" in arg:
+                    path = [p for p in file_path if self.card_name in Path(p).stem][0]
+                elif "edm4hep" in arg:
+                    path = [p for p in file_path if self.edm4hep_name in Path(p).stem][
+                        0
+                    ]
+                elif self.datatype in arg:
+                    path = [p for p in file_path if self.datatype == Path(p).stem][0]
+                else:
+                    raise FileNotFoundError(
+                        f"The file associated with {arg} has more than one found path. The found paths are {file_path}."
+                        f" This may occur if there are multiple files being picked up by flare for {arg}"
+                    )
 
-            self.copy_input_file_to_output_dir(path)
-            return path
-
-    def get_sourced_env(self, setup_script, extra_args="", preserve=None):
-        """
-        Run `source setup_script` in a bash subshell started with a
-        completely clean environment (env -i), so nothing from the
-        calling process's environment (LD_LIBRARY_PATH, PYTHONPATH,
-        PATH, etc.) leaks in and conflicts with what setup_script sets.
-        """
-        if setup_script is None:
-            return None
-
-        preserve = preserve or {}
-        base_preserved = {
-            "HOME": os.environ.get("HOME", ""),
-            "USER": os.environ.get("USER", ""),
-            "TERM": os.environ.get("TERM", "dumb"),
-        }
-        base_preserved.update(preserve)
-
-        preserved_exports = " ".join(f"{k}={v!r}" for k, v in base_preserved.items())
-
-        command = (
-            f"env -i {preserved_exports} "
-            f"bash -c 'source {setup_script} {extra_args} && env -0'"
-        )
-
-        output = subprocess.check_output(
-            ["bash", "-c", command],
-            env={},  # belt-and-suspenders: don't inherit here either
-            universal_newlines=False,
-        )
-
-        env = {}
-        for line in output.split(b"\0"):
-            if not line:
-                continue
-            key, _, value = line.partition(b"=")
-            env[key.decode()] = value.decode()
-        return env
+                self.copy_input_file_to_output_dir(path)
+                return path
 
     def process(self):
         """
@@ -242,23 +225,21 @@ class MCProductionBaseTask(
         tmp folder to the correct folder at which point b2luigi flags the job as done
         """
 
-        logger.info(f"Command to be ran \n\n {self.prod_cmd} \n\n")
+        print(f"Command to be ran \n\n {self.prod_cmd} \n\n")
+
         # Run any required pre_run methods for this specific stage for this specific prodtype
         self.pre_run()
         # Run the cmd in the tmp directory
-        subprocess.check_call(
-            self.prod_cmd,
-            cwd=self.tmp_output_parent_dir,
-            shell=True,
-            env=self.get_sourced_env(self.dataprod_env_script),
-        )
+        print("Submitting", self.prod_cmd)
+        print("Output file name: ", self.output_file_name)
+        subprocess.check_call(self.prod_cmd, cwd=self.tmp_output_parent_dir, shell=True)
         # Run any required on_completion methods for this specific stage for this specific prodtype
         self.on_completion()
 
         # Get final output dir
         target = self.tmp_output_parent_dir.with_suffix("")
 
-        logger.info(f"Moving {self.tmp_output_parent_dir} -> {target}")
+        print(f"Moving {self.tmp_output_parent_dir} -> {target}")
 
         # Move the contents of the tmp dir to the output dir. Not we cannot just move the
         # directory as b2luigi's batch submitter saves the executable_wrapper.sh to the output dir
@@ -292,6 +273,7 @@ class MCProductionBaseTask(
             return
 
         for func_name in func_names:
+            print(f"Attempting to run {func_name}")
             if hasattr(self, func_name):
                 func = getattr(self, func_name)
                 func()
@@ -345,43 +327,55 @@ class MCProductionWrapper(OutputMixin, luigi.DispatchableTask):
 
     def requires(self):
         dataprod_config = luigi.get_setting("dataprod_config")
-        # If the prodtype is default i.e wasn't defined globally
-        # we must call the default_prodtype requires function
-        if self.prodtype == "default":
-            datatypes_dict = flatten_to_dict(dataprod_config.datatype)
-            datatypes = list(datatypes_dict.keys())
 
-            for datatype, card, edm4hep in product(
-                datatypes,
-                dataprod_config.card,
-                dataprod_config.edm4hep,
-            ):
-                prodtype = datatypes_dict[datatype]["prodtype"]
+        for datatype_bundle in dataprod_config.datatype_bundles:
+            yield get_last_stage_task(
+                inject_stage1_dependency=self.inject_stage1_dependency_task
+            )(
+                prodtype=get_mc_production_types()[datatype_bundle.prodtype],
+                datatype=datatype_bundle.datatype,
+                card_name=datatype_bundle.card,
+                edm4hep_name=datatype_bundle.edm4hep,
+            )
+        # # If the prodtype is default i.e wasn't defined globally
+        # # we must call the default_prodtype requires function
+        # if self.prodtype == "default":
+        #     datatypes_dict = flatten_to_dict(
+        #         dataprod_config.datatype
+        #     )  # TODO this is now redundant
+        #     datatypes = list(datatypes_dict.keys())
 
-                yield get_last_stage_task(
-                    inject_stage1_dependency=self.inject_stage1_dependency_task,
-                    prodtype=prodtype,
-                )(
-                    prodtype=get_mc_production_types()[prodtype],
-                    datatype=datatype,
-                    card_name=card,
-                    edm4hep_name=edm4hep,
-                )
+        #     for datatype, card, edm4hep in product(
+        #         datatypes,
+        #         dataprod_config.get_cards(datatypes),
+        #         dataprod_config.edm4hep,
+        #     ):
+        #         prodtype = datatypes_dict[datatype]["prodtype"]
 
-        else:
-            for datatype, card, edm4hep in product(
-                dataprod_config.datatype,
-                dataprod_config.card,
-                dataprod_config.edm4hep,
-            ):
-                yield get_last_stage_task(
-                    inject_stage1_dependency=self.inject_stage1_dependency_task
-                )(
-                    prodtype=get_mc_production_types()[self.prodtype],
-                    datatype=datatype,
-                    card_name=card,
-                    edm4hep_name=edm4hep,
-                )
+        #         yield get_last_stage_task(
+        #             inject_stage1_dependency=self.inject_stage1_dependency_task,
+        #             prodtype=prodtype,
+        #         )(
+        #             prodtype=get_mc_production_types()[prodtype],
+        #             datatype=datatype,
+        #             card_name=card,
+        #             edm4hep_name=edm4hep,
+        #         )
+
+        # else:
+        #     for datatype, card, edm4hep in product(
+        #         dataprod_config.datatype,
+        #         dataprod_config.get_cards(dataprod_config.datatype),
+        #         dataprod_config.edm4hep,
+        #     ):
+        #         yield get_last_stage_task(
+        #             inject_stage1_dependency=self.inject_stage1_dependency_task
+        #         )(
+        #             prodtype=get_mc_production_types()[self.prodtype],
+        #             datatype=datatype,
+        #             card_name=card,
+        #             edm4hep_name=edm4hep,
+        #         )
 
 
 def _get_mc_prod_stages(prodtype=None) -> dict:
@@ -431,7 +425,6 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
     )
     ```
     """
-    last_stage = next(reversed(_get_mc_prod_stages(prodtype=prodtype)))
     class_name = "MCProduction"
     class_name += prodtype.capitalize() if prodtype else ""
     return _linear_task_workflow_generator(
@@ -439,10 +432,11 @@ def get_mc_prod_stages_dict(inject_stage1_dependency=None, prodtype=None) -> dic
         class_name=class_name,
         base_class=MCProductionBaseTask,
         class_attrs={
-            last_stage: {
+            task: {
                 "card_name": luigi.Parameter(default="default"),
                 "edm4hep_name": luigi.Parameter(default="default"),
             }
+            for task in list(_get_mc_prod_stages(prodtype=prodtype))[1:]
         },
         inject_stage1_dependency=inject_stage1_dependency,
     )

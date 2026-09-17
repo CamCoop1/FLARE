@@ -62,7 +62,8 @@ class FCCTemplateMethodMixin:
         The path where the rendered template for this stage that b2luigi will use at run time
         """
         outputDir = find_file(self.outputDir)
-        return find_file(outputDir, f"steering_{self.stage.name}.py")
+        suffix = get_python_script_for_task(self.stage.name).suffix
+        return find_file(outputDir, f"steering_{self.stage.name}{suffix}")
 
     def run_templating(self):
         """
@@ -186,6 +187,10 @@ class FCCAnalysisBaseClass(
     @property
     def unparsed_args(self):
         return self.stage_dict.args
+
+    def bm_input(self):
+
+        return list(self.get_all_input_file_names())[0]
 
     def bm_free_name(self, *args, **kwargs) -> str:
         """

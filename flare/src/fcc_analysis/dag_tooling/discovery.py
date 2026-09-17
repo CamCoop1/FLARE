@@ -17,7 +17,9 @@ def discover_task_scripts() -> list[str]:
 
     identified_tasks = [
         p.stem.split("_")[0]
-        for p in studydir.glob("*.py")
+        for p in studydir.glob("*")
+        # This if-statement ensures we only keep the discovered python files
+        # that begin with a VALID FCC Analysis Task identifier
         if any(p.stem.startswith(x) for x in valid_internal_task_names)
     ]
 
@@ -35,9 +37,9 @@ def discover_task_scripts() -> list[str]:
 def get_python_script_for_task(task: str) -> Path:
     studydir = luigi.get_setting("studydir")
     # This is guaranteed since this function is only ever called after all validation is done
-    python_script = [p for p in studydir.glob("*py") if task in p.name]
+    python_script = [p for p in studydir.glob("*") if task in p.name]
 
     assert (
         len(python_script) == 1
-    ), f"The python script for {task} could not be found in {studydir}"
+    ), f"The python script for {task} could not be found in {studydir}, found {python_script} from task {task}"
     return python_script[0]

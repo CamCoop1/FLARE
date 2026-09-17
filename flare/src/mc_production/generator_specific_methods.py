@@ -2,6 +2,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from b2luigi import get_setting
+
 
 class MadgraphMethods:
     """
@@ -65,3 +67,25 @@ class MadgraphMethods:
         shutil.copyfile(
             self.input_file_path, dst=f"{self.tmp_output_parent_dir}/{input_file_name}"
         )
+
+
+class K4RunMethods:
+    CLDCONFIG = "/cvmfs/sw.hsf.org/key4hep/releases/2025-05-29/x86_64-almalinux9-gcc14.2.0-opt/cldconfig/2025-05-26-72663j/share/CLDConfig/"
+
+    @property
+    def tmp_output_parent_dir(self):
+        raise NotImplementedError
+
+    def cp_sandbox_files(self):
+        """
+        Copy the CLD files to the CWD
+        """
+        dataprod_config = get_setting("dataprod_config")
+        sandbox_path = dataprod_config.k4run_sandbox
+        if not sandbox_path:
+            return
+
+        for path in Path(sandbox_path).glob("*"):
+            link = self.tmp_output_parent_dir / path.relative_to(sandbox_path)
+            if not link.exists():
+                link.symlink_to(path)

@@ -9,7 +9,7 @@ def _run_hooks(args):
     load_settings_into_manager(args)
     # The FCC Analysis linting is only required when
     # running the FCC Workflow
-    if args.command == "analysis":
+    if args.command == "fccanalysis":
         if run_fcc_linting(args):
             # If run_fcc_linting returns a truthy object then there are diagnostics
             # which are not suppressed and so we much exit
